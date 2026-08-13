@@ -19,7 +19,9 @@ Two questions for you:
 1. Are the style defaults actually publication-grade, or cosmetically off?
    The repo includes a 20-molecule blind test and a documented pass
    criterion (≥40% chosen by practitioners); ferrocene and free-base
-   porphyrin are recorded as known limitations rather than counted.
+   porphyrin are recorded as known limitations rather than counted. The
+   blind test vs ChemDraw is still pending — the methodology is in the
+   README and the ChemDraw panels are added manually before the review.
 2. What quick-fix validation rules do you actually hit in real workflows?
    We currently implement only four (unmatched brackets/rings, lowercase
    aromatic kekulization, nitrogen valence via [N+]) and deliberately do not

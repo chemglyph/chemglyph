@@ -15,10 +15,7 @@ from .svg_utils import apply_post, parse_hex_color
 
 _MOLBLOCK_RE = re.compile(r"\bV(2000|3000)\b")
 _SPECIAL_OPTION_KEYS = {"acs1996_mode", "use_bw_atom_palette"}
-_TRANSPARENT_RECT = re.compile(
-    r"<rect[^>]*(?:fill:#00000000|fill-opacity\s*:\s*0)[^>]*>\s*</rect>"
-    r"|<rect[^>]*(?:fill:#00000000|fill-opacity\s*:\s*0)[^>]*/>"
-)
+_FIRST_RECT_ELEMENT = re.compile(r"<rect\b[^>]*(?:/>|>.*?</rect>)", re.DOTALL)
 
 
 @dataclass
@@ -255,8 +252,14 @@ def _draw_svg(
 
 
 def _strip_transparent_background(svg: str) -> str:
-    """Drop the fully transparent background rect RDKit emits in SVG output."""
-    return _TRANSPARENT_RECT.sub("", svg, count=1)
+    """Drop RDKit's background rect (always the first ``<rect>`` element).
+
+    RDKit versions differ: newer builds emit an alpha-0 fill, older builds
+    still emit an opaque white rect for an alpha-0 background color. Either
+    way the rect is the first element in the document, so removing it is the
+    robust transparent-background fix.
+    """
+    return _FIRST_RECT_ELEMENT.sub("", svg, count=1)
 
 
 def _draw_png(

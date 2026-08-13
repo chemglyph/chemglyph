@@ -21,6 +21,8 @@ GOLDEN_MOLECULES = {
     "s-ibuprofen": "CC(C)Cc1ccc(cc1)[C@@H](C)C(=O)O",
 }
 
+_EXPECTED_BOND_WIDTH = {"acs": 2.0, "modern": 2.4, "textbook-cn": 2.6}
+
 
 def _svg(smiles: str, style: str) -> str:
     result = chemglyph.render_molecule(smiles, style=style)
@@ -96,6 +98,21 @@ def test_textbook_bonds_are_thicker_than_acs() -> None:
     acs_widths = _stroke_widths(_svg(smiles, "acs"))
     textbook_widths = _stroke_widths(_svg(smiles, "textbook-cn"))
     assert sum(acs_widths) / len(acs_widths) < sum(textbook_widths) / len(textbook_widths)
+
+
+@pytest.mark.parametrize("style", sorted(STYLES))
+def test_bond_stroke_width_matches_style_golden(style: str) -> None:
+    svg = _svg(GOLDEN_MOLECULES["caffeine"], style)
+    widths = _stroke_widths(svg)
+    expected = _EXPECTED_BOND_WIDTH[style]
+    assert widths, "no stroke widths found in SVG"
+    assert max(widths) <= expected + 0.15
+    assert any(abs(width - expected) < 0.1 for width in widths)
+
+
+def test_style_spec_bond_widths_match_golden() -> None:
+    for style, expected in _EXPECTED_BOND_WIDTH.items():
+        assert get_style(style).draw_options["bondLineWidth"] == expected
 
 
 def test_transparent_background_by_default() -> None:

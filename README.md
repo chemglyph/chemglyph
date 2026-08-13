@@ -155,9 +155,10 @@ recorded separately as known limitations.
 
 ![ChemGlyph vs RDKit default](docs/images/comparison_vs_rdkit.png)
 
-The comparison above shows ChemGlyph `modern` against RDKit's stock output on
-three §11 blind-test molecules (ChemDraw panels are added manually during the
-blind review).
+**Blind test vs ChemDraw: pending — methodology below.** The comparison above
+shows ChemGlyph `modern` against RDKit's stock output on three §11 blind-test
+molecules; the ChemDraw panels are added manually during the blind review and
+this image is regenerated once the review runs.
 
 ## Roadmap
 

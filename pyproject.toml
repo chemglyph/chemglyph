@@ -23,7 +23,7 @@ classifiers = [
   "Topic :: Scientific/Engineering :: Chemistry",
 ]
 dependencies = [
-  "rdkit>=2024.9",
+  "rdkit>=2024.9", # floor CI-verified at 2024.9.4 (see ci.yml test-minimum-rdkit)
   "mcp>=1.2",
 ]
 
