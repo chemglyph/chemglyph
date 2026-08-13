@@ -1,0 +1,56 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "chemglyph"
+version = "0.1.0"
+description = "Publication-quality chemical structure & reaction rendering for AI agents"
+readme = "README.md"
+requires-python = ">=3.11"
+license = "MIT"
+authors = [{ name = "random-orbit", email = "305297779+random-orbit@users.noreply.github.com" }]
+keywords = ["chemistry", "chemical-structure", "rdkit", "svg", "mcp", "rendering"]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Science/Research",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Scientific/Engineering :: Chemistry",
+]
+dependencies = [
+  "rdkit>=2024.9",
+  "mcp>=1.2",
+]
+
+[project.optional-dependencies]
+opsin = ["py2opsin>=0.2"]
+dev = [
+  "pytest>=8",
+  "ruff>=0.8",
+]
+
+[project.scripts]
+chemglyph-mcp = "chemglyph.mcp_server:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/chemglyph"]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+src = ["src", "tests", "benchmarks", "examples"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.ruff.format]
+quote-style = "double"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
