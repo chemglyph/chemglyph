@@ -109,6 +109,24 @@ or a passed blind test:
   `gh pr ready 12063 --repo punkpeye/awesome-mcp-servers` and post a
   ready-now comment.
 
+### P1-6 addendum: PyPI 0.1.0 released (2026-08-13)
+
+- Rebuilt the sdist + wheel from the rewritten history; `twine check`
+  PASSED for both artifacts.
+- TestPyPI: upload attempt returned **403** — the provided token is a
+  pypi.org token and TestPyPI is a separate credential store. Equivalent
+  pre-verification was performed instead: the locally built wheel was
+  installed into a clean venv and rendered a molecule (0.1.0, C9H8O4, SVG).
+- Production upload succeeded:
+  <https://pypi.org/project/chemglyph/0.1.0/> (sdist + wheel).
+- Post-upload check in a fresh venv: `pip install chemglyph` -> 0.1.0;
+  rendered benzoic acid (C7H6O2, SVG OK); PyPI `project_urls` point at
+  `github.com/chemglyph/chemglyph`.
+- PR #12063 restored from draft to ready-for-review, with a comment noting
+  the live PyPI release.
+- Security note for the maintainer: the upload token was shared in chat; it
+  should be rotated in the PyPI account settings.
+
 ## P1-7: RDKit minimum version
 
 - Declared floor was `rdkit>=2024.9`, but only 2026.3.5 had been tested.
