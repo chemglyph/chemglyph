@@ -154,8 +154,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
-
-def main() -> None:
-    """Entry point for the ``chemglyph-mcp`` console script."""
-    raise NotImplementedError("TODO(M3): implement MCP server")

@@ -278,8 +278,10 @@ def _rdkit_error_capture() -> Iterator[list[str]]:
             records.append(_RDKIT_LOG_PREFIX.sub("", record.getMessage()))
 
     handler = _Capture()
+    previous_handlers = logger.handlers
     previous_level = logger.level
     previous_propagate = logger.propagate
+    logger.handlers = []  # silence RDKit's own stderr handler while probing
     logger.addHandler(handler)
     logger.setLevel(logging.DEBUG)
     logger.propagate = False
@@ -287,5 +289,6 @@ def _rdkit_error_capture() -> Iterator[list[str]]:
         yield records
     finally:
         logger.removeHandler(handler)
+        logger.handlers = previous_handlers
         logger.setLevel(previous_level)
         logger.propagate = previous_propagate

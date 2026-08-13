@@ -106,7 +106,18 @@ def _parse_structure(structure: str) -> Chem.Mol:
         parser = "SMILES"
     if mol is None:
         raw = raw_error or f"RDKit could not parse the {parser} input"
-        suggestion = _quick_fix_suggestion(stripped)
+        if parser == "InChI":
+            suggestion = (
+                "Suggested fix: verify the InChI string "
+                "(regenerate it with RDKit's MolToInchi if possible)."
+            )
+        elif parser == "molblock":
+            suggestion = (
+                "Suggested fix: check the V2000/V3000 block "
+                "(atom/bond counts, valences, and whitespace)."
+            )
+        else:
+            suggestion = _quick_fix_suggestion(stripped)
         raise ChemGlyphParseError(f"Could not parse structure ({parser}): {raw}. {suggestion}")
     return mol
 
