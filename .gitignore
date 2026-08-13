@@ -67,6 +67,7 @@ ENV/
 
 # Local-only maintainer data (never committed)
 scripts/pii_patterns.txt
+docs/progress/support_ticket_draft.md
 
 # Blind-test figure output: generated figures stay local, but the answer key
 # is tracked as part of the methodology audit trail.

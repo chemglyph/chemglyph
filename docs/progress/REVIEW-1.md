@@ -54,7 +54,8 @@ Recommendation: **yes, do it, but sequence it after an explicit approval for a
 history rewrite** — a purge alone is insufficient because the mailbox also
 lives in old blobs of the rewritten-out history.
 
-Proposed sequence (needs maintainer approval, see "Pending approvals"):
+Proposed sequence (executed on 2026-08-13 after maintainer approval — see the
+execution log below):
 
 1. `git filter-repo` (or equivalent) over `--all` to strip the address string
    from every blob, then `git push --force-with-lease origin main`.
@@ -210,11 +211,38 @@ because graders see the shuffled figure directory and never this repository —
 anyone with repo access is excluded from the grading pool. ChemDraw panels
 remain manual, local inputs.
 
-## Pending approvals (blocking)
+## P0-3 execution log (maintainer-approved 2026-08-13)
 
-1. **History rewrite + force-push** to purge the mailbox string from old
-   blobs, then a **GitHub Support purge** of dangling objects (P0-3). Not
-   executed yet: this changes all SHAs and force-pushes `main`, so it needs
-   explicit maintainer sign-off.
-2. NetBerth's personal-Gmail exposure (see P0-2) is pre-existing and outside
-   this repository; remediation is recommended separately to the maintainer.
+Executed strictly in the approved order:
+
+1. **Backup first**: mirror clone to
+   `/Users/abc/backups/chemglyph-pre-rewrite.git`; the commit set was verified
+   identical to the working repo (10/10) and `fsck` clean. The backup retains
+   the pre-rewrite data by design — keep it private and delete it after the
+   Support purge is confirmed.
+2. **Rewrite**: `git filter-repo` with an email callback (old mailbox ->
+   noreply identity) and a blob callback (literal -> `[redacted-email]`).
+   10 commits rewritten; new history head `fc76fd4`.
+3. **Post-rewrite verification, all green**:
+   a. `git log --all` author/committer identities contain only the noreply
+      alias;
+   b. full-history blob scan plus author/committer/message scans: zero
+      matches for the mailbox or its domain;
+   c. ruff clean, pytest 58 passed / 1 skipped (optional OPSIN).
+4. **Push**: `--force-with-lease` replaced remote `main` with `fc76fd4`; no
+   tags existed to rewrite; CI green on all five jobs (4 matrix jobs +
+   minimum-rdkit).
+5. **Support ticket draft**: written to
+   `docs/progress/support_ticket_draft.md` (gitignored, kept out of the
+   repository) with the full old-SHA list. The maintainer submits it at
+   support.github.com while logged in; agents cannot submit on the account's
+   behalf.
+6. **Expected accessibility state**: after the push, the dangling initial
+   commit and the pre-rewrite SHAs remain readable by SHA until GitHub
+   Support garbage-collects them. This is the documented expected behavior,
+   not a failure. The maintainer re-verifies 404s after Support confirms.
+
+Remaining follow-ups: submit the support ticket; after the purge, verify 404s
+for every listed SHA and delete the backup. NetBerth's separate personal-Gmail
+exposure (P0-2) is out of this repository's scope and should receive the same
+treatment from its own maintainer.
