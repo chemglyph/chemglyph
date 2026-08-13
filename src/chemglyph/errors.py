@@ -21,5 +21,9 @@ class ChemGlyphRenderError(ChemGlyphError):
     """Raised when rendering fails for a parsed structure (e.g. missing backend)."""
 
 
+class ChemGlyphReactionError(ChemGlyphError):
+    """Raised for malformed reaction specs or invalid layout parameters."""
+
+
 class ChemGlyphDependencyError(ChemGlyphError):
     """Raised when an optional dependency (e.g. Java for OPSIN) is unavailable."""

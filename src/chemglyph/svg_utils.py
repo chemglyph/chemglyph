@@ -53,17 +53,28 @@ def require_viewbox(svg: str) -> ViewBox:
 
 
 def inner_content(svg: str) -> str:
-    """Return everything between the root ``<svg ...>`` tag and ``</svg>``."""
-    start = svg.find(">")
+    """Return everything between the root ``<svg ...>`` tag and ``</svg>``.
+
+    Any XML declaration before the root element is dropped along with the
+    root tag, so the result is safe to nest inside another SVG document.
+    """
+    svg_start = svg.find("<svg")
+    start = svg.find(">", svg_start)
     end = svg.rfind("</svg>")
-    if start == -1 or end == -1 or end <= start:
+    if svg_start == -1 or start == -1 or end == -1 or end <= start:
         raise ChemGlyphRenderError("SVG fragment is missing the root <svg> element")
     return svg[start + 1 : end]
 
 
-def wrap_group(content: str, dx: float = 0.0, dy: float = 0.0) -> str:
+def wrap_group(
+    content: str,
+    dx: float = 0.0,
+    dy: float = 0.0,
+    class_name: str | None = None,
+) -> str:
     """Wrap SVG content in a ``<g>`` with a translate transform."""
-    return f'<g transform="translate({_fmt(dx)},{_fmt(dy)})">{content}</g>'
+    class_attr = f' class="{class_name}"' if class_name else ""
+    return f'<g{class_attr} transform="translate({_fmt(dx)},{_fmt(dy)})">{content}</g>'
 
 
 def compose_svg(
