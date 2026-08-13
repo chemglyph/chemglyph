@@ -16,7 +16,7 @@ pip install chemglyph
 ```python
 import chemglyph
 
-result = chemglyph.render_molecule("c1ccccc1")        # benzene
+result = chemglyph.render_molecule("c1ccccc1")  # benzene
 open("benzene.svg", "w").write(result.data)
 ```
 
@@ -47,8 +47,8 @@ Three styles x three molecules (benzoic acid, caffeine, (S)-ibuprofen):
 ![ChemGlyph style gallery](docs/images/gallery_3x3.png)
 
 ```python
-chemglyph.render_molecule(smiles, style="acs")          # black/white, ACS journal
-chemglyph.render_molecule(smiles, style="modern")       # colored heteroatoms, screens
+chemglyph.render_molecule(smiles, style="acs")  # black/white, ACS journal
+chemglyph.render_molecule(smiles, style="modern")  # colored heteroatoms, screens
 chemglyph.render_molecule(smiles, style="textbook-cn")  # bold monochrome, textbook
 ```
 
@@ -59,13 +59,15 @@ and `fmt="png"` for bitmap output.
 
 ```python
 spec = {
-    "steps": [{
-        "reactants": ["OC(=O)c1ccccc1O", "CC(=O)OC(C)=O"],
-        "products": ["CC(=O)Oc1ccccc1C(=O)O", "CC(=O)O"],
-        "conditions": {"above": "H₂SO₄ (cat.)", "below": "rt, 15 min"},
-        "yield": "89%",
-        "arrow": "forward",
-    }],
+    "steps": [
+        {
+            "reactants": ["OC(=O)c1ccccc1O", "CC(=O)OC(C)=O"],
+            "products": ["CC(=O)Oc1ccccc1C(=O)O", "CC(=O)O"],
+            "conditions": {"above": "H₂SO₄ (cat.)", "below": "rt, 15 min"},
+            "yield": "89%",
+            "arrow": "forward",
+        }
+    ],
     "style": "modern",
 }
 svg = chemglyph.render_reaction(spec)
@@ -92,14 +94,14 @@ through untouched.
 
 ```python
 report = chemglyph.validate_structure("c1cccc1")
-report.fixes[0].description    # 'lowercase aromatic atoms could not be kekulized...'
-report.fixes[0].fixed_smiles   # 'C1CCCC1'
+report.fixes[0].description  # 'lowercase aromatic atoms could not be kekulized...'
+report.fixes[0].fixed_smiles  # 'C1CCCC1'
 ```
 
 ## Naming (v0.1: English only)
 
 ```python
-chemglyph.parse_name("aspirin")   # 'CC(=O)Oc1ccccc1C(=O)O'
+chemglyph.parse_name("aspirin")  # 'CC(=O)Oc1ccccc1C(=O)O'
 ```
 
 English IUPAC/common names resolve offline via OPSIN through the optional
