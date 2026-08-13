@@ -1,0 +1,7 @@
+{
+  "mcpServers": {
+    "chemglyph": {
+      "command": "chemglyph-mcp"
+    }
+  }
+}
