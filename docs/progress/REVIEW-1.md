@@ -231,7 +231,13 @@ Executed strictly in the approved order:
    c. ruff clean, pytest 58 passed / 1 skipped (optional OPSIN).
 4. **Push**: `--force-with-lease` replaced remote `main` with `fc76fd4`; no
    tags existed to rewrite; CI green on all five jobs (4 matrix jobs +
-   minimum-rdkit).
+   minimum-rdkit). A follow-up normal push then hit a GitHub server-side
+   anomaly: `git push` to `main` returned HTTP 500 repeatedly while the same
+   commit pushed cleanly to a scratch branch and all reads (`ls-remote`, API)
+   stayed healthy. The ref was advanced via the REST ref-update endpoint
+   (standard push equivalent); the scratch branch was deleted and CI is green
+   again. The anomaly is recorded in the Support ticket draft so GitHub can
+   inspect the repository state alongside the purge request.
 5. **Support ticket draft**: written to
    `docs/progress/support_ticket_draft.md` (gitignored, kept out of the
    repository) with the full old-SHA list. The maintainer submits it at
