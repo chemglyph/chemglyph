@@ -3,7 +3,7 @@
 Hi r/chemistry — I'd appreciate a critical look at a small open-source tool
 aimed squarely at "would you put this figure in a paper".
 
-ChemGlyph (https://github.com/random-orbit/chemglyph) renders single
+ChemGlyph (https://github.com/chemglyph/chemglyph) renders single
 molecules and reaction schemes to SVG/PNG with three presets:
 
 - `acs` — monochrome, tuned bond widths and label sizes;

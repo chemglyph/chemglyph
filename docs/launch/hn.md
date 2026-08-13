@@ -24,6 +24,6 @@ they'd publish — and the repo documents the pass criteria (>40% selection).
 The ChemDraw comparison panels are still being added manually, so the blind
 test is pending, not passed; the methodology is in the README.
 
-Repo: https://github.com/random-orbit/chemglyph (MIT, Python >= 3.11,
+Repo: https://github.com/chemglyph/chemglyph (MIT, Python >= 3.11,
 RDKit >= 2024.9). Feedback on the style presets and the reaction schema
 especially welcome.

@@ -1,7 +1,7 @@
 # Giving local LLM agents first-class chemistry rendering: an MCP server
 
 Agents are fine at emitting SMILES and bad at drawing molecules. ChemGlyph
-(https://github.com/random-orbit/chemglyph) is an MCP server + Python library
+(https://github.com/chemglyph/chemglyph) is an MCP server + Python library
 that gives them publication-quality structure and reaction rendering.
 
 Four tools, each docstring written for the model ("use this when..."):

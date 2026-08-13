@@ -14,9 +14,10 @@ Verified via the commits API after the `--force-with-lease`:
 - A compare against `main` returns "No common ancestor": the commit is no
   longer reachable from any branch or tag, but GitHub serves unreferenced
   objects by SHA indefinitely.
-- `repos/random-orbit/chemglyph/events` and the user's public activity feed
-  show `PushEvent`/`CreateEvent` records for the day, but their `commits`
-  arrays are empty — **no SHA residue in the event stream**.
+- the repository events API and the user's public activity feed (queried
+  before the 2026-08-13 transfer to the chemglyph organization) show
+  `PushEvent`/`CreateEvent` records for the day, but their `commits` arrays
+  are empty — **no SHA residue in the event stream**.
 
 Exposure assessment: the mailbox is not on any branch, not in any event
 payload, and not on the account profile (`public_email` is null). Its one
@@ -119,6 +120,25 @@ or a passed blind test:
   for the optional OPSIN path).
 - CI gained a `test-minimum-rdkit` job (ubuntu, Python 3.11,
   `rdkit==2024.9.4`, full pytest) so the floor stays verified.
+
+## P1 (addendum): Repository transfer to the chemglyph organization
+
+On 2026-08-13 the repository moved from the alias account to
+`github.com/chemglyph/chemglyph`. Follow-up completed:
+
+- `git remote set-url origin https://github.com/chemglyph/chemglyph.git`;
+  `git push origin main` succeeded (push permission verified, refs intact).
+- Replaced the old owner/repo path in `pyproject.toml` (new `[project.urls]`
+  block), README (links + CI badge), the three launch drafts, and the
+  historical references in M0.md/this file. `docs/claude_desktop_config.json`
+  contains no repository URL, so nothing to change there.
+- Verified `curl -sI` on the old owner/repo URL returns **HTTP 301** with
+  `Location: https://github.com/chemglyph/chemglyph`, and the new address
+  returns 200. The old URL keeps redirecting as long as GitHub retains the
+  transfer redirect.
+- awesome-mcp-servers PR #12063 (still draft) updated to the new address and
+  commented accordingly.
+- Full-repo grep for the old owner/repo path: zero matches.
 
 ## P2-8: Consolidated TODO(question) list with suggested answers
 

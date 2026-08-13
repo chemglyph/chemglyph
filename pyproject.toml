@@ -27,6 +27,11 @@ dependencies = [
   "mcp>=1.2",
 ]
 
+[project.urls]
+Homepage = "https://github.com/chemglyph/chemglyph"
+Repository = "https://github.com/chemglyph/chemglyph"
+Issues = "https://github.com/chemglyph/chemglyph/issues"
+
 [project.optional-dependencies]
 opsin = ["py2opsin>=0.2"]
 dev = [

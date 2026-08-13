@@ -2,6 +2,8 @@
 
 **Publication-quality chemical structure & reaction rendering for AI agents.**
 
+[![CI](https://github.com/chemglyph/chemglyph/actions/workflows/ci.yml/badge.svg)](https://github.com/chemglyph/chemglyph/actions/workflows/ci.yml)
+
 ChemGlyph is the KaTeX of chemistry: a rendering layer, a validation layer,
 and an MCP interface on top of [RDKit](https://www.rdkit.org). It exists for
 one job — turning structures and reaction schemes into figures you would
