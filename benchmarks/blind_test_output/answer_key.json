@@ -1,6 +1,8 @@
 {
-  "generated_at": "2026-08-13T09:30:37.322944+00:00",
+  "generated_at": "2026-08-13T16:00:33.776613+00:00",
   "seed": 20260813,
+  "chemglyph_version": "0.1.0",
+  "rdkit_version": "2026.03.5",
   "styles": {
     "chemglyph-acs": "acs",
     "chemglyph-modern": "modern"

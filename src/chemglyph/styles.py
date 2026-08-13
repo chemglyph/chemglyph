@@ -42,11 +42,17 @@ def get_style(name: str) -> StyleSpec:
 _ACS_OPTIONS = {
     "acs1996_mode": True,
     "use_bw_atom_palette": True,
+    # SetACS1996Mode pins absolute sizes (10px labels, fixed bond length) that
+    # ignore the canvas; reset both to auto so the min/max font sizes below
+    # scale with the molecule exactly like the other styles. The monochrome
+    # palette, padding, and multiple-bond spacing still come from ACS1996.
+    "fixedFontSize": -1,
+    "fixedBondLength": -1.0,
     "bondLineWidth": 2.0,
     "multipleBondOffset": 0.18,
     "additionalAtomLabelPadding": 0.16,
-    "minFontSize": 12,
-    "maxFontSize": 28,
+    "minFontSize": 16,
+    "maxFontSize": 36,
     "padding": 0.02,
 }
 

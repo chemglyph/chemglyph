@@ -73,3 +73,7 @@ docs/progress/support_ticket_draft.md
 # is tracked as part of the methodology audit trail.
 benchmarks/blind_test_output/*
 !benchmarks/blind_test_output/answer_key.json
+
+# Manual ChemDraw panels and proctor-only blinding artifacts (never committed)
+benchmarks/chemdraw_panels/
+benchmarks/blind_review/

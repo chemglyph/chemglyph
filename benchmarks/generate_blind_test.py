@@ -14,10 +14,13 @@ import sys
 from datetime import UTC, datetime
 from pathlib import Path
 
+import rdkit
+
 _REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(_REPO_ROOT / "src") not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT / "src"))
 
+import chemglyph  # noqa: E402
 from blind_test_molecules import BLIND_TEST_MOLECULES, KNOWN_LIMITATIONS  # noqa: E402
 from chemglyph import render_molecule  # noqa: E402
 from chemglyph.errors import ChemGlyphRenderError  # noqa: E402
@@ -60,6 +63,8 @@ def generate(out_dir: Path, seed: int | None = None) -> dict:
     answer_key = {
         "generated_at": datetime.now(UTC).isoformat(),
         "seed": seed,
+        "chemglyph_version": chemglyph.__version__,
+        "rdkit_version": rdkit.__version__,
         "styles": {"chemglyph-acs": "acs", "chemglyph-modern": "modern"},
         "known_limitations_excluded_from_denominator": sorted(KNOWN_LIMITATIONS),
         "figures": figures,

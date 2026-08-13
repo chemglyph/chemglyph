@@ -7,6 +7,7 @@ never pixel-level, so results are stable across platforms and fonts.
 from __future__ import annotations
 
 import re
+from xml.etree import ElementTree as ET
 
 import pytest
 from rdkit import Chem
@@ -22,6 +23,11 @@ GOLDEN_MOLECULES = {
 }
 
 _EXPECTED_BOND_WIDTH = {"acs": 2.0, "modern": 2.4, "textbook-cn": 2.6}
+_EXPECTED_FONT_SIZES = {
+    "acs": (16, 36),
+    "modern": (14, 32),
+    "textbook-cn": (18, 40),
+}
 
 
 def _svg(smiles: str, style: str) -> str:
@@ -32,6 +38,27 @@ def _svg(smiles: str, style: str) -> str:
 
 def _stroke_widths(svg: str) -> list[float]:
     return [float(value) for value in re.findall(r"stroke-width:([0-9.]+)", svg)]
+
+
+def _label_heights(svg: str) -> list[float]:
+    root = ET.fromstring(svg)
+    heights: list[float] = []
+    for element in root.iter():
+        if (element.attrib.get("class") or "").startswith("atom-"):
+            numbers = [
+                float(value) for value in re.findall(r"-?\d+\.?\d*", element.attrib.get("d", ""))
+            ]
+            if len(numbers) >= 4:
+                ys = numbers[1::2]
+                heights.append(max(ys) - min(ys))
+    return heights
+
+
+def _first_bond_length(svg: str) -> float:
+    match = re.search(r"d='M\s*([\d.]+),([\d.]+)\s+L\s*([\d.]+),([\d.]+)'", svg)
+    assert match is not None, "no plain bond found in SVG"
+    x1, y1, x2, y2 = (float(part) for part in match.groups())
+    return ((x2 - x1) ** 2 + (y2 - y1) ** 2) ** 0.5
 
 
 def _element_ids(svg: str) -> tuple[set[int], set[int]]:
@@ -113,6 +140,44 @@ def test_bond_stroke_width_matches_style_golden(style: str) -> None:
 def test_style_spec_bond_widths_match_golden() -> None:
     for style, expected in _EXPECTED_BOND_WIDTH.items():
         assert get_style(style).draw_options["bondLineWidth"] == expected
+
+
+def test_style_spec_font_sizes_match_golden() -> None:
+    for style, expected in _EXPECTED_FONT_SIZES.items():
+        options = get_style(style).draw_options
+        assert (options["minFontSize"], options["maxFontSize"]) == expected
+
+
+@pytest.mark.parametrize("style", sorted(STYLES))
+def test_labels_are_readable_at_default_canvas(style: str) -> None:
+    """Every style must keep atom labels readable at the auto-sized canvas."""
+    smiles = GOLDEN_MOLECULES["benzoic-acid"]
+    heights = sorted(_label_heights(_svg(smiles, style)))
+    median = heights[len(heights) // 2]
+    # Roughly >= 18px font (sans-serif cap height ~0.7em); RDKit's ACS1996
+    # preset pins labels at 10px (7px cap), which this floor rejects.
+    assert median >= 12.0
+
+
+def test_acs_labels_scale_with_canvas_instead_of_being_pinned() -> None:
+    """ACS labels must scale with the canvas, not stay pinned at 10px.
+
+    Regression guard for the ACS1996 preset: ``SetACS1996Mode`` pins
+    ``fixedFontSize`` at 10px and ``fixedBondLength`` at an absolute size.
+    The acs StyleSpec must disable both so the declared ``minFontSize`` /
+    ``maxFontSize`` range governs, otherwise the letters look tiny next to
+    bonds on any reasonably sized canvas.
+    """
+    smiles = GOLDEN_MOLECULES["benzoic-acid"]
+    result = chemglyph.render_molecule(smiles, style="acs", size=(320, 320))
+    heights = sorted(_label_heights(result.data))
+    median = heights[len(heights) // 2]
+    bond = _first_bond_length(result.data)
+    assert median >= 14.0, "ACS labels reverted to the pinned 10px font"
+    # The ACS proportion should stay label-forward: cap height roughly
+    # 0.3-0.8x a bond. A mis-scaled mean bond length (e.g. 0.18) inflates
+    # bonds ~8x and drags this ratio below 0.2.
+    assert 0.3 <= median / bond <= 0.8
 
 
 def test_transparent_background_by_default() -> None:

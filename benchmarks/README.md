@@ -11,3 +11,7 @@ blind test because the methodology requires graders to see only the shuffled
 figure directory, never this repository — anyone with repo access must be
 excluded from the grading pool. Generated figures stay local (gitignored);
 ChemDraw reference panels are mixed in by hand before the review.
+
+The manual half of the test — ChemDraw panel preparation, blinding, grading,
+scoring, and post-review documentation — is an executable procedure in
+[`RUNBOOK.md`](RUNBOOK.md).

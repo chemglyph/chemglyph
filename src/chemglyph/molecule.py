@@ -60,7 +60,9 @@ def render_molecule(
     _prepare_for_drawing(mol)
     spec = get_style(style)
     output_fmt = _normalize_fmt(fmt)
-    options = _build_options(spec, transparent=transparent, show_atom_indices=show_atom_indices)
+    options = _build_options(
+        spec, mol=mol, transparent=transparent, show_atom_indices=show_atom_indices
+    )
     canvas = size if size is not None else _estimate_canvas(mol)
 
     if output_fmt == "svg":
@@ -142,12 +144,13 @@ def _normalize_fmt(fmt: str) -> str:
 def _build_options(
     spec: StyleSpec,
     *,
+    mol: Chem.Mol,
     transparent: bool,
     show_atom_indices: bool,
 ) -> rdMolDraw2D.MolDrawOptions:
     options = rdMolDraw2D.MolDrawOptions()
     if spec.draw_options.get("acs1996_mode"):
-        _apply_acs1996_mode(options)
+        _apply_acs1996_mode(options, mol)
     if spec.draw_options.get("use_bw_atom_palette"):
         _use_bw_atom_palette(options)
     for key, value in spec.draw_options.items():
@@ -198,14 +201,31 @@ def _set_atom_palette(
         options.atomColourPalette[atomic_number] = _colour(*rgb)
 
 
-def _apply_acs1996_mode(options: rdMolDraw2D.MolDrawOptions) -> None:
+def _apply_acs1996_mode(options: rdMolDraw2D.MolDrawOptions, mol: Chem.Mol) -> None:
+    """Enable RDKit's ACS1996 preset with the molecule's real mean bond length.
+
+    ``SetACS1996Mode`` derives its scale from ``14.4 / meanBondLength``, so it
+    must receive the actual mean bond length of *this* molecule (RDKit's
+    ``MeanBondLength`` helper, which requires 2D coordinates). Passing a
+    constant such as ``0.18`` inflates every bond ~8x while the preset still
+    pins the label font at 10px, which is what made ACS labels look tiny.
+
+    The preset also pins ``fixedBondLength``/``fixedFontSize`` (absolute pixel
+    sizes that ignore the canvas); the ``acs`` StyleSpec re-enables adaptive
+    scaling by resetting both to -1, letting ``minFontSize``/``maxFontSize``
+    govern the label size like the other styles.
+    """
     acs1996 = getattr(rdMolDraw2D, "SetACS1996Mode", None)
     if acs1996 is None:
         return
-    try:
-        acs1996(options, 0.18)  # RDKit 2026+ takes a mean bond length
-    except TypeError:
-        acs1996(options)  # legacy single-argument signature
+    mean_bond_length = getattr(rdMolDraw2D, "MeanBondLength", None)
+    if mean_bond_length is not None:
+        try:
+            acs1996(options, mean_bond_length(mol))  # RDKit >= 2022.09
+            return
+        except TypeError:
+            pass  # fall through to the legacy single-argument signature
+    acs1996(options)
 
 
 def _estimate_canvas(mol: Chem.Mol) -> tuple[int, int]:
