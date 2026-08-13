@@ -67,3 +67,8 @@ ENV/
 
 # Local-only maintainer data (never committed)
 scripts/pii_patterns.txt
+
+# Blind-test figure output: generated figures stay local, but the answer key
+# is tracked as part of the methodology audit trail.
+benchmarks/blind_test_output/*
+!benchmarks/blind_test_output/answer_key.json

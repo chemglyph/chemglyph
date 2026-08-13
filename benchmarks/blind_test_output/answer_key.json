@@ -1,0 +1,374 @@
+{
+  "generated_at": "2026-08-13T09:30:37.322944+00:00",
+  "seed": 20260813,
+  "styles": {
+    "chemglyph-acs": "acs",
+    "chemglyph-modern": "modern"
+  },
+  "known_limitations_excluded_from_denominator": [
+    "ferrocene",
+    "porphyrin-free-base"
+  ],
+  "figures": {
+    "017_chemglyph-acs": {
+      "number": 17,
+      "molecule": "benzoic-acid",
+      "smiles": "OC(=O)c1ccccc1",
+      "style": "acs",
+      "svg": "017_chemglyph-acs.svg",
+      "png": "017_chemglyph-acs.png",
+      "png_status": "ok"
+    },
+    "038_chemglyph-modern": {
+      "number": 38,
+      "molecule": "benzoic-acid",
+      "smiles": "OC(=O)c1ccccc1",
+      "style": "modern",
+      "svg": "038_chemglyph-modern.svg",
+      "png": "038_chemglyph-modern.png",
+      "png_status": "ok"
+    },
+    "001_chemglyph-acs": {
+      "number": 1,
+      "molecule": "caffeine",
+      "smiles": "Cn1cnc2c1c(=O)n(C)c(=O)n2C",
+      "style": "acs",
+      "svg": "001_chemglyph-acs.svg",
+      "png": "001_chemglyph-acs.png",
+      "png_status": "ok"
+    },
+    "015_chemglyph-modern": {
+      "number": 15,
+      "molecule": "caffeine",
+      "smiles": "Cn1cnc2c1c(=O)n(C)c(=O)n2C",
+      "style": "modern",
+      "svg": "015_chemglyph-modern.svg",
+      "png": "015_chemglyph-modern.png",
+      "png_status": "ok"
+    },
+    "032_chemglyph-acs": {
+      "number": 32,
+      "molecule": "s-ibuprofen",
+      "smiles": "CC(C)Cc1ccc(cc1)[C@@H](C)C(=O)O",
+      "style": "acs",
+      "svg": "032_chemglyph-acs.svg",
+      "png": "032_chemglyph-acs.png",
+      "png_status": "ok"
+    },
+    "025_chemglyph-modern": {
+      "number": 25,
+      "molecule": "s-ibuprofen",
+      "smiles": "CC(C)Cc1ccc(cc1)[C@@H](C)C(=O)O",
+      "style": "modern",
+      "svg": "025_chemglyph-modern.svg",
+      "png": "025_chemglyph-modern.png",
+      "png_status": "ok"
+    },
+    "023_chemglyph-acs": {
+      "number": 23,
+      "molecule": "aspirin",
+      "smiles": "CC(=O)Oc1ccccc1C(=O)O",
+      "style": "acs",
+      "svg": "023_chemglyph-acs.svg",
+      "png": "023_chemglyph-acs.png",
+      "png_status": "ok"
+    },
+    "030_chemglyph-modern": {
+      "number": 30,
+      "molecule": "aspirin",
+      "smiles": "CC(=O)Oc1ccccc1C(=O)O",
+      "style": "modern",
+      "svg": "030_chemglyph-modern.svg",
+      "png": "030_chemglyph-modern.png",
+      "png_status": "ok"
+    },
+    "014_chemglyph-acs": {
+      "number": 14,
+      "molecule": "vanillin",
+      "smiles": "COc1cc(C=O)ccc1O",
+      "style": "acs",
+      "svg": "014_chemglyph-acs.svg",
+      "png": "014_chemglyph-acs.png",
+      "png_status": "ok"
+    },
+    "005_chemglyph-modern": {
+      "number": 5,
+      "molecule": "vanillin",
+      "smiles": "COc1cc(C=O)ccc1O",
+      "style": "modern",
+      "svg": "005_chemglyph-modern.svg",
+      "png": "005_chemglyph-modern.png",
+      "png_status": "ok"
+    },
+    "024_chemglyph-acs": {
+      "number": 24,
+      "molecule": "linalool",
+      "smiles": "CC(C)=CCCC(C)(O)C=C",
+      "style": "acs",
+      "svg": "024_chemglyph-acs.svg",
+      "png": "024_chemglyph-acs.png",
+      "png_status": "ok"
+    },
+    "022_chemglyph-modern": {
+      "number": 22,
+      "molecule": "linalool",
+      "smiles": "CC(C)=CCCC(C)(O)C=C",
+      "style": "modern",
+      "svg": "022_chemglyph-modern.svg",
+      "png": "022_chemglyph-modern.png",
+      "png_status": "ok"
+    },
+    "003_chemglyph-acs": {
+      "number": 3,
+      "molecule": "beta-damascone",
+      "smiles": "CC(=O)/C=C/C1=C(C)CCCC1(C)C",
+      "style": "acs",
+      "svg": "003_chemglyph-acs.svg",
+      "png": "003_chemglyph-acs.png",
+      "png_status": "ok"
+    },
+    "016_chemglyph-modern": {
+      "number": 16,
+      "molecule": "beta-damascone",
+      "smiles": "CC(=O)/C=C/C1=C(C)CCCC1(C)C",
+      "style": "modern",
+      "svg": "016_chemglyph-modern.svg",
+      "png": "016_chemglyph-modern.png",
+      "png_status": "ok"
+    },
+    "011_chemglyph-acs": {
+      "number": 11,
+      "molecule": "cholesterol",
+      "smiles": "CC(C)CCC[C@@H](C)[C@H]1CC[C@@H]2[C@@]1(C)CC[C@H]1[C@H]2CC=C2C[C@@H](O)CC[C@]12C",
+      "style": "acs",
+      "svg": "011_chemglyph-acs.svg",
+      "png": "011_chemglyph-acs.png",
+      "png_status": "ok"
+    },
+    "020_chemglyph-modern": {
+      "number": 20,
+      "molecule": "cholesterol",
+      "smiles": "CC(C)CCC[C@@H](C)[C@H]1CC[C@@H]2[C@@]1(C)CC[C@H]1[C@H]2CC=C2C[C@@H](O)CC[C@]12C",
+      "style": "modern",
+      "svg": "020_chemglyph-modern.svg",
+      "png": "020_chemglyph-modern.png",
+      "png_status": "ok"
+    },
+    "027_chemglyph-acs": {
+      "number": 27,
+      "molecule": "penicillin-g",
+      "smiles": "CC1(C)S[C@@H]2[C@H](NC(=O)Cc3ccccc3)C(=O)N2[C@H]1C(=O)O",
+      "style": "acs",
+      "svg": "027_chemglyph-acs.svg",
+      "png": "027_chemglyph-acs.png",
+      "png_status": "ok"
+    },
+    "019_chemglyph-modern": {
+      "number": 19,
+      "molecule": "penicillin-g",
+      "smiles": "CC1(C)S[C@@H]2[C@H](NC(=O)Cc3ccccc3)C(=O)N2[C@H]1C(=O)O",
+      "style": "modern",
+      "svg": "019_chemglyph-modern.svg",
+      "png": "019_chemglyph-modern.png",
+      "png_status": "ok"
+    },
+    "002_chemglyph-acs": {
+      "number": 2,
+      "molecule": "18-crown-6",
+      "smiles": "C1COCCOCCOCCOCCOCCO1",
+      "style": "acs",
+      "svg": "002_chemglyph-acs.svg",
+      "png": "002_chemglyph-acs.png",
+      "png_status": "ok"
+    },
+    "008_chemglyph-modern": {
+      "number": 8,
+      "molecule": "18-crown-6",
+      "smiles": "C1COCCOCCOCCOCCOCCO1",
+      "style": "modern",
+      "svg": "008_chemglyph-modern.svg",
+      "png": "008_chemglyph-modern.png",
+      "png_status": "ok"
+    },
+    "034_chemglyph-acs": {
+      "number": 34,
+      "molecule": "porphyrin-free-base",
+      "smiles": "c1cc2cc3ccc(cc4ccc(cc5ccc(cc1n2)[nH]5)n4)[nH]3",
+      "style": "acs",
+      "svg": "034_chemglyph-acs.svg",
+      "png": "034_chemglyph-acs.png",
+      "png_status": "ok"
+    },
+    "040_chemglyph-modern": {
+      "number": 40,
+      "molecule": "porphyrin-free-base",
+      "smiles": "c1cc2cc3ccc(cc4ccc(cc5ccc(cc1n2)[nH]5)n4)[nH]3",
+      "style": "modern",
+      "svg": "040_chemglyph-modern.svg",
+      "png": "040_chemglyph-modern.png",
+      "png_status": "ok"
+    },
+    "026_chemglyph-acs": {
+      "number": 26,
+      "molecule": "sulfate",
+      "smiles": "[O-]S(=O)(=O)[O-]",
+      "style": "acs",
+      "svg": "026_chemglyph-acs.svg",
+      "png": "026_chemglyph-acs.png",
+      "png_status": "ok"
+    },
+    "033_chemglyph-modern": {
+      "number": 33,
+      "molecule": "sulfate",
+      "smiles": "[O-]S(=O)(=O)[O-]",
+      "style": "modern",
+      "svg": "033_chemglyph-modern.svg",
+      "png": "033_chemglyph-modern.png",
+      "png_status": "ok"
+    },
+    "031_chemglyph-acs": {
+      "number": 31,
+      "molecule": "betaine",
+      "smiles": "C[N+](C)(C)CC([O-])=O",
+      "style": "acs",
+      "svg": "031_chemglyph-acs.svg",
+      "png": "031_chemglyph-acs.png",
+      "png_status": "ok"
+    },
+    "036_chemglyph-modern": {
+      "number": 36,
+      "molecule": "betaine",
+      "smiles": "C[N+](C)(C)CC([O-])=O",
+      "style": "modern",
+      "svg": "036_chemglyph-modern.svg",
+      "png": "036_chemglyph-modern.png",
+      "png_status": "ok"
+    },
+    "010_chemglyph-acs": {
+      "number": 10,
+      "molecule": "ferrocene",
+      "smiles": "[cH-]1cccc1.[cH-]1cccc1.[Fe+2]",
+      "style": "acs",
+      "svg": "010_chemglyph-acs.svg",
+      "png": "010_chemglyph-acs.png",
+      "png_status": "ok"
+    },
+    "037_chemglyph-modern": {
+      "number": 37,
+      "molecule": "ferrocene",
+      "smiles": "[cH-]1cccc1.[cH-]1cccc1.[Fe+2]",
+      "style": "modern",
+      "svg": "037_chemglyph-modern.svg",
+      "png": "037_chemglyph-modern.png",
+      "png_status": "ok"
+    },
+    "021_chemglyph-acs": {
+      "number": 21,
+      "molecule": "glucose-pyranose",
+      "smiles": "OC[C@H]1OC(O)[C@H](O)[C@@H](O)[C@@H]1O",
+      "style": "acs",
+      "svg": "021_chemglyph-acs.svg",
+      "png": "021_chemglyph-acs.png",
+      "png_status": "ok"
+    },
+    "006_chemglyph-modern": {
+      "number": 6,
+      "molecule": "glucose-pyranose",
+      "smiles": "OC[C@H]1OC(O)[C@H](O)[C@@H](O)[C@@H]1O",
+      "style": "modern",
+      "svg": "006_chemglyph-modern.svg",
+      "png": "006_chemglyph-modern.png",
+      "png_status": "ok"
+    },
+    "039_chemglyph-acs": {
+      "number": 39,
+      "molecule": "triphenylphosphine",
+      "smiles": "c1ccc(cc1)P(c1ccccc1)c1ccccc1",
+      "style": "acs",
+      "svg": "039_chemglyph-acs.svg",
+      "png": "039_chemglyph-acs.png",
+      "png_status": "ok"
+    },
+    "028_chemglyph-modern": {
+      "number": 28,
+      "molecule": "triphenylphosphine",
+      "smiles": "c1ccc(cc1)P(c1ccccc1)c1ccccc1",
+      "style": "modern",
+      "svg": "028_chemglyph-modern.svg",
+      "png": "028_chemglyph-modern.png",
+      "png_status": "ok"
+    },
+    "007_chemglyph-acs": {
+      "number": 7,
+      "molecule": "tnt",
+      "smiles": "Cc1c(cc(cc1[N+](=O)[O-])[N+](=O)[O-])[N+](=O)[O-]",
+      "style": "acs",
+      "svg": "007_chemglyph-acs.svg",
+      "png": "007_chemglyph-acs.png",
+      "png_status": "ok"
+    },
+    "013_chemglyph-modern": {
+      "number": 13,
+      "molecule": "tnt",
+      "smiles": "Cc1c(cc(cc1[N+](=O)[O-])[N+](=O)[O-])[N+](=O)[O-]",
+      "style": "modern",
+      "svg": "013_chemglyph-modern.svg",
+      "png": "013_chemglyph-modern.png",
+      "png_status": "ok"
+    },
+    "009_chemglyph-acs": {
+      "number": 9,
+      "molecule": "paclitaxel",
+      "smiles": "CC1=C2[C@@]([C@]([C@H]([C@@H]3[C@]4([C@H](OC4)C[C@@H]([C@]3(C(=O)[C@@H]2OC(=O)C)C)O)OC(=O)C)OC(=O)c2ccccc2)(C[C@@H]1OC(=O)[C@H](O)[C@@H](NC(=O)c1ccccc1)c1ccccc1)O)(C)C",
+      "style": "acs",
+      "svg": "009_chemglyph-acs.svg",
+      "png": "009_chemglyph-acs.png",
+      "png_status": "ok"
+    },
+    "004_chemglyph-modern": {
+      "number": 4,
+      "molecule": "paclitaxel",
+      "smiles": "CC1=C2[C@@]([C@]([C@H]([C@@H]3[C@]4([C@H](OC4)C[C@@H]([C@]3(C(=O)[C@@H]2OC(=O)C)C)O)OC(=O)C)OC(=O)c2ccccc2)(C[C@@H]1OC(=O)[C@H](O)[C@@H](NC(=O)c1ccccc1)c1ccccc1)O)(C)C",
+      "style": "modern",
+      "svg": "004_chemglyph-modern.svg",
+      "png": "004_chemglyph-modern.png",
+      "png_status": "ok"
+    },
+    "029_chemglyph-acs": {
+      "number": 29,
+      "molecule": "ciprofloxacin",
+      "smiles": "OC(=O)c1cn(C2CC2)c2cc(N3CCNCC3)c(F)cc2c1=O",
+      "style": "acs",
+      "svg": "029_chemglyph-acs.svg",
+      "png": "029_chemglyph-acs.png",
+      "png_status": "ok"
+    },
+    "035_chemglyph-modern": {
+      "number": 35,
+      "molecule": "ciprofloxacin",
+      "smiles": "OC(=O)c1cn(C2CC2)c2cc(N3CCNCC3)c(F)cc2c1=O",
+      "style": "modern",
+      "svg": "035_chemglyph-modern.svg",
+      "png": "035_chemglyph-modern.png",
+      "png_status": "ok"
+    },
+    "018_chemglyph-acs": {
+      "number": 18,
+      "molecule": "e-azobenzene",
+      "smiles": "c1ccc(cc1)/N=N/c1ccccc1",
+      "style": "acs",
+      "svg": "018_chemglyph-acs.svg",
+      "png": "018_chemglyph-acs.png",
+      "png_status": "ok"
+    },
+    "012_chemglyph-modern": {
+      "number": 12,
+      "molecule": "e-azobenzene",
+      "smiles": "c1ccc(cc1)/N=N/c1ccccc1",
+      "style": "modern",
+      "svg": "012_chemglyph-modern.svg",
+      "png": "012_chemglyph-modern.png",
+      "png_status": "ok"
+    }
+  }
+}
