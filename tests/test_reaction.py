@@ -91,6 +91,62 @@ def test_three_step_wrap_produces_multiple_rows() -> None:
         )
     ]
     assert len(set(translate_y)) >= 2
+    assert _count(svg, "chemglyph-arrow-down") >= 1
+
+
+def test_wrap_row_ends_with_down_arrow_and_redraws_intermediate() -> None:
+    spec = {
+        "steps": [
+            {"reactants": ["O"], "products": ["CC"]},
+            {"reactants": ["CC"], "products": ["CCC"]},
+        ],
+        "layout": {"max_width": 260},
+    }
+    svg = _render(spec)
+    # Row 1: O -> CC + down arrow; row 2: CC (redrawn) -> CCC.
+    assert _count(svg, "chemglyph-arrow-down") == 1
+    assert _count(svg, 'class="chemglyph-fragment"') == 4  # O, CC, CC(redrawn), CCC
+
+
+def test_align_arrow_centers_first_arrow_of_each_row() -> None:
+    spec = {
+        "steps": [
+            {"reactants": ["O"], "products": ["CC"]},
+            {"reactants": ["CC"], "products": ["CCC"]},
+        ],
+        "layout": {"max_width": 260, "align": "arrow"},
+    }
+    svg = _render(spec)
+    forward_x = [
+        float(value)
+        for value in re.findall(
+            r'class="chemglyph-arrow chemglyph-arrow-forward" x1="([^"]+)"', svg
+        )
+    ]
+    assert len(forward_x) == 2
+    assert forward_x[0] == forward_x[1]
+
+
+def test_condition_font_scales_with_style() -> None:
+    spec = {
+        "steps": [
+            {
+                "reactants": ["O"],
+                "products": ["CC"],
+                "conditions": {"above": "heat"},
+            }
+        ],
+        "style": "acs",
+    }
+    acs_svg = _render(spec)
+    spec["style"] = "textbook-cn"
+    textbook_svg = _render(spec)
+    font_re = r'class="chemglyph-condition"[^>]*font-size="([^"]+)"'
+    acs_font = float(re.search(font_re, acs_svg).group(1))
+    textbook_font = float(re.search(font_re, textbook_svg).group(1))
+    assert textbook_font > acs_font
+    assert 12.0 <= acs_font <= 20.0
+    assert 12.0 <= textbook_font <= 20.0
 
 
 def test_continuation_step_does_not_redraw_intermediate() -> None:

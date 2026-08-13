@@ -9,6 +9,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 from html import escape
+from xml.etree import ElementTree as ET
 
 from .errors import ChemGlyphRenderError
 
@@ -19,6 +20,7 @@ _VIEWBOX_RE = re.compile(
     r"""([-+0-9.eE]+)[,\s]+([-+0-9.eE]+)[,\s]+([-+0-9.eE]+)[,\s]+([-+0-9.eE]+)\s*["']"""
 )
 _STROKE_WIDTH_RE = re.compile(r"(stroke-width:)([0-9.]+)(px)")
+_NUMBER_RE = re.compile(r"[-+]?\d*\.?\d+(?:[eE][-+]?\d+)?")
 
 
 @dataclass(frozen=True)
@@ -49,6 +51,86 @@ def require_viewbox(svg: str) -> ViewBox:
     box = extract_viewbox(svg)
     if box is None:
         raise ChemGlyphRenderError("SVG fragment has no viewBox attribute")
+    return box
+
+
+def content_viewbox(svg: str, *, margin: float = 0.0) -> ViewBox:
+    """Smallest axis-aligned bounding box of the drawn geometry.
+
+    Parses the element tree (namespace-agnostic) and collects every geometric
+    anchor: path control points, circles, ellipses, rects, lines, polygons,
+    and text anchors. Transforms are ignored — ChemGlyph only uses translate
+    wrappers, which this caller accounts for itself. Text extents are
+    approximated by their anchor point, so callers should keep a margin.
+
+    Falls back to the document viewBox when no geometry is found; raises
+    :class:`ChemGlyphRenderError` when there is no geometry and no viewBox.
+    """
+    try:
+        root = ET.fromstring(svg)
+    except ET.ParseError as exc:
+        raise ChemGlyphRenderError(f"SVG content is not well-formed XML: {exc}") from exc
+    xs: list[float] = []
+    ys: list[float] = []
+    for element in root.iter():
+        tag = element.tag.rsplit("}", 1)[-1]
+        if tag == "path":
+            numbers = [float(value) for value in _NUMBER_RE.findall(element.attrib.get("d", ""))]
+            xs.extend(numbers[0::2])
+            ys.extend(numbers[1::2])
+        elif tag == "circle":
+            cx = float(element.attrib.get("cx", 0.0))
+            cy = float(element.attrib.get("cy", 0.0))
+            radius = float(element.attrib.get("r", 0.0))
+            xs.extend((cx - radius, cx + radius))
+            ys.extend((cy - radius, cy + radius))
+        elif tag == "ellipse":
+            cx = float(element.attrib.get("cx", 0.0))
+            cy = float(element.attrib.get("cy", 0.0))
+            rx = float(element.attrib.get("rx", 0.0))
+            ry = float(element.attrib.get("ry", 0.0))
+            xs.extend((cx - rx, cx + rx))
+            ys.extend((cy - ry, cy + ry))
+        elif tag == "rect":
+            x = float(element.attrib.get("x", 0.0))
+            y = float(element.attrib.get("y", 0.0))
+            width = float(element.attrib.get("width", 0.0))
+            height = float(element.attrib.get("height", 0.0))
+            xs.extend((x, x + width))
+            ys.extend((y, y + height))
+        elif tag == "line":
+            xs.extend((float(element.attrib.get("x1", 0.0)), float(element.attrib.get("x2", 0.0))))
+            ys.extend((float(element.attrib.get("y1", 0.0)), float(element.attrib.get("y2", 0.0))))
+        elif tag in {"polygon", "polyline"}:
+            numbers = [
+                float(value) for value in _NUMBER_RE.findall(element.attrib.get("points", ""))
+            ]
+            xs.extend(numbers[0::2])
+            ys.extend(numbers[1::2])
+        elif tag == "text":
+            xs.append(float(element.attrib.get("x", 0.0)))
+            ys.append(float(element.attrib.get("y", 0.0)))
+    if not xs or not ys:
+        fallback = extract_viewbox(svg)
+        if fallback is None:
+            raise ChemGlyphRenderError("SVG has no drawn geometry and no viewBox")
+        return ViewBox(fallback.x, fallback.y, fallback.width, fallback.height)
+    box = ViewBox(min(xs), min(ys), max(xs) - min(xs), max(ys) - min(ys))
+    document = extract_viewbox(svg)
+    if document is not None:
+        box = ViewBox(
+            x=max(box.x, document.x),
+            y=max(box.y, document.y),
+            width=min(box.x + box.width, document.x + document.width) - max(box.x, document.x),
+            height=min(box.y + box.height, document.y + document.height) - max(box.y, document.y),
+        )
+    if margin:
+        box = ViewBox(
+            x=box.x - margin,
+            y=box.y - margin,
+            width=box.width + 2.0 * margin,
+            height=box.height + 2.0 * margin,
+        )
     return box
 
 

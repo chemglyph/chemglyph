@@ -231,8 +231,11 @@ def _apply_acs1996_mode(options: rdMolDraw2D.MolDrawOptions, mol: Chem.Mol) -> N
         return
     mean_bond_length = getattr(rdMolDraw2D, "MeanBondLength", None)
     if mean_bond_length is not None:
+        value = float(mean_bond_length(mol))
+        if value <= 0.0:
+            value = 1.4  # bondless molecule (e.g. a single atom): typical bond length
         try:
-            acs1996(options, mean_bond_length(mol))  # RDKit >= 2022.09
+            acs1996(options, value)  # RDKit >= 2022.09
             return
         except TypeError:
             pass  # fall through to the legacy single-argument signature

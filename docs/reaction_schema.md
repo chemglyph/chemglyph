@@ -35,11 +35,12 @@
 - `style` (optional, default `modern`): one of `acs`, `modern`, `textbook-cn`.
 - `layout` (optional):
   - `max_width` (default `1200`): horizontal budget in SVG user units. When a
-    step would overflow it, the row wraps; the current row ends without an
-    arrow and the next row opens with the step's arrow, redrawing the
-    intermediates once (MVP behavior).
-  - `align` (accepted, reserved): vertical centering strategy. MVP always
-    centers fragments on the row midline.
+    step would overflow it, the row wraps: the current row ends with a
+    down-pointing arrow and the next row redraws the intermediates once,
+    followed by the step's normal arrow.
+  - `align` (`"arrow"` or omitted): with `"arrow"`, every row is shifted
+    right so each row's first arrow shares one vertical axis. Default is
+    left-aligned rows. Fragments are always centered on the row midline.
 
 ## Continuation rule
 
@@ -54,4 +55,6 @@ One SVG document with a transparent background, `viewBox` tightly bounding the
 content plus a 16px margin. Layout elements carry machine-readable classes:
 `chemglyph-fragment`, `chemglyph-plus`, `chemglyph-arrow`,
 `chemglyph-arrow-forward|equilibrium|retro`, `chemglyph-arrowhead`,
-`chemglyph-condition`.
+`chemglyph-arrow-down`, `chemglyph-condition`. Condition and yield labels use
+the active style's label scale (half its `maxFontSize`, clamped to 12-20
+units).
