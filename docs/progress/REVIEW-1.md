@@ -330,3 +330,53 @@ classic CPK scheme for `modern`. Applied everywhere the palette lives:
 The earlier P2-10 entry above still lists the old hex values because it
 records what the assertions were at that point in time; the authoritative
 palette is this entry and `src/chemglyph/styles.py`.
+
+### Reference panels: feasibility and first sheet (2026-08-14)
+
+Goal: a scriptable reference renderer so style tuning has an anchor even
+though hand-made ChemDraw panels are not available.
+
+Feasibility sweep:
+
+| Tool | License | Batch/scriptable | Verdict |
+|---|---|---|---|
+| Ketcher | Apache-2.0 | No: web editor, no CLI; headless use still needs Chromium | rejected for batch use |
+| Indigo | Apache-2.0 | Yes: Python `IndigoRenderer`, SVG/PNG to buffer or file | **adopted** |
+| OpenBabel | GPL-2.0 | Yes (`obabel -osvg`) but depiction quality is dated | fallback only |
+| CDK | LGPL | Yes (Java `DepictionGenerator`) | fallback only |
+| MarvinJS | commercial | Needs a ChemAxon license server, no free headless path | rejected |
+
+Indigo is the engine behind Ketcher, so its stock output is the closest
+scriptable stand-in for a hand-made Ketcher/ChemDraw panel. `epam.indigo`
+1.45.0 (PyPI, macOS arm64 wheel) renders all 20 blind-test molecules,
+including ferrocene and the free-base porphyrin. Render settings: white
+background, `terminal-hetero` labels (explicit CH3, ChemDraw-like),
+bond length 30 px, line width 1.0 px; text scales with bond length.
+
+`benchmarks/reference_panels.py` (tracked) builds the anchor sheets
+`reference_sheet_page{1,2}.png` under `benchmarks/blind_review/`
+(gitignored): one row per molecule, columns reference | chemglyph acs |
+chemglyph modern, with each engine normalized to the same ~30 px mean bond
+length. The sheets are for the maintainer's eyeball comparison only; they
+never enter the blind deck. `epam.indigo>=1.45` was added to the `dev`
+extra.
+
+### Round-1 wording audit and modern positioning (2026-08-14)
+
+The round-1 grader instruction was: "每组选一张你更愿意放进论文的图"
+(pick the figure you would rather put in a paper), scored against stock
+RDKit, like-vs-like per style family. `modern` was designed in the
+specification as the colored, screen/chat style, while `acs` is the
+journal/paper style. The paper-framed question therefore measures `acs`
+mostly in its intended context and `modern` outside it; the 37.8% vs 8.9%
+gap is partly this mismatch, but the remaining deficit is real layout
+quality (crowding, heavy strokes, tight padding). See the analysis in the
+conversation; the parameter candidates ship only after the maintainer
+confirms the positioning wording.
+
+### PR #12063 title cleanup (2026-08-14)
+
+The PR title was `Add ChemGlyph 🤖🤖🤖`. Since the PR author is the
+maintainer's own account, the title was edited directly to plain
+`Add ChemGlyph` and a one-line comment was posted on the PR recording the
+change (comment 5291267758). PR remains open and ready for review.

@@ -38,6 +38,7 @@ opsin = ["py2opsin>=0.2"]
 dev = [
   "pytest>=8",
   "ruff>=0.8",
+  "epam.indigo>=1.45", # reference panels for the blind test (benchmarks/reference_panels.py)
 ]
 
 [project.scripts]

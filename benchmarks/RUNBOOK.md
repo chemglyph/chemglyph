@@ -82,6 +82,29 @@ Rules:
 - If a ChemDraw panel cannot be produced for a molecule (porphyrin and
   ferrocene may behave oddly), still include the pair and record a note.
 
+### Automated Indigo reference panels (no ChemDraw/Ketcher UI)
+
+When hand-made ChemDraw panels are unavailable, `benchmarks/reference_panels.py`
+produces scripted reference panels with Indigo, the Apache-2.0 engine behind
+Ketcher. Install it with `pip install epam.indigo` (already in the `dev`
+extra) and run:
+
+```bash
+python benchmarks/reference_panels.py
+```
+
+The script writes `benchmarks/blind_review/reference_sheet_page{1,2}.png`
+(gitignored): one row per molecule, columns reference | chemglyph acs |
+chemglyph modern, with every engine normalized to the same ~30 px mean bond
+length. Indigo settings mirror Ketcher's look: white background,
+`terminal-hetero` labels (explicit CH3), bond length 30 px, line width
+1.0 px.
+
+Use the sheets as the maintainer's tuning anchor only. They are not a blind
+deck and graders must never see them; the official blind run still uses
+hand-made ChemDraw/Ketcher panels mixed into the shuffled figure set per the
+rules above.
+
 ### Ketcher export checklist
 
 When Ketcher replaces ChemDraw, follow the same rules with these steps:
