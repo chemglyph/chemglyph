@@ -34,7 +34,7 @@ def score_grader(answers: dict[str, str], pair_key: dict) -> dict:
     for pair_id, info in pair_key.items():
         if not isinstance(info, dict):
             continue  # top-level fields such as seed/run_id
-        if not info.get("scored"):
+        if not info.get("scored", True):
             continue
         scored += 1
         answer = answers.get(pair_id)

@@ -559,3 +559,12 @@ key and the repository stay away from graders.
 
 README wording rule after results: report the opponent as "open-source
 reference (Indigo/Ketcher)"; never claim or imply a ChemDraw comparison.
+
+### Maintainer self-ballot (dry run, excluded from the aggregate)
+
+The maintainer ran the confirmation deck themselves and scored 10/12
+ChemGlyph (83.3%): acs 6/6, modern 4/6 with `neither` on e-azobenzene and
+benzoic acid. Per RUNBOOK hygiene rule 9 (a grader with repository access
+invalidates their sheet), this ballot is recorded as a pipeline dry run only
+and is excluded from the official three-grader aggregate. The two `neither`
+pairs are modern fix-list candidates to watch in the real run.
