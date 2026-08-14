@@ -1,7 +1,8 @@
 # Publishing ChemGlyph to the official MCP registry
 
-Status: prepared, not yet submitted. The official registry is in preview;
-its flow may change.
+Status: published. `io.github.random-orbit/chemglyph` version `0.1.1` is live
+in the official registry (verified via the public v0 API on 2026-08-14).
+The registry is in preview; its flow may change.
 
 ## What already exists
 
@@ -54,3 +55,6 @@ its flow may change.
   schema URL in it and re-validate.
 - Registry entries host metadata only; the actual install stays
   `pip install chemglyph`.
+- Authentication was completed with the GitHub account already logged into
+  the `gh` CLI (`mcp-publisher login github -token ...`). Run
+  `mcp-publisher logout` to clear the saved session.

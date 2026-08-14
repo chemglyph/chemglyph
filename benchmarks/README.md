@@ -15,3 +15,8 @@ ChemDraw reference panels are mixed in by hand before the review.
 The manual half of the test — ChemDraw panel preparation, blinding, grading,
 scoring, and post-review documentation — is an executable procedure in
 [`RUNBOOK.md`](RUNBOOK.md).
+
+Until hand-made reference panels exist, `generate_review_deck.py` builds a
+shuffled A/B deck against stock RDKit output (`benchmarks/blind_review/`,
+gitignored) plus `pair_key.json` and grader instructions, so a review round
+can run immediately with human graders.
