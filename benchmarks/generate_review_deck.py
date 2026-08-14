@@ -16,6 +16,7 @@ Usage::
 from __future__ import annotations
 
 import argparse
+import base64
 import io
 import json
 import random
@@ -97,6 +98,22 @@ def _page(pair_id: int, image_a: Image.Image, image_b: Image.Image, *, scored: b
     return page
 
 
+def _data_url(image: Image.Image) -> str:
+    buffer = io.BytesIO()
+    image.save(buffer, format="PNG")
+    return "data:image/png;base64," + base64.b64encode(buffer.getvalue()).decode("ascii")
+
+
+def _build_html(pairs: list[dict]) -> str:
+    """Single-file Chinese voting page; embeds only images and pair ids.
+
+    Deliberately contains no molecule names, no engine names, and no key
+    material, so graders cannot break the blinding from the page alone.
+    """
+    template = (_REPO_ROOT / "benchmarks" / "review_template.html").read_text(encoding="utf-8")
+    return template.replace("__DATA_JSON__", json.dumps(pairs, ensure_ascii=False))
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Build the blind review deck")
     parser.add_argument("--seed", type=int, default=None)
@@ -108,6 +125,7 @@ def main() -> None:
 
     pairs: list[dict] = []
     pair_key: dict[str, dict] = {}
+    html_pairs: list[dict] = []
     for index, (label, smiles, _note) in enumerate(BLIND_TEST_MOLECULES):
         for style in ("acs", "modern"):
             pair_number = index * 2 + (0 if style == "acs" else 1) + 1
@@ -128,36 +146,43 @@ def main() -> None:
                 "scored": scored,
             }
             pairs.append(key)
+            html_pairs.append(
+                {
+                    "id": key,
+                    "scored": scored,
+                    "a": _data_url(image_a),
+                    "b": _data_url(image_b),
+                }
+            )
     (out_dir / "pair_key.json").write_text(json.dumps(pair_key, indent=2) + "\n")
+    (out_dir / "review.html").write_text(_build_html(html_pairs))
 
-    instructions = """# Blind figure review: instructions
+    instructions = """# 化学结构图评审说明
 
-Thanks for helping. You will look at 40 pairs of chemical structure figures.
-Each page shows two candidates, A and B, for the same molecule. For each
-pair, pick the one you would rather see in a paper. If you have no real
-preference, answer "tie".
+感谢参与。你将看到 40 组化学结构图,每组两张(A 和 B),画的是同一个分子。
+每组选一张你更愿意放进论文的图;没有明显偏好就选平局。
 
-Rules:
+规则:
 
-- Go with your first impression. A minute per pair is plenty.
-- Judge the figure itself: layout, legibility, and general polish.
-- A few pages are marked "not scored". You can skip them or answer anyway;
-  they do not count toward the result.
-- Work alone and do not compare answers with other reviewers until everyone
-  has finished.
+- 凭第一印象,每组一分钟以内。
+- 只看布局、清晰度和整体观感。
+- 标着"不计分"的组可以不答,答了也不计分。
+- 独立完成,提交前不要和其他评审人讨论。
 
-Send your answers as a simple list, one line per pair:
+两种方式任选:
 
-    pair_001 A
-    pair_002 tie
-    ...
+1. 打开 review.html,直接在页面里点选,结束后复制答案或下载 answers.json;
+2. 打开 deck/ 里的图片,按 pair_001 A、pair_002 tie 这样的格式把答案列出来。
+
+把答案发给组织者即可。
 """
     (out_dir / "instructions.md").write_text(instructions)
     with zipfile.ZipFile(out_dir / "deck.zip", "w") as archive:
+        archive.write(out_dir / "review.html", arcname="review.html")
+        archive.write(out_dir / "instructions.md", arcname="instructions.md")
         for page in sorted(deck_dir.glob("*.png")):
             archive.write(page, arcname=page.name)
-        archive.write(out_dir / "instructions.md", arcname="instructions.md")
-    print(f"Wrote {len(pairs)} pages, pair_key.json, and deck.zip under {out_dir}")
+    print(f"Wrote {len(pairs)} pages, review.html, pair_key.json, and deck.zip under {out_dir}")
 
 
 if __name__ == "__main__":
