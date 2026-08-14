@@ -56,14 +56,14 @@ _ACS_OPTIONS = {
     "padding": 0.02,
 }
 
-# modern: default CPK palette with tuned heteroatom colors (O red, N blue,
-# S dark yellow, Cl green); slightly heavier bonds for screen/chat display.
+# modern: classic CPK heteroatom colors (O red, N blue, S yellow, Cl green);
+# slightly heavier bonds for screen/chat display.
 _MODERN_OPTIONS = {
     "atom_colours": {
-        8: "#D62728",
-        7: "#1F77B4",
-        16: "#C78F00",
-        17: "#2CA02C",
+        8: "#FF0D0D",
+        7: "#3050F8",
+        16: "#E8C300",
+        17: "#1FB01F",
     },
     "bondLineWidth": 2.4,
     "multipleBondOffset": 0.18,

@@ -97,16 +97,16 @@ def test_golden_snapshots_match_structure(style: str, label: str) -> None:
 def test_modern_colors_heteroatoms() -> None:
     benzoic = _svg(GOLDEN_MOLECULES["benzoic-acid"], "modern")
     caffeine = _svg(GOLDEN_MOLECULES["caffeine"], "modern")
-    assert "#D62728" in benzoic  # O red
-    assert "#D62728" in caffeine  # O red
-    assert "#1F77B4" in caffeine  # N blue
+    assert "#FF0D0D" in benzoic  # O red (CPK)
+    assert "#FF0D0D" in caffeine  # O red (CPK)
+    assert "#3050F8" in caffeine  # N blue (CPK)
 
 
 @pytest.mark.parametrize("style", ["acs", "textbook-cn"])
 def test_monochrome_styles_have_no_heteroatom_colors(style: str) -> None:
     benzoic = _svg(GOLDEN_MOLECULES["benzoic-acid"], style)
-    assert "#D62728" not in benzoic
-    assert "#1F77B4" not in benzoic
+    assert "#FF0D0D" not in benzoic
+    assert "#3050F8" not in benzoic
 
 
 @pytest.mark.parametrize("style", sorted(STYLES))

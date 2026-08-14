@@ -308,3 +308,25 @@ treatment from its own maintainer.
   at `/Users/abc/backups/support_ticket_draft.md` is still on disk and can
   now be deleted by the maintainer.
 - NetBerth's separate exposure remains out of this repository's scope.
+
+### Palette finalization (2026-08-14)
+
+The maintainer reviewed the five-candidate palette sheet and chose the
+classic CPK scheme for `modern`. Applied everywhere the palette lives:
+
+- `src/chemglyph/styles.py`: `modern` atom colours are now O `#FF0D0D`,
+  N `#3050F8`, S `#E8C300`, Cl `#1FB01F` (classic CPK). `acs` and
+  `textbook-cn` stay monochrome.
+- `tests/test_styles.py`: color presence/absence assertions updated to the
+  CPK hex values.
+- Regenerated the committed assets with the new palette:
+  `examples/aspirin_synthesis.svg`, `docs/images/gallery_3x3.png`, and
+  `docs/images/comparison_vs_rdkit.png`.
+- `benchmarks/RUNBOOK.md` and `docs/progress/M1.md` colour references
+  updated to match.
+- Verified: ruff clean, format clean, pytest 87 passed / 2 skipped; the
+  regenerated SVGs/PNGs contain the CPK colours and no stale hex values.
+
+The earlier P2-10 entry above still lists the old hex values because it
+records what the assertions were at that point in time; the authoritative
+palette is this entry and `src/chemglyph/styles.py`.
