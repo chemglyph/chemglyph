@@ -20,9 +20,11 @@ What's in it:
 The thing I keep going back and forth on: is a rendering/validation/interface
 layer on top of RDKit a real category, or is this mostly solving my own
 GC-MS workbench problem? There's a blind test in the repo: 20 fixed
-molecules, shuffled figures, practitioners pick what they'd publish, pass at
-40% or better. ChemDraw panels are still being added by hand, so the test is
-pending, not passed.
+molecules, shuffled figures, practitioners pick what they'd publish against
+an open-source reference renderer (Indigo, the engine behind Ketcher). The
+molecule list, deck generator, runbook, and scorer are all in the repo, so
+anyone can run the protocol and contribute results. The test is pending, not
+passed, and no ChemDraw comparison has been made.
 
 Repo: https://github.com/chemglyph/chemglyph (MIT, Python 3.11+, RDKit
 2024.9+). Feedback on the style defaults and the reaction JSON schema is

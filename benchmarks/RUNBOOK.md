@@ -175,9 +175,10 @@ notes on them are recorded as known limitations instead of being scored.
 2. Update the README status line: replace "Blind test vs ChemDraw: pending"
    with the date, grader count, selection rate, and the porphyrin/ferrocene
    limitation note.
-3. Add the ChemDraw panels to the README comparison sheet in
-   `scripts/generate_docs_images.py` (third column), regenerate
-   `docs/images/comparison_vs_rdkit.png`, and commit it.
+3. Regenerate the README comparison sheet via
+   `scripts/generate_docs_images.py` (the reference column is the Indigo
+   publication-convention panel until hand-made ChemDraw panels replace it)
+   and commit `docs/images/comparison_vs_reference.png`.
 4. Tick the blind-test items in `docs/progress/M4.md` and add a dated entry
    there or in `docs/progress/REVIEW-1.md`.
 5. Keep `pair_key.json` and raw grader sheets local; archive or delete them

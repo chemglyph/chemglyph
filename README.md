@@ -28,7 +28,7 @@ plus `canonical_smiles`, `mol_formula`, `mol_weight`, and `warnings`.
 
 Three styles, same molecule (benzoic acid, caffeine, (S)-ibuprofen):
 
-![ChemGlyph style gallery](docs/images/gallery_3x3.png)
+![ChemGlyph style gallery](https://raw.githubusercontent.com/chemglyph/chemglyph/main/docs/images/gallery_3x3.png)
 
 ```python
 chemglyph.render_molecule(smiles, style="acs")  # black/white, ACS journal
@@ -145,17 +145,30 @@ writes shuffled, numbered PNG/SVG figures plus `answer_key.json`:
 python benchmarks/generate_blind_test.py --seed 1234
 ```
 
-Pass criteria: two or three chemical practitioners blind-pick the figures
-they would publish; ChemGlyph passes at 40% or higher. Ferrocene and the
-free-base porphyrin are excluded from the denominator and recorded as known
-limitations. The procedure is documented in
+The deck, methodology, and scoring tooling are all open-sourced: the fixed
+molecule list, the A/B deck generator (which pairs ChemGlyph against an
+open-source reference renderer), the runbook, and the scorer live in
+[benchmarks/](benchmarks/). Anyone can run the protocol and contribute
+results. The pass threshold and procedure are documented in
 [benchmarks/RUNBOOK.md](benchmarks/RUNBOOK.md).
 
-![ChemGlyph vs RDKit default](docs/images/comparison_vs_rdkit.png)
+![ChemGlyph vs open-source reference](https://raw.githubusercontent.com/chemglyph/chemglyph/main/docs/images/comparison_vs_reference.png)
 
-Blind test vs ChemDraw: pending. The image above compares ChemGlyph `modern`
-with RDKit's stock output; ChemDraw panels are added by hand during the
-review, and the image is regenerated afterwards.
+Blind test vs ChemDraw: pending. The image above is an author-generated
+comparison of ChemGlyph `modern` against the open-source reference renderer
+(Indigo, the engine behind Ketcher) - it is not an independent review.
+
+## Known limitations
+
+- Blind-test figures for ferrocene (metal complex) and the free-base
+  porphyrin (large conjugated macrocycle) are excluded from the benchmark
+  denominator and recorded separately.
+- RDKit has no clean 2D layout for paclitaxel: its gem-dimethyl substituent
+  placement inside the central 8-membered ring is a documented layout
+  limitation.
+- Full automatic Chinese name-to-structure parsing is not implemented;
+  Chinese names resolve through a small built-in dictionary plus an optional
+  translator hook. English names resolve through OPSIN.
 
 ## Roadmap
 

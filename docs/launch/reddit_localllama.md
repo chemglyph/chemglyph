@@ -11,8 +11,8 @@ Four tools, with docstrings written for the model:
 - `render_reaction`: a JSON schema for synthesis routes with conditions,
   yields, equilibrium and retro arrows, and line wrapping
 - `validate_structure`: errors plus a small set of automatic SMILES fixes
-- `parse_name`: English names via OPSIN, Chinese names via a built-in
-  dictionary, all offline
+- `parse_name`: English names via OPSIN, Chinese names via a small built-in
+  dictionary (full automatic Chinese parsing is not implemented), all offline
 
 Details that might matter to agent builders: conditions are pre-formatted
 Unicode text (the caller passes H₂SO₄, the tool never parses formulas), all

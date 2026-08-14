@@ -21,10 +21,10 @@ _REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(_REPO_ROOT / "src") not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT / "src"))
 
+import resvg_py  # noqa: E402
+from indigo import Indigo  # noqa: E402
+from indigo.renderer import IndigoRenderer  # noqa: E402
 from PIL import Image, ImageDraw, ImageFont  # noqa: E402
-from rdkit import Chem  # noqa: E402
-from rdkit.Chem import rdDepictor  # noqa: E402
-from rdkit.Chem.Draw import rdMolDraw2D  # noqa: E402
 
 import chemglyph  # noqa: E402
 
@@ -85,14 +85,22 @@ def _chemglyph_png(smiles: str, style: str) -> Image.Image:
     return _from_png(result.data)
 
 
-def _rdkit_default_png(smiles: str) -> Image.Image:
-    mol = Chem.MolFromSmiles(smiles)
-    rdDepictor.SetPreferCoordGen(True)
-    rdDepictor.Compute2DCoords(mol)
-    drawer = rdMolDraw2D.MolDraw2DCairo(CELL, CELL)
-    rdMolDraw2D.PrepareAndDrawMolecule(drawer, mol)
-    drawer.FinishDrawing()
-    return _from_png(bytes(drawer.GetDrawingText()))
+def _indigo_reference_png(smiles: str) -> Image.Image:
+    """Publication-convention reference panel (Indigo, Ketcher's engine)."""
+    indigo = Indigo()
+    renderer = IndigoRenderer(indigo)
+    indigo.setOption("render-output-format", "svg")
+    indigo.setOption("render-background-color", "255,255,255")
+    indigo.setOption("render-label-mode", "hetero")
+    indigo.setOption("render-stereo-style", "ext")
+    indigo.setOption("render-bond-length", 30)
+    indigo.setOption("render-bond-line-width", 1.0)
+    indigo.setOption("render-font-size", 14)
+    mol = indigo.loadMolecule(smiles)
+    mol.layout()
+    svg = renderer.renderToBuffer(obj=mol).decode("utf-8")
+    data = resvg_py.svg_to_bytes(svg_string=svg, zoom=1.0, background="#ffffff")
+    return _from_png(data)
 
 
 def _sheet(
@@ -151,13 +159,13 @@ def gallery(out_dir: Path) -> None:
 def comparison(out_dir: Path) -> None:
     sheet, draw = _sheet(2, len(COMPARISON))
     _header(draw, 0, "ChemGlyph (modern)")
-    _header(draw, 1, "RDKit default")
+    _header(draw, 1, "Open-source reference (Indigo/Ketcher)")
     for row, (name, smiles) in enumerate(COMPARISON):
         _paste(sheet, _chemglyph_png(smiles, "modern"), 0, row)
-        _paste(sheet, _rdkit_default_png(smiles), 1, row)
+        _paste(sheet, _indigo_reference_png(smiles), 1, row)
         _caption(draw, 0, row, name)
         _caption(draw, 1, row, name)
-    sheet.save(out_dir / "comparison_vs_rdkit.png")
+    sheet.save(out_dir / "comparison_vs_reference.png")
 
 
 def main() -> None:
