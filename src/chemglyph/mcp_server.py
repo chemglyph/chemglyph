@@ -15,6 +15,8 @@ from __future__ import annotations
 import base64
 import os
 from dataclasses import asdict
+from datetime import datetime
+from pathlib import Path
 from typing import Any
 
 from mcp.server.mcpserver import MCPServer
@@ -40,7 +42,9 @@ server = MCPServer(
         "from SMILES, InChI, or a molblock. Example: "
         '{"structure": "CC(=O)Oc1ccccc1C(=O)O", "style": "modern"}. '
         "Set fmt to 'svg' to also receive the SVG source as text for saving to "
-        "a file; the PNG preview is always included."
+        "a file; the PNG preview is always included. Set save to true to also "
+        "write the PNG to the user's Downloads/chemglyph folder and get the "
+        "file path back, which is useful in clients that do not render images."
     ),
     structured_output=False,
 )
@@ -51,6 +55,7 @@ def render_molecule_tool(
     transparent: bool = True,
     show_atom_indices: bool = False,
     highlight_atoms: list[int] | None = None,
+    save: bool = False,
 ) -> list[ImageContent | TextContent]:
     """MCP wrapper for :func:`chemglyph.render_molecule`."""
     try:
@@ -85,6 +90,13 @@ def render_molecule_tool(
             parts.append(TextContent(type="text", text=f"SVG source:\n{svg.data}"))
         except ChemGlyphError:
             pass  # The PNG already rendered; keep the call successful.
+    if save:
+        parts.append(
+            TextContent(
+                type="text",
+                text=f"Saved image to {_save_png(png.data)}",
+            )
+        )
     return parts
 
 
@@ -98,11 +110,15 @@ def render_molecule_tool(
         'Example: {"steps": [{"reactants": ["c1ccccc1O", "CC(=O)OC(C)=O"], '
         '"products": ["CC(=O)Oc1ccccc1C(=O)O"], "conditions": {"above": "H₂SO₄ (cat.)", '
         '"below": "rt, 15 min"}, "yield": "89%", "arrow": "forward"}], "style": "modern"}. '
-        "See docs/reaction_schema.md for the full schema."
+        "See docs/reaction_schema.md for the full schema. Set save to true to "
+        "also write the PNG to the user's Downloads/chemglyph folder and get "
+        "the file path back."
     ),
     structured_output=False,
 )
-def render_reaction_tool(spec: dict[str, Any]) -> list[ImageContent | TextContent]:
+def render_reaction_tool(
+    spec: dict[str, Any], save: bool = False
+) -> list[ImageContent | TextContent]:
     """MCP wrapper for :func:`chemglyph.render_reaction`."""
     try:
         svg = render_reaction(spec)
@@ -110,7 +126,7 @@ def render_reaction_tool(spec: dict[str, Any]) -> list[ImageContent | TextConten
         return [_error(str(exc))]
     png = _rasterize_svg(svg)
     if png is None:
-        return [
+        parts: list[ImageContent | TextContent] = [
             ImageContent(
                 type="image",
                 data=base64.b64encode(svg.encode("utf-8")).decode("ascii"),
@@ -126,17 +142,34 @@ def render_reaction_tool(spec: dict[str, Any]) -> list[ImageContent | TextConten
                 ),
             ),
         ]
-    return [
-        ImageContent(
-            type="image",
-            data=base64.b64encode(png).decode("ascii"),
-            mime_type="image/png",
-        ),
-        TextContent(
-            type="text",
-            text="Rendered reaction scheme PNG (see attached image).",
-        ),
-    ]
+    else:
+        parts = [
+            ImageContent(
+                type="image",
+                data=base64.b64encode(png).decode("ascii"),
+                mime_type="image/png",
+            ),
+            TextContent(
+                type="text",
+                text="Rendered reaction scheme PNG (see attached image).",
+            ),
+        ]
+    if save:
+        if png is not None:
+            parts.append(
+                TextContent(
+                    type="text",
+                    text=f"Saved image to {_save_png(png)}",
+                )
+            )
+        else:
+            parts.append(
+                TextContent(
+                    type="text",
+                    text=("Cannot save: no PNG rasterizer is installed (pip install resvg-py)."),
+                )
+            )
+    return parts
 
 
 @server.tool(
@@ -197,6 +230,17 @@ def _metadata(result: Any) -> TextContent:
             f"warnings: {result.warnings}"
         ),
     )
+
+
+def _save_png(data: bytes) -> str:
+    directory = Path(
+        os.environ.get("CHEMGLYPH_MCP_SAVE_DIR") or (Path.home() / "Downloads" / "chemglyph")
+    )
+    directory.mkdir(parents=True, exist_ok=True)
+    stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+    path = directory / f"chemglyph_{stamp}.png"
+    path.write_bytes(data)
+    return str(path)
 
 
 def _rasterize_svg(svg: str) -> bytes | None:

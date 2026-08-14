@@ -9,6 +9,7 @@ from __future__ import annotations
 import base64
 import os
 import sys
+from pathlib import Path
 from typing import Any
 
 import anyio
@@ -75,6 +76,24 @@ def test_render_molecule_svg_request_adds_svg_text_after_png() -> None:
     assert image.mime_type == "image/png"
     texts = [item.text for item in result.content if item.type == "text"]
     assert any("<svg" in item for item in texts)
+
+
+def test_render_molecule_save_writes_png_and_returns_path(tmp_path) -> None:
+    env = {**os.environ, "CHEMGLYPH_MCP_SAVE_DIR": str(tmp_path)}
+    result = _call_tool(
+        "render_molecule",
+        {"structure": "CCO", "save": True},
+        env=env,
+    )
+    assert not result.is_error
+    text = next(
+        item.text
+        for item in result.content
+        if item.type == "text" and item.text.startswith("Saved image to")
+    )
+    saved_path = text.removeprefix("Saved image to ")
+    assert saved_path.startswith(str(tmp_path))
+    assert Path(saved_path).read_bytes().startswith(b"\x89PNG\r\n\x1a\n")
 
 
 def test_render_reaction_returns_png_image() -> None:
