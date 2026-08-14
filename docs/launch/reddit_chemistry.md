@@ -32,5 +32,11 @@ Two questions:
    kekulization, and nitrogen valence via [N+]. There is deliberately no
    "does this molecule exist" judgment.
 
+One thing that will come up: how does it compare to ChemDraw? I don't have a
+ChemDraw license, so no comparison has been made and I won't claim one. The
+benchmark reference renderer is open-source Indigo (the engine behind
+Ketcher). ChemGlyph is not a ChemDraw editor replacement either - it is for
+programmatic and agent-driven rendering where you already have SMILES.
+
 MIT licensed, offline, no database calls. Harsh feedback on the schema and
 defaults is welcome.

@@ -1,4 +1,4 @@
-# Show HN: ChemGlyph, chemical structures and reactions that look publishable
+# Show HN: ChemGlyph – a rendering layer for chemical structures and reactions
 
 ChemGlyph is a Python library and MCP server that turns SMILES and reaction
 schemes into clean SVG figures. Think KaTeX for chemistry.
@@ -19,7 +19,7 @@ What's in it:
 
 The thing I keep going back and forth on: is a rendering/validation/interface
 layer on top of RDKit a real category, or is this mostly solving my own
-GC-MS workbench problem? There's a blind test in the repo: 20 fixed
+niche problem? There's a blind test in the repo: 20 fixed
 molecules, shuffled figures, practitioners pick what they'd publish against
 an open-source reference renderer (Indigo, the engine behind Ketcher). The
 molecule list, deck generator, runbook, and scorer are all in the repo, so
