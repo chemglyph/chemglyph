@@ -7,6 +7,7 @@ MCP client, so the protocol surface (tool list + call results) is exercised.
 from __future__ import annotations
 
 import base64
+import os
 import sys
 from typing import Any
 
@@ -15,11 +16,12 @@ from mcp import ClientSession
 from mcp.client.stdio import StdioServerParameters, stdio_client
 
 
-def _call_tool(tool: str, arguments: dict[str, Any]) -> Any:
+def _call_tool(tool: str, arguments: dict[str, Any], env: dict[str, str] | None = None) -> Any:
     async def run() -> Any:
         params = StdioServerParameters(
             command=sys.executable,
             args=["-m", "chemglyph.mcp_server"],
+            env=env,
         )
         async with stdio_client(params) as (read_stream, write_stream):
             async with ClientSession(read_stream, write_stream) as session:
@@ -53,19 +55,29 @@ def test_server_exposes_four_tools() -> None:
     }
 
 
-def test_render_molecule_returns_svg_image_and_metadata() -> None:
+def test_render_molecule_returns_png_image_and_metadata() -> None:
     result = _call_tool("render_molecule", {"structure": "CC(=O)Oc1ccccc1C(=O)O"})
     assert not result.is_error
     contents = result.content
     image = next(item for item in contents if item.type == "image")
     text = next(item for item in contents if item.type == "text")
-    assert image.mime_type == "image/svg+xml"
-    svg = base64.b64decode(image.data).decode("utf-8")
-    assert "<svg" in svg
+    assert image.mime_type == "image/png"
+    png = base64.b64decode(image.data)
+    assert png.startswith(b"\x89PNG\r\n\x1a\n")
+    assert "format: png" in text.text
     assert "C9H8O4" in text.text
 
 
-def test_render_reaction_returns_svg_image() -> None:
+def test_render_molecule_svg_request_adds_svg_text_after_png() -> None:
+    result = _call_tool("render_molecule", {"structure": "CCO", "fmt": "svg"})
+    assert not result.is_error
+    image = next(item for item in result.content if item.type == "image")
+    assert image.mime_type == "image/png"
+    texts = [item.text for item in result.content if item.type == "text"]
+    assert any("<svg" in item for item in texts)
+
+
+def test_render_reaction_returns_png_image() -> None:
     result = _call_tool(
         "render_reaction",
         {
@@ -83,8 +95,34 @@ def test_render_reaction_returns_svg_image() -> None:
     )
     assert not result.is_error
     image = next(item for item in result.content if item.type == "image")
+    assert image.mime_type == "image/png"
+    png = base64.b64decode(image.data)
+    assert png.startswith(b"\x89PNG\r\n\x1a\n")
+
+
+def test_render_reaction_falls_back_to_svg_when_rasterizer_disabled() -> None:
+    env = {**os.environ, "CHEMGLYPH_MCP_DISABLE_RASTER": "1"}
+    result = _call_tool(
+        "render_reaction",
+        {
+            "spec": {
+                "steps": [
+                    {
+                        "reactants": ["OC(=O)c1ccccc1O"],
+                        "products": ["CC(=O)Oc1ccccc1C(=O)O"],
+                    }
+                ]
+            }
+        },
+        env=env,
+    )
+    assert not result.is_error
+    image = next(item for item in result.content if item.type == "image")
+    assert image.mime_type == "image/svg+xml"
     svg = base64.b64decode(image.data).decode("utf-8")
     assert "chemglyph-arrow" in svg
+    text = next(item for item in result.content if item.type == "text")
+    assert "SVG source below" in text.text
 
 
 def test_validate_structure_returns_report_text() -> None:

@@ -3,11 +3,17 @@
 Run with the ``chemglyph-mcp`` console script (or ``python -m
 chemglyph.mcp_server``) and register it in an MCP client such as Claude
 Desktop. The server speaks the official MCP protocol through the ``mcp`` SDK.
+
+Images are returned as PNG whenever possible. Chat clients such as LM Studio
+and Claude Desktop display PNG tool results inline but silently drop SVG
+``image`` content, so SVG is only used as a fallback or returned as text when
+explicitly requested.
 """
 
 from __future__ import annotations
 
 import base64
+import os
 from dataclasses import asdict
 from typing import Any
 
@@ -28,58 +34,67 @@ server = MCPServer(
 @server.tool(
     name="render_molecule",
     description=(
-        "Draw a single chemical structure as SVG or PNG. Use this when the user "
-        "asks to render a molecule from SMILES, InChI, or a molblock. Example: "
-        '{"structure": "CC(=O)Oc1ccccc1C(=O)O", "style": "modern", "fmt": "svg"}. '
-        "Returns the image plus canonical SMILES, formula, molecular weight, and warnings."
+        "Draw a single chemical structure as PNG and return it as an image the "
+        "chat client can display, plus canonical SMILES, formula, molecular "
+        "weight, and warnings. Use this when the user asks to render a molecule "
+        "from SMILES, InChI, or a molblock. Example: "
+        '{"structure": "CC(=O)Oc1ccccc1C(=O)O", "style": "modern"}. '
+        "Set fmt to 'svg' to also receive the SVG source as text for saving to "
+        "a file; the PNG preview is always included."
     ),
     structured_output=False,
 )
 def render_molecule_tool(
     structure: str,
     style: str = "modern",
-    fmt: str = "svg",
+    fmt: str = "png",
     transparent: bool = True,
     show_atom_indices: bool = False,
     highlight_atoms: list[int] | None = None,
 ) -> list[ImageContent | TextContent]:
     """MCP wrapper for :func:`chemglyph.render_molecule`."""
     try:
-        result = render_molecule(
+        png = render_molecule(
             structure,
             style=style,
-            fmt=fmt,
+            fmt="png",
             transparent=transparent,
             show_atom_indices=show_atom_indices,
             highlight_atoms=highlight_atoms,
         )
     except ChemGlyphError as exc:
         return [_error(str(exc))]
-    if result.fmt == "png":
-        encoded = base64.b64encode(result.data).decode("ascii")
-        image = ImageContent(type="image", data=encoded, mime_type="image/png")
-    else:
-        encoded = base64.b64encode(result.data.encode("utf-8")).decode("ascii")
-        image = ImageContent(type="image", data=encoded, mime_type="image/svg+xml")
-    metadata = TextContent(
-        type="text",
-        text=(
-            f"canonical_smiles: {result.canonical_smiles}\n"
-            f"formula: {result.mol_formula}\n"
-            f"molecular_weight: {result.mol_weight:.4f}\n"
-            f"format: {result.fmt}\n"
-            f"warnings: {result.warnings}"
+    parts: list[ImageContent | TextContent] = [
+        ImageContent(
+            type="image",
+            data=base64.b64encode(png.data).decode("ascii"),
+            mime_type="image/png",
         ),
-    )
-    return [image, metadata]
+        _metadata(png),
+    ]
+    if fmt.strip().lower() == "svg":
+        try:
+            svg = render_molecule(
+                structure,
+                style=style,
+                fmt="svg",
+                transparent=transparent,
+                show_atom_indices=show_atom_indices,
+                highlight_atoms=highlight_atoms,
+            )
+            parts.append(TextContent(type="text", text=f"SVG source:\n{svg.data}"))
+        except ChemGlyphError:
+            pass  # The PNG already rendered; keep the call successful.
+    return parts
 
 
 @server.tool(
     name="render_reaction",
     description=(
-        "Draw a chemical reaction or synthesis route. Use this when the user "
-        "asks for a reaction scheme. Pass conditions as pre-formatted Unicode "
-        "text (e.g. H₂SO₄); ChemGlyph does not parse formulas out of text. "
+        "Draw a chemical reaction or synthesis route and return it as a PNG "
+        "image the chat client can display. Use this when the user asks for a "
+        "reaction scheme. Pass conditions as pre-formatted Unicode text (e.g. "
+        "H₂SO₄); ChemGlyph does not parse formulas out of text. "
         'Example: {"steps": [{"reactants": ["c1ccccc1O", "CC(=O)OC(C)=O"], '
         '"products": ["CC(=O)Oc1ccccc1C(=O)O"], "conditions": {"above": "H₂SO₄ (cat.)", '
         '"below": "rt, 15 min"}, "yield": "89%", "arrow": "forward"}], "style": "modern"}. '
@@ -93,12 +108,33 @@ def render_reaction_tool(spec: dict[str, Any]) -> list[ImageContent | TextConten
         svg = render_reaction(spec)
     except ChemGlyphError as exc:
         return [_error(str(exc))]
-    encoded = base64.b64encode(svg.encode("utf-8")).decode("ascii")
+    png = _rasterize_svg(svg)
+    if png is None:
+        return [
+            ImageContent(
+                type="image",
+                data=base64.b64encode(svg.encode("utf-8")).decode("ascii"),
+                mime_type="image/svg+xml",
+            ),
+            TextContent(
+                type="text",
+                text=(
+                    "Rendered reaction scheme (SVG). If your chat client does "
+                    "not show SVG images, install a rasterizer "
+                    "(pip install resvg-py) or use the SVG source below:\n"
+                    f"{svg}"
+                ),
+            ),
+        ]
     return [
-        ImageContent(type="image", data=encoded, mime_type="image/svg+xml"),
+        ImageContent(
+            type="image",
+            data=base64.b64encode(png).decode("ascii"),
+            mime_type="image/png",
+        ),
         TextContent(
             type="text",
-            text="Rendered reaction scheme SVG (also attached as an image).",
+            text="Rendered reaction scheme PNG (see attached image).",
         ),
     ]
 
@@ -107,7 +143,7 @@ def render_reaction_tool(spec: dict[str, Any]) -> list[ImageContent | TextConten
     name="validate_structure",
     description=(
         "Validate a structure string and return errors plus automatic fixes. "
-        "Use this when a SMILES may be malformed and you want a repair "
+        "Use this when a SMILES may be malformed and you need a repair "
         "suggestion before rendering. Example: "
         '{"structure": "c1ccc1"} returns the fixed SMILES "C1CCC1".'
     ),
@@ -148,6 +184,46 @@ def parse_name_tool(name: str) -> list[TextContent]:
 
 def _error(message: str) -> TextContent:
     return TextContent(type="text", text=f"ChemGlyph error: {message}")
+
+
+def _metadata(result: Any) -> TextContent:
+    return TextContent(
+        type="text",
+        text=(
+            f"canonical_smiles: {result.canonical_smiles}\n"
+            f"formula: {result.mol_formula}\n"
+            f"molecular_weight: {result.mol_weight:.4f}\n"
+            f"format: {result.fmt}\n"
+            f"warnings: {result.warnings}"
+        ),
+    )
+
+
+def _rasterize_svg(svg: str) -> bytes | None:
+    """Rasterize an SVG to PNG, or return ``None`` when no backend is available.
+
+    ``resvg-py`` gives browser-grade rendering with prebuilt wheels and no
+    system libraries; ``cairosvg`` is a fallback for installs that already
+    have it. Set ``CHEMGLYPH_MCP_DISABLE_RASTER`` to force the SVG fallback
+    (useful for debugging or minimal installs).
+    """
+    if os.environ.get("CHEMGLYPH_MCP_DISABLE_RASTER"):
+        return None
+    try:
+        import resvg_py  # type: ignore[import-not-found]
+    except ImportError:
+        try:
+            import cairosvg  # type: ignore[import-not-found]
+        except ImportError:
+            return None
+        try:
+            return cairosvg.svg2png(bytestring=svg.encode("utf-8"))  # type: ignore[no-any-return]
+        except Exception:
+            return None
+    try:
+        return resvg_py.svg_to_bytes(svg_string=svg)  # type: ignore[no-any-return]
+    except Exception:
+        return None
 
 
 def main() -> None:

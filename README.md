@@ -124,8 +124,8 @@ Claude Desktop registration (macOS:
 
 | Tool | Use it when | Returns |
 |---|---|---|
-| `render_molecule` | the user asks to draw one structure from SMILES/InChI/molblock | SVG or PNG image plus formula, MW, warnings |
-| `render_reaction` | the user asks for a reaction or synthesis route | reaction SVG image |
+| `render_molecule` | the user asks to draw one structure from SMILES/InChI/molblock | PNG image plus formula, MW, warnings (SVG source on request) |
+| `render_reaction` | the user asks for a reaction or synthesis route | PNG image of the reaction scheme |
 | `validate_structure` | a SMILES may be malformed and you need a repair | validation report JSON |
 | `parse_name` | the user gives a name like "aspirin" instead of SMILES | canonical SMILES or an error |
 
