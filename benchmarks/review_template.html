@@ -89,12 +89,14 @@ pre {
   <div id="done" class="card hidden">
     <h1>评审完成</h1>
     <p>你的答案如下。请把这段文字复制发给组织者,或点"下载答案文件"把文件发过去。</p>
+    <p>本次评审编号(run id):<code id="run-id"></code></p>
     <pre id="answer-text"></pre>
     <button class="btn" onclick="copyAnswers()">复制答案</button>
     <button class="btn" onclick="downloadAnswers()">下载答案文件</button>
   </div>
 </div>
 <script>
+const RUN_ID = "__RUN_ID__";
 const DATA = __DATA_JSON__;
 const answers = {};
 const notes = {};
@@ -152,6 +154,7 @@ function answerText() {
 
 function finish() {
   document.getElementById("quiz").classList.add("hidden");
+  document.getElementById("run-id").textContent = RUN_ID;
   document.getElementById("answer-text").textContent = answerText();
   document.getElementById("done").classList.remove("hidden");
   window.scrollTo(0, 0);
@@ -165,7 +168,7 @@ function copyAnswers() {
 
 function downloadAnswers() {
   const blob = new Blob(
-    [JSON.stringify({answers: answers, notes: notes}, null, 2)],
+    [JSON.stringify({run_id: RUN_ID, answers: answers, notes: notes}, null, 2)],
     {type: "application/json"}
   );
   const link = document.createElement("a");

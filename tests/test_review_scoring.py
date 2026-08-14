@@ -11,6 +11,8 @@ import pytest
 _SCRIPT = Path(__file__).resolve().parents[1] / "benchmarks" / "score_review.py"
 
 _PAIR_KEY = {
+    "seed": 20260814,
+    "run_id": "81d8f1c9455e",
     "pair_001": {
         "molecule": "benzoic-acid",
         "style": "acs",
@@ -89,3 +91,23 @@ def test_aggregate_applies_pass_threshold() -> None:
     assert passing["pass"] is True
     failing = score_review.aggregate([_grader(0.39)])
     assert failing["pass"] is False
+
+
+def test_check_run_id_accepts_match_and_rejects_mismatch() -> None:
+    score_review = _load_module()
+    assert score_review.check_run_id("abc123", "abc123") is None
+    assert score_review.check_run_id("abc123", None) is None
+    assert score_review.check_run_id(None, "abc123") is None
+    error = score_review.check_run_id("abc123", "def456")
+    assert error is not None
+    assert "abc123" in error and "def456" in error
+
+
+def test_load_answer_file_keeps_run_id() -> None:
+    score_review = _load_module()
+    path = Path("/tmp/cg-score-test-answers.json")
+    path.write_text('{"run_id": "abc123", "answers": {"pair_001": "A"}}')
+    answers, run_id = score_review.load_answer_file(path)
+    assert run_id == "abc123"
+    assert answers == {"pair_001": "A"}
+    path.unlink()

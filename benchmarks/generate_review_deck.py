@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import argparse
 import base64
+import hashlib
 import io
 import json
 import random
@@ -104,20 +105,24 @@ def _data_url(image: Image.Image) -> str:
     return "data:image/png;base64," + base64.b64encode(buffer.getvalue()).decode("ascii")
 
 
-def _build_html(pairs: list[dict]) -> str:
+def _build_html(pairs: list[dict], run_id: str) -> str:
     """Single-file Chinese voting page; embeds only images and pair ids.
 
     Deliberately contains no molecule names, no engine names, and no key
     material, so graders cannot break the blinding from the page alone.
     """
     template = (_REPO_ROOT / "benchmarks" / "review_template.html").read_text(encoding="utf-8")
-    return template.replace("__DATA_JSON__", json.dumps(pairs, ensure_ascii=False))
+    return template.replace("__DATA_JSON__", json.dumps(pairs, ensure_ascii=False)).replace(
+        "__RUN_ID__", run_id
+    )
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Build the blind review deck")
     parser.add_argument("--seed", type=int, default=None)
     args = parser.parse_args()
+    if args.seed is None:
+        args.seed = random.SystemRandom().randrange(1, 10**9)
     rng = random.Random(args.seed)
     out_dir = _REPO_ROOT / "benchmarks" / "blind_review"
     deck_dir = out_dir / "deck"
@@ -154,10 +159,16 @@ def main() -> None:
                     "b": _data_url(image_b),
                 }
             )
+    pair_key["seed"] = args.seed
+    run_id = hashlib.sha256(
+        json.dumps(pair_key, sort_keys=True, ensure_ascii=False).encode("utf-8")
+    ).hexdigest()[:12]
+    pair_key["run_id"] = run_id
     (out_dir / "pair_key.json").write_text(json.dumps(pair_key, indent=2) + "\n")
-    (out_dir / "review.html").write_text(_build_html(html_pairs))
+    (out_dir / "review.html").write_text(_build_html(html_pairs, run_id))
 
-    instructions = """# 化学结构图评审说明
+    instructions = (
+        """# 化学结构图评审说明
 
 感谢参与。你将看到 40 组化学结构图,每组两张(A 和 B),画的是同一个分子。
 每组选一张你更愿意放进论文的图;没有明显偏好就选平局。
@@ -174,8 +185,12 @@ def main() -> None:
 1. 打开 review.html,直接在页面里点选,结束后复制答案或下载 answers.json;
 2. 打开 deck/ 里的图片,按 pair_001 A、pair_002 tie 这样的格式把答案列出来。
 
-把答案发给组织者即可。
+把答案发给组织者即可。本次评审编号(run id)是:
 """
+        + run_id
+        + """
+"""
+    )
     (out_dir / "instructions.md").write_text(instructions)
     with zipfile.ZipFile(out_dir / "deck.zip", "w") as archive:
         archive.write(out_dir / "review.html", arcname="review.html")

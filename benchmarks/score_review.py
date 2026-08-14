@@ -32,6 +32,8 @@ def score_grader(answers: dict[str, str], pair_key: dict) -> dict:
     per_style: dict[str, dict] = {"acs": {"n": 0, "picked": 0.0}, "modern": {"n": 0, "picked": 0.0}}
     per_molecule: dict[str, dict] = {}
     for pair_id, info in pair_key.items():
+        if not isinstance(info, dict):
+            continue  # top-level fields such as seed/run_id
         if not info.get("scored"):
             continue
         scored += 1
@@ -82,11 +84,13 @@ def aggregate(grader_scores: list[dict]) -> dict:
     }
 
 
-def load_answers(path: Path) -> dict[str, str]:
+def load_answer_file(path: Path) -> tuple[dict[str, str], str | None]:
+    """Load an answer file and its deck run id (JSON only; text has none)."""
     text = path.read_text(encoding="utf-8")
     if path.suffix == ".json":
         payload = json.loads(text)
         raw = payload.get("answers", payload)
+        run_id = payload.get("run_id") if isinstance(payload, dict) else None
     else:
         raw = {}
         for line in text.splitlines():
@@ -95,7 +99,20 @@ def load_answers(path: Path) -> dict[str, str]:
                 continue
             pair_id, _, answer = stripped.partition(" ")
             raw[pair_id.strip()] = answer.strip()
-    return {str(key): str(value) for key, value in raw.items()}
+        run_id = None
+    return {str(key): str(value) for key, value in raw.items()}, run_id
+
+
+def check_run_id(pair_key_run_id: str | None, answers_run_id: str | None) -> str | None:
+    """Return an error message when the answer file belongs to another deck."""
+    if not pair_key_run_id or not answers_run_id:
+        return None
+    if answers_run_id != pair_key_run_id:
+        return (
+            f"answers were produced for run {answers_run_id!r}, "
+            f"but pair_key.json is run {pair_key_run_id!r}"
+        )
+    return None
 
 
 def main() -> None:
@@ -103,7 +120,21 @@ def main() -> None:
     parser.add_argument("answer_files", nargs="+", type=Path)
     args = parser.parse_args()
     pair_key = json.loads(_PAIR_KEY_PATH.read_text(encoding="utf-8"))
-    grader_scores = [score_grader(load_answers(path), pair_key) for path in args.answer_files]
+    expected_run_id = pair_key.get("run_id")
+    loaded: list[dict[str, str]] = []
+    for path in args.answer_files:
+        answers, run_id = load_answer_file(path)
+        error = check_run_id(expected_run_id, run_id)
+        if error:
+            print(f"error: {path}: {error}", file=sys.stderr)
+            raise SystemExit(1)
+        if run_id is None:
+            print(
+                f"warning: {path} has no run id; assuming it belongs to this deck",
+                file=sys.stderr,
+            )
+        loaded.append(answers)
+    grader_scores = [score_grader(answers, pair_key) for answers in loaded]
     result = aggregate(grader_scores)
     report = {
         "generated_at": datetime.now(UTC).isoformat(),
