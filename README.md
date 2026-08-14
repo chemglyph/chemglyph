@@ -103,6 +103,8 @@ ChemGlyph itself never calls an online service, including for translation.
 
 Run the bundled console script (stdio transport):
 
+<!-- mcp-name: io.github.random-orbit/chemglyph -->
+
 ```bash
 chemglyph-mcp
 ```

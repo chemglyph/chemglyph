@@ -77,3 +77,4 @@ benchmarks/blind_test_output/*
 # Manual ChemDraw panels and proctor-only blinding artifacts (never committed)
 benchmarks/chemdraw_panels/
 benchmarks/blind_review/
+benchmarks/rdkit_default_panels/

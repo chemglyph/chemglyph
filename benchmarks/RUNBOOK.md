@@ -50,11 +50,18 @@ denominator to make the numbers pass.
 5. Copy `answer_key.json` to a local archive (it is overwritten by the next
    regeneration). Keep the archived copy tied to the exact reviewed set.
 
-## 4. ChemDraw panel protocol
+## 4. Reference panel protocol (ChemDraw or Ketcher)
 
-Tool: ChemDraw Professional. Produce two panels per molecule, saved locally
-under `benchmarks/chemdraw_panels/` (this directory is gitignored — **never
-commit the panels**):
+The reference panels are the "opponent" side of every pair. ChemDraw
+Professional is the preferred tool, but the same procedure works with
+[Ketcher](https://lifescience.opensource.epam.com/ketcher/), a free,
+open-source editor, when ChemDraw is not available. Record which tool made
+the panels in the run log; the methodology sentence then reads "reference
+editor (ChemDraw or Ketcher)".
+
+Produce two panels per molecule, saved locally under
+`benchmarks/chemdraw_panels/` (this directory is gitignored — **never commit
+the panels**):
 
 - `chemdraw-acs/{label}.svg|.png` — apply the ACS Document 1996 settings
   (fixed bond length, Arial labels, black on white) to mirror `chemglyph-acs`.
@@ -74,6 +81,22 @@ Rules:
   test judges typography and layout, not export resolution.
 - If a ChemDraw panel cannot be produced for a molecule (porphyrin and
   ferrocene may behave oddly), still include the pair and record a note.
+
+### Ketcher export checklist
+
+When Ketcher replaces ChemDraw, follow the same rules with these steps:
+
+1. Open the Ketcher demo page and clear the canvas.
+2. In the top-left menu, open the structure window and paste the SMILES from
+   `answer_key.json` ("Paste" accepts SMILES). Do not hand-draw from the
+   label.
+3. Choose the canvas size and atom styling to mirror the ChemGlyph style
+   (`acs`: black on white; `modern`: recolored heteroatoms if the UI allows,
+   otherwise monochrome and note that color was excluded from judging).
+4. File -> Save as SVG, named per the panel protocol above. Export PNG as
+   well (Ketcher offers PNG export) and keep both.
+5. Do the same parity check as ChemDraw before mixing: display the pair side
+   by side and normalize the display scale so mean bond lengths match.
 
 ## 5. Mixing and blinding (proctor only)
 
