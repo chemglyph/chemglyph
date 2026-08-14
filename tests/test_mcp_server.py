@@ -9,6 +9,7 @@ from __future__ import annotations
 import base64
 import os
 import sys
+import tempfile
 from pathlib import Path
 from typing import Any
 
@@ -16,13 +17,18 @@ import anyio
 from mcp import ClientSession
 from mcp.client.stdio import StdioServerParameters, stdio_client
 
+_SAVE_DIR = Path(tempfile.mkdtemp(prefix="chemglyph-mcp-test-"))
+
 
 def _call_tool(tool: str, arguments: dict[str, Any], env: dict[str, str] | None = None) -> Any:
     async def run() -> Any:
+        merged_env = {**os.environ, "CHEMGLYPH_MCP_SAVE_DIR": str(_SAVE_DIR)}
+        if env:
+            merged_env.update(env)
         params = StdioServerParameters(
             command=sys.executable,
             args=["-m", "chemglyph.mcp_server"],
-            env=env,
+            env=merged_env,
         )
         async with stdio_client(params) as (read_stream, write_stream):
             async with ClientSession(read_stream, write_stream) as session:

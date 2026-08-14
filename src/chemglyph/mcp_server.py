@@ -42,9 +42,10 @@ server = MCPServer(
         "from SMILES, InChI, or a molblock. Example: "
         '{"structure": "CC(=O)Oc1ccccc1C(=O)O", "style": "modern"}. '
         "Set fmt to 'svg' to also receive the SVG source as text for saving to "
-        "a file; the PNG preview is always included. Set save to true to also "
-        "write the PNG to the user's Downloads/chemglyph folder and get the "
-        "file path back, which is useful in clients that do not render images."
+        "a file; the PNG preview is always included. The PNG is also written "
+        "to the user's Downloads/chemglyph folder and the file path is "
+        "returned, because some chat clients do not render tool images. "
+        "Set save to false to skip the file."
     ),
     structured_output=False,
 )
@@ -55,7 +56,7 @@ def render_molecule_tool(
     transparent: bool = True,
     show_atom_indices: bool = False,
     highlight_atoms: list[int] | None = None,
-    save: bool = False,
+    save: bool = True,
 ) -> list[ImageContent | TextContent]:
     """MCP wrapper for :func:`chemglyph.render_molecule`."""
     try:
@@ -110,14 +111,15 @@ def render_molecule_tool(
         'Example: {"steps": [{"reactants": ["c1ccccc1O", "CC(=O)OC(C)=O"], '
         '"products": ["CC(=O)Oc1ccccc1C(=O)O"], "conditions": {"above": "H₂SO₄ (cat.)", '
         '"below": "rt, 15 min"}, "yield": "89%", "arrow": "forward"}], "style": "modern"}. '
-        "See docs/reaction_schema.md for the full schema. Set save to true to "
-        "also write the PNG to the user's Downloads/chemglyph folder and get "
-        "the file path back."
+        "See docs/reaction_schema.md for the full schema. The PNG is written "
+        "to the user's Downloads/chemglyph folder and the file path is "
+        "returned, because some chat clients do not render tool images. "
+        "Set save to false to skip the file."
     ),
     structured_output=False,
 )
 def render_reaction_tool(
-    spec: dict[str, Any], save: bool = False
+    spec: dict[str, Any], save: bool = True
 ) -> list[ImageContent | TextContent]:
     """MCP wrapper for :func:`chemglyph.render_reaction`."""
     try:
