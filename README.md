@@ -129,6 +129,13 @@ Claude Desktop registration (macOS:
 | `validate_structure` | a SMILES may be malformed and you need a repair | validation report JSON |
 | `parse_name` | the user gives a name like "aspirin" instead of SMILES | canonical SMILES or an error |
 
+One thing to know about clients. Some MCP clients, LM Studio included, only
+pass the text part of a tool result to the model and never display the
+attached image. The render tools write their PNG to `~/Downloads/chemglyph/`
+and return that path in the text, so you can always open the file yourself.
+If a model claims it rendered a figure but nothing shows up, ask it for the
+saved path rather than having it redraw the structure by hand.
+
 ## Benchmarks
 
 `benchmarks/` holds the fixed 20-molecule blind test and a generator that
