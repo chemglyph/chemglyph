@@ -53,24 +53,25 @@ _ACS_OPTIONS = {
     "additionalAtomLabelPadding": 0.16,
     "minFontSize": 16,
     "maxFontSize": 36,
-    "padding": 0.02,
+    "padding": 0.05,
 }
 
-# modern: classic CPK heteroatom colors (O red, N blue, S yellow, Cl green);
-# slightly heavier bonds for screen/chat display.
+# modern: darkened CPK heteroatom colors (O red, N blue, S yellow, Cl green)
+# that sit on white without overwhelming the skeleton; lighter bonds and more
+# padding for screen/chat display.
 _MODERN_OPTIONS = {
     "atom_colours": {
-        8: "#FF0D0D",
-        7: "#3050F8",
-        16: "#E8C300",
-        17: "#1FB01F",
+        8: "#C0392B",
+        7: "#2471A3",
+        16: "#A67C00",
+        17: "#1E8449",
     },
-    "bondLineWidth": 2.4,
+    "bondLineWidth": 1.8,
     "multipleBondOffset": 0.18,
     "additionalAtomLabelPadding": 0.18,
-    "minFontSize": 14,
-    "maxFontSize": 32,
-    "padding": 0.03,
+    "minFontSize": 12,
+    "maxFontSize": 28,
+    "padding": 0.06,
 }
 
 # textbook-cn: pure black/white, ~1.3x the ACS bond width, larger labels,

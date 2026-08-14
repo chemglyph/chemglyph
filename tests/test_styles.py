@@ -22,10 +22,10 @@ GOLDEN_MOLECULES = {
     "s-ibuprofen": "CC(C)Cc1ccc(cc1)[C@@H](C)C(=O)O",
 }
 
-_EXPECTED_BOND_WIDTH = {"acs": 2.0, "modern": 2.4, "textbook-cn": 2.6}
+_EXPECTED_BOND_WIDTH = {"acs": 2.0, "modern": 1.8, "textbook-cn": 2.6}
 _EXPECTED_FONT_SIZES = {
     "acs": (16, 36),
-    "modern": (14, 32),
+    "modern": (12, 28),
     "textbook-cn": (18, 40),
 }
 
@@ -97,16 +97,16 @@ def test_golden_snapshots_match_structure(style: str, label: str) -> None:
 def test_modern_colors_heteroatoms() -> None:
     benzoic = _svg(GOLDEN_MOLECULES["benzoic-acid"], "modern")
     caffeine = _svg(GOLDEN_MOLECULES["caffeine"], "modern")
-    assert "#FF0D0D" in benzoic  # O red (CPK)
-    assert "#FF0D0D" in caffeine  # O red (CPK)
-    assert "#3050F8" in caffeine  # N blue (CPK)
+    assert "#C0392B" in benzoic  # O red (darkened CPK)
+    assert "#C0392B" in caffeine  # O red (darkened CPK)
+    assert "#2471A3" in caffeine  # N blue (darkened CPK)
 
 
 @pytest.mark.parametrize("style", ["acs", "textbook-cn"])
 def test_monochrome_styles_have_no_heteroatom_colors(style: str) -> None:
     benzoic = _svg(GOLDEN_MOLECULES["benzoic-acid"], style)
-    assert "#FF0D0D" not in benzoic
-    assert "#3050F8" not in benzoic
+    assert "#C0392B" not in benzoic
+    assert "#2471A3" not in benzoic
 
 
 @pytest.mark.parametrize("style", sorted(STYLES))

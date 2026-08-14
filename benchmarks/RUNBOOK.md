@@ -66,8 +66,8 @@ the panels**):
 - `chemdraw-acs/{label}.svg|.png` — apply the ACS Document 1996 settings
   (fixed bond length, Arial labels, black on white) to mirror `chemglyph-acs`.
 - `chemdraw-modern/{label}.svg|.png` — ChemDraw defaults, white background,
-  heteroatoms recolored to match `chemglyph-modern` (classic CPK: O `#FF0D0D`,
-  N `#3050F8`, S `#E8C300`, Cl `#1FB01F`). If per-atom recoloring is too
+  heteroatoms recolored to match `chemglyph-modern` (darkened CPK: O `#C0392B`,
+  N `#2471A3`, S `#A67C00`, Cl `#1E8449`). If per-atom recoloring is too
   laborious, a monochrome panel is an acceptable fallback: record that color
   was excluded from judging for that style.
 
@@ -106,6 +106,12 @@ Ketcher defaults:
 - `render-font-size = 14`: label/bond ratio ~0.68, matching ChemDraw's
   10 pt type on 14.4 pt bonds;
 - bond length 30 px, line width 1.0 px, white background.
+
+The script also normalizes both chemglyph columns to the same 30 px bond
+length (measured from the conformer span, not from label-cut SVG fragments)
+and runs a parity self-check: if any column's displayed bond length drifts
+more than 20% from its row median the script fails, so a scaling regression
+like the round-1 modern-column inflation cannot slip through unnoticed.
 
 Use the sheets as the maintainer's tuning anchor only. They are not a blind
 deck and graders must never see them; the official blind run still uses

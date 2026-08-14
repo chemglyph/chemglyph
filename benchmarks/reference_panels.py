@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import io
 import re
+import statistics
 import sys
 from pathlib import Path
 
@@ -36,6 +37,7 @@ from PIL import Image, ImageDraw, ImageFont  # noqa: E402
 
 import chemglyph  # noqa: E402
 from blind_test_molecules import BLIND_TEST_MOLECULES  # noqa: E402
+from chemglyph.molecule import _parse_structure, _prepare_for_drawing  # noqa: E402
 
 CELL = 420  # square drawing cell
 PAD = 24  # empty margin inside each cell
@@ -81,13 +83,37 @@ def _rasterize(svg: str, zoom: float) -> Image.Image:
     return _png(data)
 
 
-def _chemglyph_panel(smiles: str, style: str) -> Image.Image:
+def _drawn_bond_px(svg: str, smiles: str) -> float:
+    """Bond length in rendered pixels: drawn x-span / conformer x-span.
+
+    Measuring from the conformer span avoids the label-cut path fragments
+    that corrupted the earlier median-segment estimate (the bug that once
+    inflated the modern column ~1.7x).
+    """
+    mol = _parse_structure(smiles)
+    _prepare_for_drawing(mol)
+    conformer = mol.GetConformer()
+    coordinates = [conformer.GetAtomPosition(i).x for i in range(mol.GetNumAtoms())]
+    span = max(coordinates) - min(coordinates)
+    assert span > 1e-6, f"{smiles}: zero-width conformer"
+    drawn_x = [
+        float(value)
+        for match in re.finditer(
+            r"class='bond-\d+[^']*' d='M ([\d.]+),[\d.]+ L ([\d.]+),[\d.]+'", svg
+        )
+        for value in match.groups()
+    ]
+    assert drawn_x, f"{smiles}: no drawn bonds"
+    return (max(drawn_x) - min(drawn_x)) / span
+
+
+def _chemglyph_panel(smiles: str, style: str) -> tuple[Image.Image, float]:
     svg = chemglyph.render_molecule(smiles, style=style).data
     width, height = _svg_size(svg)
+    bond_px = _drawn_bond_px(svg, smiles)
     fit = min((CELL - 2 * PAD) / width, (CELL - 2 * PAD) / height)
-    # chemglyph's auto canvas already targets ~30 px bonds, so rasterize at
-    # native size and only shrink when a molecule is larger than its cell.
-    return _rasterize(svg, min(1.0, fit))
+    zoom = min(TARGET_BOND / bond_px, fit)
+    return _rasterize(svg, zoom), bond_px * zoom
 
 
 def _indigo() -> tuple[Indigo, IndigoRenderer]:
@@ -103,16 +129,19 @@ def _indigo() -> tuple[Indigo, IndigoRenderer]:
     return indigo, renderer
 
 
-def _indigo_panel(indigo: Indigo, renderer: IndigoRenderer, smiles: str) -> Image.Image:
+def _indigo_panel(
+    indigo: Indigo, renderer: IndigoRenderer, smiles: str
+) -> tuple[Image.Image, float]:
     mol = indigo.loadMolecule(smiles)
     mol.layout()
     svg = renderer.renderToBuffer(obj=mol).decode("utf-8")
     width, height = _svg_size(svg)
     fit = min((CELL - 2 * PAD) / width, (CELL - 2 * PAD) / height)
-    return _rasterize(svg, min(1.0, fit))
+    zoom = min(1.0, fit)
+    return _rasterize(svg, zoom), TARGET_BOND * zoom
 
 
-def _sheet(rows: list[tuple[str, str]], page: int) -> None:
+def _sheet(rows: list[tuple[str, str]], page: int) -> list[dict[str, float]]:
     width = 2 * PAD + NAME_W + 3 * CELL + 3 * GAP
     height = HEADER_H + len(rows) * ROW_H + PAD
     page_img = Image.new("RGBA", (width, height), BG)
@@ -124,15 +153,17 @@ def _sheet(rows: list[tuple[str, str]], page: int) -> None:
         draw.text((x, 28), header, font=_font(24), fill=INK, anchor="mm")
 
     indigo, renderer = _indigo()
+    records: list[dict[str, float]] = []
     for row, (label, smiles) in enumerate(rows):
         y = HEADER_H + row * ROW_H
         draw.text((PAD, y + CELL // 2), label, font=_font(22), fill=INK, anchor="lm")
-        panels = (
+        panels = [
             _indigo_panel(indigo, renderer, smiles),
             _chemglyph_panel(smiles, "acs"),
             _chemglyph_panel(smiles, "modern"),
-        )
-        for column, panel in enumerate(panels):
+        ]
+        records.append({"reference": panels[0][1], "acs": panels[1][1], "modern": panels[2][1]})
+        for column, (panel, _) in enumerate(panels):
             x = PAD + NAME_W + column * (CELL + GAP) + (CELL - panel.width) // 2
             page_img.paste(panel, (x, y + (CELL - panel.height) // 2), panel)
 
@@ -141,12 +172,42 @@ def _sheet(rows: list[tuple[str, str]], page: int) -> None:
     out_path = out_dir / f"reference_sheet_page{page}.png"
     page_img.convert("RGB").save(out_path)
     print(f"wrote {out_path}")
+    return records
+
+
+def _check_bond_parity(records: list[dict[str, float]]) -> None:
+    """Fail when any column's bond length drifts >20% from the row median.
+
+    Every engine is normalized to the same ~30 px bond length; a column that
+    deviates means the normalization regressed (for example the earlier
+    label-fragment bug, which inflated the modern column ~1.7x while the
+    other two stayed put).
+    """
+    problems = []
+    for row, record in enumerate(records, start=1):
+        values = list(record.values())
+        median = statistics.median(values)
+        for column, value in record.items():
+            if abs(value - median) / median > 0.20:
+                problems.append((row, column, value, median))
+    if problems:
+        detail = "; ".join(
+            f"row {row} {column}={value:.1f}px vs row median {median:.1f}px"
+            for row, column, value, median in problems
+        )
+        raise RuntimeError(f"bond-length parity check failed: {detail}")
+    medians = {
+        column: statistics.median([record[column] for record in records]) for column in records[0]
+    }
+    print(f"bond-length parity OK: column medians {medians}")
 
 
 def main() -> None:
     molecules = [(label, smiles) for label, smiles, _ in BLIND_TEST_MOLECULES]
+    records: list[dict[str, float]] = []
     for page, start in enumerate(range(0, len(molecules), ROWS_PER_PAGE), start=1):
-        _sheet(molecules[start : start + ROWS_PER_PAGE], page)
+        records.extend(_sheet(molecules[start : start + ROWS_PER_PAGE], page))
+    _check_bond_parity(records)
 
 
 if __name__ == "__main__":

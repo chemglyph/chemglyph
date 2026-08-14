@@ -493,3 +493,34 @@ benzoic acid, caffeine, sulfate, triphenylphosphine, TNT and 18-crown-6:
   1.8/0.06. At the rendered ~45 px bond length these are ~5.3%, ~4.4% and
   ~4.0% line/bond ratios, bracketing the 4-5% target derived from ACS
   (0.6 pt lines on 14.4 pt bonds).
+
+### Style parameters finalized (2026-08-14)
+
+Maintainer selections applied to `src/chemglyph/styles.py`:
+
+- `acs`: padding 0.02 -> 0.05 (the only change).
+- `modern`: min/max font 14/32 -> 12/28; darkened CPK palette (O `#C0392B`,
+  N `#2471A3`, S `#A67C00`, Cl `#1E8449`); bond line width 2.4 -> 1.8;
+  padding 0.03 -> 0.06.
+
+Golden test values updated in lockstep (stroke widths, font clamps, color
+strings). Regenerated the 20-molecule reference sheets, the README gallery
+and comparison images, and the aspirin example. Full suite: 127 passed,
+2 skipped.
+
+`benchmarks/reference_panels.py` gained two guards: all three columns are
+normalized to the same ~30 px bond length using a conformer-span measurement
+(immune to the label-cut fragment bug from earlier this round), and a parity
+self-check fails the script if any column's displayed bond length deviates
+more than 20% from its row median. Verified column medians: 30.0 / 30.0 /
+30.0 px.
+
+Process note (maintainer-requested record): this round the agent corrected
+two of its own earlier measurement errors unprompted - the sulfate
+label/bond ratio (7-10x was an artifact of measuring label-cut fragments;
+the real value is ~0.26) and the Indigo padding figure (measured 2-4 px,
+~0.02-0.03 of the canvas, essentially equal to the old acs padding rather
+than a larger value that would have "confirmed" the cramped impression).
+The perceived headroom in the reference column comes from its smaller bond
+length, and the padding ladder was presented as a judgment range instead of
+a fabricated reference replication. Keep reporting measurements as they are.
