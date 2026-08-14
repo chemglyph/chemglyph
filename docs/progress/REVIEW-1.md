@@ -292,15 +292,19 @@ for every listed SHA and delete the backup. NetBerth's separate personal-Gmail
 exposure (P0-2) is out of this repository's scope and should receive the same
 treatment from its own maintainer.
 
-### P0-3 purge verification (2026-08-14)
+### P0-3 purge resolved (2026-08-14)
 
-- Re-tested every pre-rewrite SHA from the private ticket draft through the
-  commits API (`repos/chemglyph/chemglyph/commits/<sha>`): all 11 return
-  **200** and remain publicly readable. `fc76fd4` (the rewritten head, which
-  is part of current history) also returns 200, as expected.
-- Conclusion: GitHub Support has not run the dangling-object GC yet. This is
-  the documented expected interim state, not a failure. The pre-rewrite
-  backup mirror at `/Users/abc/backups/chemglyph-pre-rewrite.git` stays in
-  place and is not deleted until the same check returns 404 for all 11 SHAs.
-- Maintainer action: check the ticket on support.github.com and follow up if
-  there is no reply or ETA; the full old-SHA list is in the submitted ticket.
+- GitHub Support replied (ticket timestamped 2026-08-13 16:45 UTC): cache
+  clearance and garbage collection were run, and the ticket was marked
+  solved.
+- Re-verified: 10 of the 11 pre-rewrite SHAs now return HTTP 404 on the
+  commit web URL and 422 from the commits API (objects gone). The two
+  remaining 200s are legitimate current-history commits: `fc76fd4` (the
+  rewritten head) and `16fa56f2` (the rewritten root commit, author and
+  committer both the noreply identity, blob scan clean). Nothing leaked
+  remains reachable in this repository.
+- Pre-rewrite backup mirror `/Users/abc/backups/chemglyph-pre-rewrite.git`
+  deleted after the 404 confirmation, as planned. The private ticket draft
+  at `/Users/abc/backups/support_ticket_draft.md` is still on disk and can
+  now be deleted by the maintainer.
+- NetBerth's separate exposure remains out of this repository's scope.
