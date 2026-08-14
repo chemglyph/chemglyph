@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>化学结构图确认评审</title>
+<style>
+body {
+  font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+  background: #f5f5f7; color: #1d1d1f; margin: 0;
+}
+.wrap { max-width: 980px; margin: 24px auto; padding: 0 16px; }
+.card {
+  background: #fff; border: 1px solid #e2e2e6; border-radius: 12px;
+  padding: 20px 24px; margin-bottom: 16px;
+}
+h1 { font-size: 26px; }
+p, li { line-height: 1.7; font-size: 16px; }
+.question {
+  font-size: 18px; font-weight: 700; margin: 0 0 12px; padding: 10px 14px;
+  background: #eef4fa; border-radius: 8px;
+}
+.pair { display: flex; gap: 16px; flex-wrap: wrap; }
+.choice {
+  flex: 1 1 300px; border: 3px solid #e2e2e6; border-radius: 10px;
+  padding: 8px; cursor: pointer; text-align: center; background: #fff;
+}
+.choice img { width: 100%; height: auto; display: block; }
+.choice.selected { border-color: #1f77b4; box-shadow: 0 0 0 3px rgba(31, 119, 180, .2); }
+.tag { font-weight: 700; margin-bottom: 6px; }
+.btn {
+  border: 0; border-radius: 8px; padding: 10px 18px; font-size: 16px;
+  cursor: pointer; background: #1f77b4; color: #fff; margin: 4px 8px 4px 0;
+}
+.btn.secondary { background: #e8e8ed; color: #1d1d1f; }
+.btn.selected { outline: 3px solid #1f77b4; }
+.hidden { display: none; }
+pre {
+  background: #f5f5f7; border-radius: 8px; padding: 14px;
+  white-space: pre-wrap; font-size: 14px;
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div id="start" class="card">
+    <h1>化学结构图确认评审</h1>
+    <p>感谢参与。本次共 12 组化学结构图,每组两张(A 和 B),画的是同一个分子。</p>
+    <p>每组上方会写明判断标准,两种标准随机出现:</p>
+    <ul>
+      <li>"哪张你更愿意放进论文?" - 按期刊排版标准判断。</li>
+      <li>"哪张在屏幕或网页上更清晰、更专业?" - 按屏幕显示标准判断。</li>
+    </ul>
+    <p>规则:</p>
+    <ul>
+      <li>凭第一印象作答,每组一分钟以内足够。</li>
+      <li>只看图的布局、清晰度和整体观感。</li>
+      <li>确实没差别选"两者差不多";两张都不理想选"都不理想"。</li>
+      <li>独立完成,不要和其他评审人讨论,直到所有人都提交。</li>
+    </ul>
+    <p>完成后页面会生成你的答案,复制发给组织者即可。</p>
+    <button class="btn" onclick="start()">开始评审</button>
+  </div>
+
+  <div id="quiz" class="hidden">
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px">
+        <strong id="pair-title"></strong>
+        <span id="progress"></span>
+      </div>
+      <div class="question" id="pair-question"></div>
+      <div class="pair">
+        <div class="choice" id="choice-a" onclick="pick('A')">
+          <div class="tag">A</div>
+          <img id="img-a" alt="候选图 A"/>
+        </div>
+        <div class="choice" id="choice-b" onclick="pick('B')">
+          <div class="tag">B</div>
+          <img id="img-b" alt="候选图 B"/>
+        </div>
+      </div>
+      <div style="margin-top:12px">
+        <button class="btn secondary" id="tie-btn" onclick="pick('tie')">两者差不多(平局)</button>
+        <button class="btn secondary" id="neither-btn" onclick="pick('neither')">都不理想</button>
+      </div>
+      <div style="margin-top:8px">
+        <textarea id="note" rows="2" oninput="saveNote()"
+          style="width:100%;box-sizing:border-box;border:1px solid #e2e2e6;border-radius:8px;padding:8px;font-size:14px"
+          placeholder="备注(可选):两张图的问题在哪里"></textarea>
+      </div>
+      <div style="margin-top:16px">
+        <button class="btn" onclick="prev()">上一组</button>
+        <button class="btn" onclick="next()">下一组</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="done" class="card hidden">
+    <h1>评审完成</h1>
+    <p>你的答案如下。请把这段文字复制发给组织者,或点"下载答案文件"把文件发过去。</p>
+    <p>本次评审编号(run id):<code id="run-id"></code></p>
+    <pre id="answer-text"></pre>
+    <button class="btn" onclick="copyAnswers()">复制答案</button>
+    <button class="btn" onclick="downloadAnswers()">下载答案文件</button>
+  </div>
+</div>
+<script>
+const RUN_ID = "__RUN_ID__";
+const DATA = __DATA_JSON__;
+const answers = {};
+const notes = {};
+let current = 0;
+
+function start() {
+  document.getElementById("start").classList.add("hidden");
+  document.getElementById("quiz").classList.remove("hidden");
+  show(0);
+}
+
+function show(i) {
+  current = i;
+  const pair = DATA[i];
+  document.getElementById("pair-title").textContent =
+    "第 " + (i + 1) + " / " + DATA.length + " 组";
+  document.getElementById("pair-question").textContent = pair.question;
+  document.getElementById("progress").textContent = Object.keys(answers).length + " 已答";
+  document.getElementById("img-a").src = pair.a;
+  document.getElementById("img-b").src = pair.b;
+  document.getElementById("note").value = notes[DATA[current].id] || "";
+  renderSelection();
+}
+
+function renderSelection() {
+  const value = answers[DATA[current].id];
+  document.getElementById("choice-a").classList.toggle("selected", value === "A");
+  document.getElementById("choice-b").classList.toggle("selected", value === "B");
+  document.getElementById("tie-btn").classList.toggle("selected", value === "tie");
+  document.getElementById("neither-btn").classList.toggle("selected", value === "neither");
+}
+
+function pick(value) {
+  answers[DATA[current].id] = value;
+  renderSelection();
+}
+
+function saveNote() {
+  notes[DATA[current].id] = document.getElementById("note").value.trim();
+}
+
+function prev() {
+  if (current > 0) show(current - 1);
+}
+
+function next() {
+  if (current < DATA.length - 1) { show(current + 1); return; }
+  finish();
+}
+
+function answerText() {
+  return DATA.map(function (pair) {
+    return pair.id + " " + (answers[pair.id] || "-");
+  }).join("\n");
+}
+
+function finish() {
+  document.getElementById("quiz").classList.add("hidden");
+  document.getElementById("run-id").textContent = RUN_ID;
+  document.getElementById("answer-text").textContent = answerText();
+  document.getElementById("done").classList.remove("hidden");
+  window.scrollTo(0, 0);
+}
+
+function copyAnswers() {
+  navigator.clipboard.writeText(answerText()).then(function () {
+    alert("答案已复制,请粘贴发给组织者。");
+  });
+}
+
+function downloadAnswers() {
+  const blob = new Blob(
+    [JSON.stringify({run_id: RUN_ID, answers: answers, notes: notes}, null, 2)],
+    {type: "application/json"}
+  );
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = "answers.json";
+  link.click();
+}
+</script>
+</body>
+</html>

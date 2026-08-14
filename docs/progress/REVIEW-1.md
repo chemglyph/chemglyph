@@ -544,3 +544,18 @@ luminance cannot measure hue salience against a black skeleton (darkened
 red scored nearly the same share/luminance as classic red while reading as
 almost black on screen). The color dimension is therefore always decided by
 human confirmation; ink statistics must never substitute for it.
+
+### Confirmation blind test prepared (2026-08-14)
+
+Deck design locked before results: 3 graders x 12 pairs each, 6 acs + 6
+modern. The opponent is the Indigo publication-convention reference panel
+(not stock RDKit). Questions are split by style: acs pairs ask "which would
+you rather put in a paper", modern pairs ask "which is clearer and more
+professional on screen/web". Molecules are drawn from the 20-item list
+excluding ferrocene, porphyrin and paclitaxel; all graders see the same 12
+pairs. `generate_confirmation_deck.py` writes the deck, a Chinese voting
+page with per-pair questions, `record_sheet.csv` and `pair_key.json`; the
+key and the repository stay away from graders.
+
+README wording rule after results: report the opponent as "open-source
+reference (Indigo/Ketcher)"; never claim or imply a ChemDraw comparison.

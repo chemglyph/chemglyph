@@ -20,3 +20,10 @@ Until hand-made reference panels exist, `generate_review_deck.py` builds a
 shuffled A/B deck against stock RDKit output (`benchmarks/blind_review/`,
 gitignored) plus `pair_key.json` and grader instructions, so a review round
 can run immediately with human graders.
+
+The confirmation round uses `generate_confirmation_deck.py`: 12 pairs per
+grader (6 acs + 6 modern) against the Indigo publication-convention
+reference panels, with separate questions per style (paper vs screen).
+Ferrocene, porphyrin and paclitaxel are excluded from the draw; outputs go
+to the same gitignored directory and `pair_key.json` stays with the
+organizer.
