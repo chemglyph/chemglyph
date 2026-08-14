@@ -438,3 +438,25 @@ Ketcher defaults: `render-label-mode=hetero` (no terminal CH3 labels),
 on 14.4 pt bonds). All three sheet columns now share a ~30 px bond length.
 The configuration is recorded in `benchmarks/RUNBOOK.md` as the
 publication-convention reference baseline.
+
+### P2: modern positioning decision and label/bond ratio audit (2026-08-14)
+
+Maintainer decision: modern stays the screen/chat style (colored CPK
+heteroatoms); it does not pivot to paper. Evaluation criteria split going
+forward: `acs` is judged by "would you publish it in a paper", `modern` by
+"which is clearer and more professional on screen/chat". README wording is
+unchanged (blind test still pending).
+
+Measured label/bond ratios (label glyph height / mean bond length):
+
+| Renderer | Caffeine | Sulfate | 18-crown-6 |
+|---|---|---|---|
+| RDKit default | 0.68 | 0.42 | 1.06 |
+| Indigo reference | 0.68 (configured) | - | - |
+| chemglyph modern | ~0.43 | ~7-10x | ~0.66 |
+
+Root cause of the sulfate extreme: `modern` pins `minFontSize=14`, so on the
+150 px minimum canvas a 4-atom ion gets ~3 px bonds while labels are forced
+to ~23 px. RDKit's stock renderer keeps labels proportional to bonds, which
+is why its ratios stay bounded. The modern parameter candidates must
+therefore center on the label/bond ratio, not only line width and padding.
