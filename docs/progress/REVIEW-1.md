@@ -447,16 +447,49 @@ forward: `acs` is judged by "would you publish it in a paper", `modern` by
 "which is clearer and more professional on screen/chat". README wording is
 unchanged (blind test still pending).
 
-Measured label/bond ratios (label glyph height / mean bond length):
+Measured label/bond ratios (label glyph height / drawn bond length, both in
+rendered pixels; measured via drawn-span/conformer-span so label-cut
+fragments do not corrupt the bond length):
 
 | Renderer | Caffeine | Sulfate | 18-crown-6 |
 |---|---|---|---|
 | RDKit default | 0.68 | 0.42 | 1.06 |
 | Indigo reference | 0.68 (configured) | - | - |
-| chemglyph modern | ~0.43 | ~7-10x | ~0.66 |
+| chemglyph modern | ~0.43 | ~0.26 | ~0.44 |
 
-Root cause of the sulfate extreme: `modern` pins `minFontSize=14`, so on the
-150 px minimum canvas a 4-atom ion gets ~3 px bonds while labels are forced
-to ~23 px. RDKit's stock renderer keeps labels proportional to bonds, which
-is why its ratios stay bounded. The modern parameter candidates must
-therefore center on the label/bond ratio, not only line width and padding.
+Correction: an earlier draft of this entry reported sulfate at "7-10x"; that
+number came from measuring label height against the ~1.5 px label-cut bond
+fragments instead of the full ~90 px S=O bond. The real ratios are above.
+The sulfate defect is still real but different in kind: its bonds are long
+(~90 px, because the absolute canvas margin dominates tiny molecules) while
+its labels stay ~23 px, so four O labels dominate a four-atom drawing. The
+font size is clamped by `minFontSize`/`maxFontSize` instead of tracking the
+bond length; the candidate sheets in `benchmarks/blind_review/` test tighter
+clamps (12/28 and 8/20) and the measured per-molecule ratios are in the
+conversation log.
+
+### Parameter candidate sheets (2026-08-14)
+
+`benchmarks/param_candidates.py` renders one sheet per dimension, using
+benzoic acid, caffeine, sulfate, triphenylphosphine, TNT and 18-crown-6:
+
+- `acs_padding.png`: acs padding 0.02 (current) / 0.035 / 0.05. Indigo's
+  own canvas margin measures only 2-4 px (~0.02-0.03 of the canvas), so the
+  reference column's relaxed look comes mostly from its smaller 30 px bonds
+  floating in the sheet cell rather than from a bigger padding value; the
+  ladder is therefore a judgment range, with 0.035/0.05 as the two steps
+  above current.
+- `modern_font.png`: min/max font 14/32 (current), 12/28, 8/20. Measured
+  ratio ranges: 14/32 -> 0.42-0.57, 12/28 -> 0.40-0.51, 8/20 -> 0.29-0.41
+  across the six molecules; lower clamps also shrink the four O labels on
+  sulfate and betaine/ferrocene-sized ions (see below).
+- `modern_color.png`: classic CPK / darkened CPK (O #C0392B, N #2471A3,
+  S #A67C00, Cl #1E8449) / low-saturation (O #A93226, N #2C5F8A, S #8F7A1A,
+  Cl #2E7D46). Colored-ink share is ~0.42 for all three (the same atoms are
+  colored); mean colored-pixel luminance is CPK 116.0, darkened 120.3, low
+  saturation 110.8 - i.e. the perceptual difference is saturation, not how
+  much ink is colored.
+- `modern_line.png`: line width / padding 2.4/0.03 (current), 2.0/0.045,
+  1.8/0.06. At the rendered ~45 px bond length these are ~5.3%, ~4.4% and
+  ~4.0% line/bond ratios, bracketing the 4-5% target derived from ACS
+  (0.6 pt lines on 14.4 pt bonds).
