@@ -4,9 +4,11 @@ Run from the repository root::
 
     python scripts/generate_docs_images.py
 
-Layout rules: every molecule is rendered on the same square canvas so the
-grid stays uniform; the first column carries the molecule name and the header
-row carries the renderer/style name. Light grid lines separate cells.
+Layout: a clean grid with no label column. Column headers carry the renderer
+or style name, molecules are centered in equal cells, and the molecule name
+sits under each cell. Each molecule is rendered on its own aspect-matched
+canvas and fitted into the cell so small structures do not float in a sea of
+white space.
 """
 
 from __future__ import annotations
@@ -32,11 +34,11 @@ _FONT_CANDIDATES = [
     "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
 ]
 
-CELL = 320  # molecule canvas (square)
-PAD = 24  # whitespace inside each cell
-LABEL_COL = 240  # first column (molecule names)
-HEADER_H = 64  # header strip height
-ROW_H = CELL + 2 * PAD
+CELL = 400  # cell width and height for a square drawing area
+PAD = 28  # whitespace inside each cell
+HEADER_H = 76  # header strip height
+NAME_H = 48  # caption strip under each cell
+ROW_H = CELL + 2 * PAD + NAME_H
 
 BG = (255, 255, 255, 255)
 TEXT = (24, 24, 24, 255)
@@ -49,6 +51,7 @@ GALLERY = [
 ]
 
 STYLES = ["acs", "modern", "textbook-cn"]
+STYLE_LABELS = {"acs": "ACS", "modern": "Modern", "textbook-cn": "Textbook (CN)"}
 
 COMPARISON = [
     (
@@ -78,9 +81,7 @@ def _from_png(data: bytes) -> Image.Image:
 
 
 def _chemglyph_png(smiles: str, style: str) -> Image.Image:
-    result = chemglyph.render_molecule(
-        smiles, style=style, fmt="png", transparent=False, size=(CELL, CELL)
-    )
+    result = chemglyph.render_molecule(smiles, style=style, fmt="png", transparent=False)
     return _from_png(result.data)
 
 
@@ -97,32 +98,28 @@ def _rdkit_default_png(smiles: str) -> Image.Image:
 def _sheet(
     columns: int,
     rows: int,
-    *,
-    with_label_column: bool,
 ) -> tuple[Image.Image, ImageDraw.ImageDraw]:
-    label_width = LABEL_COL if with_label_column else 0
-    width = label_width + columns * (CELL + 2 * PAD)
+    width = columns * (CELL + 2 * PAD)
     height = HEADER_H + rows * ROW_H
     image = Image.new("RGBA", (width, height), BG)
     draw = ImageDraw.Draw(image)
-    for column in range(columns + 1):
-        x = label_width + column * (CELL + 2 * PAD)
-        draw.line([(x, 0), (x, height)], fill=BORDER, width=1)
-    for row in range(rows + 1):
+    for row in range(rows):
         y = HEADER_H + row * ROW_H
-        draw.line([(0, y), (width, y)], fill=BORDER, width=1)
+        if row:
+            draw.line([(0, y), (width, y)], fill=BORDER, width=1)
+    draw.line([(0, HEADER_H), (width, HEADER_H)], fill=BORDER, width=1)
     return image, draw
 
 
-def _header(draw: ImageDraw.ImageDraw, column: int, text: str, *, with_label_column: bool) -> None:
-    label_width = LABEL_COL if with_label_column else 0
-    x = label_width + column * (CELL + 2 * PAD) + (CELL + 2 * PAD) // 2
-    draw.text((x, HEADER_H // 2), text, font=_font(26), fill=TEXT, anchor="mm")
+def _header(draw: ImageDraw.ImageDraw, column: int, text: str) -> None:
+    x = column * (CELL + 2 * PAD) + (CELL + 2 * PAD) // 2
+    draw.text((x, HEADER_H // 2), text, font=_font(30), fill=TEXT, anchor="mm")
 
 
-def _label(draw: ImageDraw.ImageDraw, row: int, text: str) -> None:
-    y = HEADER_H + row * ROW_H + ROW_H // 2
-    draw.text((LABEL_COL // 2, y), text, font=_font(24), fill=TEXT, anchor="mm")
+def _caption(draw: ImageDraw.ImageDraw, column: int, row: int, text: str) -> None:
+    x = column * (CELL + 2 * PAD) + (CELL + 2 * PAD) // 2
+    y = HEADER_H + row * ROW_H + 2 * PAD + CELL + NAME_H // 2
+    draw.text((x, y), text, font=_font(24), fill=TEXT, anchor="mm")
 
 
 def _paste(
@@ -130,11 +127,8 @@ def _paste(
     image: Image.Image,
     column: int,
     row: int,
-    *,
-    with_label_column: bool,
 ) -> None:
-    label_width = LABEL_COL if with_label_column else 0
-    x0 = label_width + column * (CELL + 2 * PAD) + PAD
+    x0 = column * (CELL + 2 * PAD) + PAD
     y0 = HEADER_H + row * ROW_H + PAD
     thumb = image.copy()
     thumb.thumbnail((CELL, CELL))
@@ -144,26 +138,25 @@ def _paste(
 
 
 def gallery(out_dir: Path) -> None:
-    sheet, draw = _sheet(len(STYLES), len(GALLERY), with_label_column=True)
-    draw.text((LABEL_COL // 2, HEADER_H // 2), "Molecule", font=_font(26), fill=TEXT, anchor="mm")
+    sheet, draw = _sheet(len(STYLES), len(GALLERY))
     for column, style in enumerate(STYLES):
-        _header(draw, column, style, with_label_column=True)
+        _header(draw, column, STYLE_LABELS[style])
     for row, (name, smiles) in enumerate(GALLERY):
-        _label(draw, row, name)
         for column, style in enumerate(STYLES):
-            _paste(sheet, _chemglyph_png(smiles, style), column, row, with_label_column=True)
+            _paste(sheet, _chemglyph_png(smiles, style), column, row)
+            _caption(draw, column, row, name)
     sheet.save(out_dir / "gallery_3x3.png")
 
 
 def comparison(out_dir: Path) -> None:
-    sheet, draw = _sheet(2, len(COMPARISON), with_label_column=True)
-    draw.text((LABEL_COL // 2, HEADER_H // 2), "Molecule", font=_font(26), fill=TEXT, anchor="mm")
-    _header(draw, 0, "ChemGlyph (modern)", with_label_column=True)
-    _header(draw, 1, "RDKit default", with_label_column=True)
+    sheet, draw = _sheet(2, len(COMPARISON))
+    _header(draw, 0, "ChemGlyph (modern)")
+    _header(draw, 1, "RDKit default")
     for row, (name, smiles) in enumerate(COMPARISON):
-        _label(draw, row, name)
-        _paste(sheet, _chemglyph_png(smiles, "modern"), 0, row, with_label_column=True)
-        _paste(sheet, _rdkit_default_png(smiles), 1, row, with_label_column=True)
+        _paste(sheet, _chemglyph_png(smiles, "modern"), 0, row)
+        _paste(sheet, _rdkit_default_png(smiles), 1, row)
+        _caption(draw, 0, row, name)
+        _caption(draw, 1, row, name)
     sheet.save(out_dir / "comparison_vs_rdkit.png")
 
 
