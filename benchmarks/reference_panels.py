@@ -9,6 +9,10 @@ The sheet is for the maintainer's eyeball comparison, not for graders; it
 never enters the blind deck. Outputs go to ``benchmarks/blind_review/``
 (gitignored) and are never committed.
 
+The Indigo column follows publication convention (see RUNBOOK.md): no
+terminal CH3 labels, stereo wedges without the "Chiral" annotation, and a
+label/bond ratio of ~0.68 (ChemDraw's 10 pt type on 14.4 pt bonds).
+
 Usage::
 
     python benchmarks/reference_panels.py
@@ -18,7 +22,6 @@ from __future__ import annotations
 
 import io
 import re
-import statistics
 import sys
 from pathlib import Path
 
@@ -73,17 +76,6 @@ def _svg_size(svg: str) -> tuple[float, float]:
     return float(width.group(1)), float(height.group(1))
 
 
-def _median_bond_length(svg: str) -> float:
-    """Median straight bond segment length from a chemglyph SVG."""
-    lengths: list[float] = []
-    bond_pattern = re.compile(r"class='bond-\d+[^']*' d='M ([\d.]+),([\d.]+) L ([\d.]+),([\d.]+)'")
-    for match in bond_pattern.finditer(svg):
-        x1, y1, x2, y2 = (float(part) for part in match.groups())
-        lengths.append(((x2 - x1) ** 2 + (y2 - y1) ** 2) ** 0.5)
-    assert lengths, "no straight bond segments found"
-    return statistics.median(lengths)
-
-
 def _rasterize(svg: str, zoom: float) -> Image.Image:
     data = resvg_py.svg_to_bytes(svg_string=svg, zoom=zoom, background="#ffffff")
     return _png(data)
@@ -92,9 +84,10 @@ def _rasterize(svg: str, zoom: float) -> Image.Image:
 def _chemglyph_panel(smiles: str, style: str) -> Image.Image:
     svg = chemglyph.render_molecule(smiles, style=style).data
     width, height = _svg_size(svg)
-    bond = _median_bond_length(svg)
     fit = min((CELL - 2 * PAD) / width, (CELL - 2 * PAD) / height)
-    return _rasterize(svg, min(TARGET_BOND / bond, fit))
+    # chemglyph's auto canvas already targets ~30 px bonds, so rasterize at
+    # native size and only shrink when a molecule is larger than its cell.
+    return _rasterize(svg, min(1.0, fit))
 
 
 def _indigo() -> tuple[Indigo, IndigoRenderer]:
@@ -102,9 +95,11 @@ def _indigo() -> tuple[Indigo, IndigoRenderer]:
     renderer = IndigoRenderer(indigo)
     indigo.setOption("render-output-format", "svg")
     indigo.setOption("render-background-color", "255,255,255")
-    indigo.setOption("render-label-mode", "terminal-hetero")
+    indigo.setOption("render-label-mode", "hetero")
+    indigo.setOption("render-stereo-style", "ext")
     indigo.setOption("render-bond-length", TARGET_BOND)
     indigo.setOption("render-bond-line-width", 1.0)
+    indigo.setOption("render-font-size", 14)
     return indigo, renderer
 
 

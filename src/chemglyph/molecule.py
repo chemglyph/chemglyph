@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
+import math
 import re
 from dataclasses import dataclass, field
 
-from rdkit import Chem
+from rdkit import Chem, Geometry
 from rdkit.Chem import Descriptors, rdDepictor, rdMolDescriptors
 from rdkit.Chem.Draw import rdMolDraw2D
 
@@ -143,6 +144,266 @@ def _prepare_for_drawing(mol: Chem.Mol) -> None:
     Chem.SanitizeMol(mol)
     rdDepictor.SetPreferCoordGen(True)
     rdDepictor.Compute2DCoords(mol)
+    _repair_ring_embeddings(mol)
+
+
+def _repair_ring_embeddings(mol: Chem.Mol) -> None:
+    """Move substituents that a layout tucked inside a small ring back out.
+
+    RDKit's 2D layouts occasionally place a pendant atom inside a ring's
+    cavity (for example paclitaxel's gem-dimethyl ends up inside the central
+    8-membered ring), which makes the drawing read as a different, larger
+    ring system. This geometric repair runs after layout, moves only atom
+    positions, and never touches bonds, atom order, or stereo flags.
+    """
+    for _ in range(4):
+        problem = _embedded_atom(mol)
+        if problem is None:
+            return
+        ring, atom_index = problem
+        _push_atom_outside(mol, ring, atom_index)
+
+
+def _ring_polygons(mol: Chem.Mol) -> list[tuple[int, ...]]:
+    """Ring atom tuples for rings small enough to hold a visible cavity."""
+    return [tuple(ring) for ring in mol.GetRingInfo().AtomRings() if len(ring) <= 8]
+
+
+def _positions(mol: Chem.Mol) -> dict[int, tuple[float, float]]:
+    conformer = mol.GetConformer()
+    return {
+        i: (conformer.GetAtomPosition(i).x, conformer.GetAtomPosition(i).y)
+        for i in range(mol.GetNumAtoms())
+    }
+
+
+def _point_in_polygon(point: tuple[float, float], polygon: list[tuple[float, float]]) -> bool:
+    """Ray-casting point-in-polygon test (strictly inside, boundary excluded)."""
+    x, y = point
+    inside = False
+    previous = len(polygon) - 1
+    for current in range(len(polygon)):
+        x1, y1 = polygon[current]
+        x2, y2 = polygon[previous]
+        if (y1 > y) != (y2 > y) and x < (x2 - x1) * (y - y1) / (y2 - y1) + x1:
+            inside = not inside
+        previous = current
+    return inside
+
+
+def _embedded_atom(mol: Chem.Mol) -> tuple[tuple[int, ...], int] | None:
+    positions = _positions(mol)
+    for ring in _ring_polygons(mol):
+        ring_set = set(ring)
+        polygon = [positions[i] for i in ring]
+        for atom_index, point in positions.items():
+            if atom_index in ring_set:
+                continue
+            if _point_in_polygon(point, polygon):
+                return ring, atom_index
+    return None
+
+
+def _inside_any_ring(
+    mol: Chem.Mol,
+    positions: dict[int, tuple[float, float]],
+    atom_index: int,
+    point: tuple[float, float],
+) -> bool:
+    for ring in _ring_polygons(mol):
+        if atom_index in ring:
+            continue
+        if _point_in_polygon(point, [positions[i] for i in ring]):
+            return True
+    return False
+
+
+def _candidate_conflicts(
+    mol: Chem.Mol,
+    positions: dict[int, tuple[float, float]],
+    parent_index: int,
+    atom_index: int,
+    point: tuple[float, float],
+    escaped_ring: set[int],
+) -> bool:
+    """True when a candidate position would overlap an atom or cross a bond."""
+    parent_point = positions[parent_index]
+    for bond in mol.GetBonds():
+        begin, end = bond.GetBeginAtomIdx(), bond.GetEndAtomIdx()
+        if atom_index in (begin, end) or parent_index in (begin, end):
+            continue
+        if begin in escaped_ring and end in escaped_ring:
+            continue  # the substituent has to cross this ring's boundary to exit
+        if _segments_cross(parent_point, point, positions[begin], positions[end]):
+            return True
+    for other_index, other_point in positions.items():
+        if other_index in (atom_index, parent_index):
+            continue
+        if other_index in escaped_ring:
+            continue  # the substituent exits past this ring's own atoms
+        if math.hypot(point[0] - other_point[0], point[1] - other_point[1]) < 0.55:
+            return True
+    return False
+
+
+def _segments_cross(
+    a: tuple[float, float],
+    b: tuple[float, float],
+    c: tuple[float, float],
+    d: tuple[float, float],
+) -> bool:
+    """Proper intersection test for two segments (shared endpoints excluded)."""
+
+    def orientation(
+        p: tuple[float, float], q: tuple[float, float], r: tuple[float, float]
+    ) -> float:
+        return (q[0] - p[0]) * (r[1] - p[1]) - (q[1] - p[1]) * (r[0] - p[0])
+
+    first, second, third, fourth = (
+        orientation(c, d, a),
+        orientation(c, d, b),
+        orientation(a, b, c),
+        orientation(a, b, d),
+    )
+    return bool(
+        ((first > 0 and second < 0) or (first < 0 and second > 0))
+        and ((third > 0 and fourth < 0) or (third < 0 and fourth > 0))
+    )
+
+
+def _push_atom_outside(mol: Chem.Mol, ring: tuple[int, ...], atom_index: int) -> None:
+    """Move one embedded atom (and, if needed, its pendant subtree) outward."""
+    positions = _positions(mol)
+    atom = mol.GetAtomWithIdx(atom_index)
+    ring_set = set(ring)
+    point = positions[atom_index]
+
+    # Ring centroid gives the "inside" reference direction for this ring.
+    centroid = (
+        sum(positions[i][0] for i in ring) / len(ring),
+        sum(positions[i][1] for i in ring) / len(ring),
+    )
+
+    if atom.GetDegree() == 1:
+        parent = atom.GetNeighbors()[0]
+        parent_point = positions[parent.GetIdx()]
+        bond_length = math.hypot(point[0] - parent_point[0], point[1] - parent_point[1])
+        outward = (
+            parent_point[0] - centroid[0],
+            parent_point[1] - centroid[1],
+        )
+        outward_norm = math.hypot(*outward) or 1.0
+        outward = (outward[0] / outward_norm, outward[1] / outward_norm)
+        current = (
+            (point[0] - parent_point[0]) / (bond_length or 1.0),
+            (point[1] - parent_point[1]) / (bond_length or 1.0),
+        )
+        dot = current[0] * outward[0] + current[1] * outward[1]
+        reflected = (current[0] - 2 * dot * outward[0], current[1] - 2 * dot * outward[1])
+        rotated = []
+        for degrees in (0, 30, -30, 60, -60, 90, -90, 120, -120, 180):
+            if atom_index % 2:
+                degrees = -degrees
+            radians = math.radians(degrees)
+            rotated.append(
+                (
+                    outward[0] * math.cos(radians) - outward[1] * math.sin(radians),
+                    outward[0] * math.sin(radians) + outward[1] * math.cos(radians),
+                )
+            )
+        for direction in (reflected, *rotated):
+            candidate = (
+                parent_point[0] + bond_length * direction[0],
+                parent_point[1] + bond_length * direction[1],
+            )
+            if not _inside_any_ring(
+                mol, positions, atom_index, candidate
+            ) and not _candidate_conflicts(
+                mol, positions, parent.GetIdx(), atom_index, candidate, ring_set
+            ):
+                _set_position(mol, atom_index, candidate)
+                return
+        # Last resort: keep the bond direction but stretch it just past the
+        # ring boundary along the centroid ray (rare; usually the rotations
+        # above find a bond-length-preserving exit).
+        centroid_direction = (
+            point[0] - centroid[0],
+            point[1] - centroid[1],
+        )
+        centroid_norm = math.hypot(*centroid_direction) or 1.0
+        centroid_direction = (
+            centroid_direction[0] / centroid_norm,
+            centroid_direction[1] / centroid_norm,
+        )
+        exit_point = _ray_exit(point, centroid_direction, [positions[i] for i in ring])
+        if exit_point is not None:
+            candidate = (
+                exit_point[0] + 0.35 * centroid_direction[0],
+                exit_point[1] + 0.35 * centroid_direction[1],
+            )
+            if not _candidate_conflicts(
+                mol, positions, parent.GetIdx(), atom_index, candidate, ring_set
+            ):
+                _set_position(mol, atom_index, candidate)
+        return
+
+    # Higher-degree atom: translate the whole pendant subtree until the
+    # embedded atom exits the ring along the centroid ray.
+    direction = (point[0] - centroid[0], point[1] - centroid[1])
+    norm = math.hypot(*direction) or 1.0
+    direction = (direction[0] / norm, direction[1] / norm)
+    displacement = _ray_exit(point, direction, [positions[i] for i in ring])
+    if displacement is None:
+        return
+    margin = 0.25
+    delta = (
+        displacement[0] + margin * direction[0] - point[0],
+        displacement[1] + margin * direction[1] - point[1],
+    )
+    subtree = _pendant_subtree(mol, atom_index, ring_set)
+    for member in subtree:
+        member_point = positions[member]
+        _set_position(mol, member, (member_point[0] + delta[0], member_point[1] + delta[1]))
+
+
+def _ray_exit(
+    origin: tuple[float, float],
+    direction: tuple[float, float],
+    polygon: list[tuple[float, float]],
+) -> tuple[float, float] | None:
+    """First polygon boundary crossing along ``origin + t*direction``."""
+    best: tuple[float, tuple[float, float]] | None = None
+    for i in range(len(polygon)):
+        x1, y1 = polygon[i]
+        x2, y2 = polygon[(i + 1) % len(polygon)]
+        ex, ey = x2 - x1, y2 - y1
+        denominator = direction[0] * ey - direction[1] * ex
+        if abs(denominator) < 1e-9:
+            continue
+        t = ((x1 - origin[0]) * ey - (y1 - origin[1]) * ex) / denominator
+        u = ((x1 - origin[0]) * direction[1] - (y1 - origin[1]) * direction[0]) / denominator
+        if t > 1e-6 and -1e-6 <= u <= 1 + 1e-6 and (best is None or t < best[0]):
+            best = (t, (origin[0] + t * direction[0], origin[1] + t * direction[1]))
+    return best[1] if best else None
+
+
+def _pendant_subtree(mol: Chem.Mol, root: int, blocked: set[int]) -> set[int]:
+    """Non-ring atoms reachable from ``root`` without passing through a ring."""
+    seen = {root}
+    stack = [root]
+    while stack:
+        current = stack.pop()
+        for neighbor in mol.GetAtomWithIdx(current).GetNeighbors():
+            neighbor_index = neighbor.GetIdx()
+            if neighbor_index in blocked or neighbor_index in seen:
+                continue
+            seen.add(neighbor_index)
+            stack.append(neighbor_index)
+    return seen
+
+
+def _set_position(mol: Chem.Mol, atom_index: int, point: tuple[float, float]) -> None:
+    mol.GetConformer().SetAtomPosition(atom_index, Geometry.Point3D(point[0], point[1], 0.0))
 
 
 def _normalize_fmt(fmt: str) -> str:

@@ -380,3 +380,61 @@ The PR title was `Add ChemGlyph 🤖🤖🤖`. Since the PR author is the
 maintainer's own account, the title was edited directly to plain
 `Add ChemGlyph` and a one-line comment was posted on the PR recording the
 change (comment 5291267758). PR remains open and ready for review.
+
+### P0: ring-topology audit and permanent regression tests (2026-08-14)
+
+**Caffeine diagnosis.** The reported 7+6 fused drawing could not be
+reproduced in the current pipeline. Evidence, at three independent layers:
+
+1. `SetPreferCoordGen(True)` is taking effect: with the flag off the
+   caffeine conformer has 1.5-unit bonds and one orientation; with it on,
+   1.0-unit bonds and a different orientation - so there is no silent
+   fallback to the default layout.
+2. Both layouts place the atoms in a correct 5+6 fused purine: regular
+   pentagon + hexagon sharing one edge, no self-intersection, no atom
+   embedded in a ring.
+3. The delivered sheet's caffeine pixels (reference, acs, modern columns)
+   all show the same 5+6 topology.
+
+What was actually wrong in the delivered sheet: `reference_panels.py`
+normalized each engine to a "median bond length" measured over SVG path
+fragments (RDKit cuts bond paths around atom labels), so caffeine `modern`
+measured ~14 px instead of ~48 px and was upscaled ~1.7x to fill its cell
+while the reference and acs columns stayed at 1.0x. The inflated, heavy-lined
+modern panel is the plausible source of the wrong-ring reading. The script
+now rasterizes chemglyph at native size (the auto canvas already targets
+30 px bonds) and only shrinks oversized molecules.
+
+**Real defect found by the audit.** Paclitaxel's gem-dimethyl carbons are
+placed inside the central 8-membered ring by CoordGen; the classic layout
+instead embeds one methyl inside the A-ring. No RDKit layout variant
+(forceRDKit, ring templates, degree-4 permutation, random sampling seeds)
+produces a clean embedding. This is recorded as a known limitation alongside
+ferrocene/porphyrin. A geometric repair was added to `_prepare_for_drawing`
+for the fixable class of embedded substituents (rotates pendant bonds to the
+exterior wedge, preserving bond length; it simply does not fire when no
+planarity-preserving exit exists).
+
+**Permanent tests.** `tests/test_layout_integrity.py` runs for all 20
+blind-test molecules:
+
+- every style's SVG must contain every bond class id (the drawn graph cannot
+  lose or add bonds);
+- ring polygons must be simple, non-degenerate, near-uniform, and (except
+  for the documented paclitaxel placement) free of embedded non-ring atoms;
+- face tracing over the ring core (pendant chains peeled) must recover
+  exactly the ring-size multiset RDKit's `GetRingInfo` reports - this is the
+  caffeine-class guard, and it passes for all 20 including paclitaxel
+  (4/6/6/6/6/6/8) and penicillin-G (4/5/6 beta-lactam present).
+
+Suite: 127 passed, 2 skipped. Sheets regenerated with the fixes.
+
+### P1: Indigo reference baseline corrected (2026-08-14)
+
+The reference column now follows publication convention instead of raw
+Ketcher defaults: `render-label-mode=hetero` (no terminal CH3 labels),
+`render-stereo-style=ext` (wedges without the "Chiral" annotation), and
+`render-font-size=14` for a label/bond ratio of ~0.68 (ChemDraw's 10 pt type
+on 14.4 pt bonds). All three sheet columns now share a ~30 px bond length.
+The configuration is recorded in `benchmarks/RUNBOOK.md` as the
+publication-convention reference baseline.

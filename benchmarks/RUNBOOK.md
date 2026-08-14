@@ -95,10 +95,17 @@ python benchmarks/reference_panels.py
 
 The script writes `benchmarks/blind_review/reference_sheet_page{1,2}.png`
 (gitignored): one row per molecule, columns reference | chemglyph acs |
-chemglyph modern, with every engine normalized to the same ~30 px mean bond
-length. Indigo settings mirror Ketcher's look: white background,
-`terminal-hetero` labels (explicit CH3), bond length 30 px, line width
-1.0 px.
+chemglyph modern, with every engine at the same ~30 px bond length. The
+Indigo settings are the publication-convention reference baseline, not raw
+Ketcher defaults:
+
+- `render-label-mode = hetero`: heteroatom labels only, no terminal CH3
+  labels (ACS-style bare line ends);
+- `render-stereo-style = ext`: stereo wedges without the "Chiral" corner
+  annotation;
+- `render-font-size = 14`: label/bond ratio ~0.68, matching ChemDraw's
+  10 pt type on 14.4 pt bonds;
+- bond length 30 px, line width 1.0 px, white background.
 
 Use the sheets as the maintainer's tuning anchor only. They are not a blind
 deck and graders must never see them; the official blind run still uses
