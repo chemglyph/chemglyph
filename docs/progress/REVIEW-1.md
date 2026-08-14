@@ -291,3 +291,16 @@ Remaining follow-ups: submit the support ticket; after the purge, verify 404s
 for every listed SHA and delete the backup. NetBerth's separate personal-Gmail
 exposure (P0-2) is out of this repository's scope and should receive the same
 treatment from its own maintainer.
+
+### P0-3 purge verification (2026-08-14)
+
+- Re-tested every pre-rewrite SHA from the private ticket draft through the
+  commits API (`repos/chemglyph/chemglyph/commits/<sha>`): all 11 return
+  **200** and remain publicly readable. `fc76fd4` (the rewritten head, which
+  is part of current history) also returns 200, as expected.
+- Conclusion: GitHub Support has not run the dangling-object GC yet. This is
+  the documented expected interim state, not a failure. The pre-rewrite
+  backup mirror at `/Users/abc/backups/chemglyph-pre-rewrite.git` stays in
+  place and is not deleted until the same check returns 404 for all 11 SHAs.
+- Maintainer action: check the ticket on support.github.com and follow up if
+  there is no reply or ETA; the full old-SHA list is in the submitted ticket.
