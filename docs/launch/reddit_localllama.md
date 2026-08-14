@@ -1,23 +1,24 @@
-# Giving local LLM agents first-class chemistry rendering: an MCP server
+# An MCP server that draws molecules and reactions for local LLM agents
 
 Agents are fine at emitting SMILES and bad at drawing molecules. ChemGlyph
-(https://github.com/chemglyph/chemglyph) is an MCP server + Python library
-that gives them publication-quality structure and reaction rendering.
+(https://github.com/chemglyph/chemglyph) is an MCP server and Python library
+that renders structures and reaction schemes.
 
-Four tools, each docstring written for the model ("use this when..."):
+Four tools, with docstrings written for the model:
 
-- `render_molecule` — SMILES/InChI/molblock → SVG/PNG + formula, MW, warnings;
-- `render_reaction` — a JSON schema for synthesis routes with conditions,
-  yields, equilibrium/retro arrows, and line wrapping;
-- `validate_structure` — errors plus a small set of automatic SMILES fixes;
-- `parse_name` — English IUPAC/common names → SMILES (offline via OPSIN).
+- `render_molecule`: SMILES/InChI/molblock to SVG or PNG, plus formula,
+  molecular weight, and warnings
+- `render_reaction`: a JSON schema for synthesis routes with conditions,
+  yields, equilibrium and retro arrows, and line wrapping
+- `validate_structure`: errors plus a small set of automatic SMILES fixes
+- `parse_name`: English names via OPSIN, Chinese names via a built-in
+  dictionary, all offline
 
-Design choices LLM folks may appreciate: conditions are pre-formatted Unicode
-text (the caller passes "H₂SO₄", the tool never parses formulas); all errors
-share one base type; everything is offline with no telemetry; and the SVG
-comes back as an MCP image content block plus text metadata.
+Details that might matter to agent builders: conditions are pre-formatted
+Unicode text (the caller passes H₂SO₄, the tool never parses formulas), all
+errors share one base type, there is no telemetry, and the SVG comes back as
+an MCP image block plus text metadata.
 
-It's the rendering/validation/interface slice only — explicitly not a
-structure editor or retrosynthesis tool. MIT licensed. Would love feedback
-on the tool surface: what else should an agent-facing chemistry tool expose
-that I'm missing?
+It only does rendering, validation, and naming. No structure editor, no
+retrosynthesis. MIT licensed. What else should an agent-facing chemistry
+tool expose?
