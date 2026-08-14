@@ -100,7 +100,7 @@ report.fixes[0].description  # 'lowercase aromatic atoms could not be kekulized.
 report.fixes[0].fixed_smiles  # 'C1CCCC1'
 ```
 
-## Naming (v0.1: English only)
+## Naming
 
 ```python
 chemglyph.parse_name("aspirin")  # 'CC(=O)Oc1ccccc1C(=O)O'
@@ -108,7 +108,16 @@ chemglyph.parse_name("aspirin")  # 'CC(=O)Oc1ccccc1C(=O)O'
 
 English IUPAC/common names resolve offline via OPSIN through the optional
 extra (`pip install 'chemglyph[opsin]'`, plus a Java runtime). Chinese names
-are reserved for v0.2 and raise a clear `NotImplementedError`.
+resolve offline through the built-in dictionary (common reagents, the
+blind-test set, common drugs), with a translator hook for the library API:
+
+```python
+chemglyph.parse_name("阿司匹林")  # 'CC(=O)Oc1ccccc1C(=O)O'
+chemglyph.parse_name("六甲基苯", translator=to_english)
+```
+
+Unknown Chinese names raise a clear `NotImplementedError`; ChemGlyph itself
+never performs online lookups or translation.
 
 ## MCP: Claude Desktop and friends
 

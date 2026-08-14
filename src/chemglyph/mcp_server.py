@@ -125,10 +125,13 @@ def validate_structure_tool(structure: str) -> list[TextContent]:
 @server.tool(
     name="parse_name",
     description=(
-        "Convert an English IUPAC or common chemical name into canonical SMILES "
-        "(offline, via OPSIN). Use this when the user gives a name like 'aspirin' "
-        "and you need SMILES to render or reason about it. Chinese names are not "
-        "supported in v0.1."
+        "Convert a chemical name into canonical SMILES, offline. Use this when "
+        "the user gives a name like 'aspirin' or '阿司匹林' and you need SMILES. "
+        "English IUPAC/common names resolve via OPSIN (needs the chemglyph[opsin] "
+        "extra and a Java runtime); Chinese names resolve via the built-in "
+        "dictionary, and unknown Chinese names return a clear error (this MCP "
+        "tool cannot accept a translator callable — pre-translate to English "
+        "yourself or use the library API)."
     ),
     structured_output=False,
 )

@@ -94,8 +94,15 @@ def test_validate_structure_returns_report_text() -> None:
     assert "'valid': True" in text.text
 
 
-def test_parse_name_chinese_error_is_surfaced() -> None:
+def test_parse_name_chinese_dictionary_resolves() -> None:
     result = _call_tool("parse_name", {"name": "阿司匹林"})
     assert not result.is_error
     text = next(item for item in result.content if item.type == "text")
-    assert "planned for v0.2" in text.text
+    assert text.text == "CC(=O)Oc1ccccc1C(=O)O"
+
+
+def test_parse_name_unknown_chinese_is_surfaced_as_error_text() -> None:
+    result = _call_tool("parse_name", {"name": "六甲基苯"})
+    assert not result.is_error
+    text = next(item for item in result.content if item.type == "text")
+    assert "built-in dictionary" in text.text
