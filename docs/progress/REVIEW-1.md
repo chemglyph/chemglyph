@@ -127,6 +127,27 @@ or a passed blind test:
 - Security note for the maintainer: the upload token was shared in chat; it
   should be rotated in the PyPI account settings.
 
+### P1-6 addendum: PyPI + registry 0.1.2 released (2026-08-14)
+
+- 0.1.2 carries the MCP image fixes: PNG tool results, reaction SVG
+  rasterization via `resvg-py`, and default save-to-`~/Downloads/chemglyph/`
+  with the file path returned in text (needed for clients such as LM Studio
+  that drop tool images).
+- Version bumped in `pyproject.toml`, `src/chemglyph/__init__.py`, and
+  `server.json`; committed as `release 0.1.2`; CI green.
+- `twine check` passed; clean-venv smoke test passed (molecule PNG,
+  reaction SVG -> PNG, MCP initialize reports 0.1.2).
+- Published to PyPI: <https://pypi.org/project/chemglyph/0.1.2/> (sdist +
+  wheel). Post-upload check: `pip install chemglyph==0.1.2` in a clean venv
+  and render both paths successfully.
+- Official MCP registry re-published via `mcp-publisher` 1.8.1
+  (`login github -token` with the existing `gh` auth): `validate` passed,
+  `publish` succeeded. Public API confirms
+  `io.github.random-orbit/chemglyph` v0.1.2, status `active`, `isLatest`
+  true (published 2026-08-14T04:01Z).
+- Security note for the maintainer: the upload token was shared in chat
+  again; rotate it in the PyPI account settings now that 0.1.2 is live.
+
 ## P1-7: RDKit minimum version
 
 - Declared floor was `rdkit>=2024.9`, but only 2026.3.5 had been tested.

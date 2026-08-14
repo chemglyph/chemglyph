@@ -1,6 +1,6 @@
 # Publishing ChemGlyph to the official MCP registry
 
-Status: published. `io.github.random-orbit/chemglyph` version `0.1.1` is live
+Status: published. `io.github.random-orbit/chemglyph` version `0.1.2` is live
 in the official registry (verified via the public v0 API on 2026-08-14).
 The registry is in preview; its flow may change.
 
@@ -12,7 +12,7 @@ The registry is in preview; its flow may change.
   `<!-- mcp-name: io.github.random-orbit/chemglyph -->`. The registry checks
   for this string in the published PyPI description, so it must ship in a
   PyPI release.
-- Version bumped to `0.1.1` in `pyproject.toml` for that release.
+- Version bumped to `0.1.2` in `pyproject.toml` for that release.
 
 ## Steps
 
@@ -22,7 +22,7 @@ The registry is in preview; its flow may change.
    TWINE_USERNAME='__token__' TWINE_PASSWORD='pypi-...' \
      .venv/bin/python -m build
    TWINE_USERNAME='__token__' TWINE_PASSWORD='pypi-...' \
-     .venv/bin/twine upload dist/chemglyph-0.1.1*
+    .venv/bin/twine upload dist/chemglyph-0.1.2*
    ```
 
 2. Install the publisher CLI (Homebrew or the release binary):
