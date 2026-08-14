@@ -66,8 +66,8 @@ the panels**):
 - `chemdraw-acs/{label}.svg|.png` — apply the ACS Document 1996 settings
   (fixed bond length, Arial labels, black on white) to mirror `chemglyph-acs`.
 - `chemdraw-modern/{label}.svg|.png` — ChemDraw defaults, white background,
-  heteroatoms recolored to match `chemglyph-modern` (darkened CPK: O `#C0392B`,
-  N `#2471A3`, S `#A67C00`, Cl `#1E8449`). If per-atom recoloring is too
+  heteroatoms recolored to match `chemglyph-modern` (classic CPK: O `#FF0D0D`,
+  N `#3050F8`, S `#E8C300`, Cl `#1FB01F`). If per-atom recoloring is too
   laborious, a monochrome panel is an acceptable fallback: record that color
   was excluded from judging for that style.
 

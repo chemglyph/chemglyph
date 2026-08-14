@@ -56,15 +56,14 @@ _ACS_OPTIONS = {
     "padding": 0.05,
 }
 
-# modern: darkened CPK heteroatom colors (O red, N blue, S yellow, Cl green)
-# that sit on white without overwhelming the skeleton; lighter bonds and more
-# padding for screen/chat display.
+# modern: classic CPK heteroatom colors (O red, N blue, S yellow, Cl green)
+# for maximum signal on screens; lighter bonds and generous padding.
 _MODERN_OPTIONS = {
     "atom_colours": {
-        8: "#C0392B",
-        7: "#2471A3",
-        16: "#A67C00",
-        17: "#1E8449",
+        8: "#FF0D0D",
+        7: "#3050F8",
+        16: "#E8C300",
+        17: "#1FB01F",
     },
     "bondLineWidth": 1.8,
     "multipleBondOffset": 0.18,

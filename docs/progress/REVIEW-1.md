@@ -524,3 +524,23 @@ than a larger value that would have "confirmed" the cramped impression).
 The perceived headroom in the reference column comes from its smaller bond
 length, and the padding ladder was presented as a judgment range instead of
 a fabricated reference replication. Keep reporting measurements as they are.
+
+### modern palette callback (2026-08-14)
+
+The three weight-reduction changes together (font 12/28, darkened CPK,
+line 1.8) made the heteroatom signal too weak - most visible on benzoic
+acid, vanillin, aspirin and s-ibuprofen, where the red O reads almost black
+at screen distance. A single-revert comparison (A: font 14/32, B: classic
+CPK, C: line 2.0) was reviewed by eye; the maintainer chose **B**.
+
+Final modern parameters: classic CPK palette (O `#FF0D0D`, N `#3050F8`,
+S `#E8C300`, Cl `#1FB01F`), min/max font 12/28, line width 1.8, padding
+0.06. Golden color strings updated; reference sheets, README images and the
+aspirin example regenerated; 127 passed / 2 skipped; CI green.
+
+Methodology conclusion (recorded for future iterations): color-class
+judgments have no reliable automated metric - colored-ink share and mean
+luminance cannot measure hue salience against a black skeleton (darkened
+red scored nearly the same share/luminance as classic red while reading as
+almost black on screen). The color dimension is therefore always decided by
+human confirmation; ink statistics must never substitute for it.
