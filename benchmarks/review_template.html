@@ -44,7 +44,7 @@ pre {
     <p>感谢参与。下面有 40 组化学结构图,每组两张(A 和 B),画的是同一个分子。</p>
     <p>规则:</p>
     <ul>
-      <li>每组选一张<strong>你更愿意放进论文</strong>的图;确实没差别就选"两者差不多"。</li>
+      <li>每组选一张<strong>你更愿意放进论文</strong>的图;确实没差别就选"两者差不多";两张都不理想就选"都不理想"。</li>
       <li>凭第一印象作答,每组一分钟以内足够。</li>
       <li>只看图的布局、清晰度和整体观感。</li>
       <li>少量标着"不计分"的组可以不答,答了也不影响结果。</li>
@@ -72,6 +72,12 @@ pre {
       </div>
       <div style="margin-top:12px">
         <button class="btn secondary" id="tie-btn" onclick="pick('tie')">两者差不多(平局)</button>
+        <button class="btn secondary" id="neither-btn" onclick="pick('neither')">都不理想</button>
+      </div>
+      <div style="margin-top:8px">
+        <textarea id="note" rows="2" oninput="saveNote()"
+          style="width:100%;box-sizing:border-box;border:1px solid #e2e2e6;border-radius:8px;padding:8px;font-size:14px"
+          placeholder="备注(可选):两张图的问题在哪里"></textarea>
       </div>
       <div style="margin-top:16px">
         <button class="btn" onclick="prev()">上一组</button>
@@ -91,6 +97,7 @@ pre {
 <script>
 const DATA = __DATA_JSON__;
 const answers = {};
+const notes = {};
 let current = 0;
 
 function start() {
@@ -107,6 +114,7 @@ function show(i) {
   document.getElementById("progress").textContent = Object.keys(answers).length + " 已答";
   document.getElementById("img-a").src = pair.a;
   document.getElementById("img-b").src = pair.b;
+  document.getElementById("note").value = notes[DATA[current].id] || "";
   renderSelection();
 }
 
@@ -115,11 +123,16 @@ function renderSelection() {
   document.getElementById("choice-a").classList.toggle("selected", value === "A");
   document.getElementById("choice-b").classList.toggle("selected", value === "B");
   document.getElementById("tie-btn").classList.toggle("selected", value === "tie");
+  document.getElementById("neither-btn").classList.toggle("selected", value === "neither");
 }
 
 function pick(value) {
   answers[DATA[current].id] = value;
   renderSelection();
+}
+
+function saveNote() {
+  notes[DATA[current].id] = document.getElementById("note").value.trim();
 }
 
 function prev() {
@@ -151,7 +164,10 @@ function copyAnswers() {
 }
 
 function downloadAnswers() {
-  const blob = new Blob([JSON.stringify({answers: answers}, null, 2)], {type: "application/json"});
+  const blob = new Blob(
+    [JSON.stringify({answers: answers, notes: notes}, null, 2)],
+    {type: "application/json"}
+  );
   const link = document.createElement("a");
   link.href = URL.createObjectURL(blob);
   link.download = "answers.json";

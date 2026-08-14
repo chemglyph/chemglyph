@@ -113,18 +113,22 @@ When Ketcher replaces ChemDraw, follow the same rules with these steps:
 
 ## 6. Grading protocol
 
-For each pair the grader records one of: `A`, `B`, or `tie` (no preference),
-plus optional free-text notes. The four porphyrin/ferrocene pairs are shown
-and marked excluded; grader notes on them are recorded as known limitations
-instead of being scored.
+For each pair the grader records one of: `A`, `B`, `tie` (no real
+preference), or `neither` (both fall short), plus optional free-text notes.
+The four porphyrin/ferrocene pairs are shown and marked excluded; grader
+notes on them are recorded as known limitations instead of being scored.
 
 ## 7. Scoring and pass criteria
 
 - Eligible denominator: 40 − 4 = **36 pairs** (18 molecules × 2 styles).
-- Per grader: `(chemglyph picks + 0.5 × ties) / 36`.
+- Per grader: `(chemglyph picks + 0.5 × ties) / 36`. A `neither` vote scores
+  0 for ChemGlyph and the pair still counts in the denominator; a pair is
+  only excluded when it is in the known-limitation list or its reference
+  panel is unusable, never because both figures scored badly.
 - Aggregate: mean across graders. **Pass: aggregate ≥ 40%.**
 - Report breakdowns per style (`acs`, `modern`) and per molecule. Molecules
-  where every grader preferred ChemDraw become the style fix list.
+  where every grader preferred the reference figure, or that drew `neither`
+  votes, become the style fix list.
 - On failure: tune the offending style(s), regenerate only the affected
   figures under a new seed, and rerun the full protocol.
 

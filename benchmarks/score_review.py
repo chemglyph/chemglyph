@@ -21,7 +21,7 @@ _REPO_ROOT = Path(__file__).resolve().parents[1]
 _OUT_DIR = _REPO_ROOT / "benchmarks" / "blind_review"
 _PAIR_KEY_PATH = _OUT_DIR / "pair_key.json"
 
-VALID_ANSWERS = {"A", "B", "tie"}
+VALID_ANSWERS = {"A", "B", "tie", "neither"}
 
 
 def score_grader(answers: dict[str, str], pair_key: dict) -> dict:
@@ -41,6 +41,7 @@ def score_grader(answers: dict[str, str], pair_key: dict) -> dict:
             value = 0.0
         else:
             chemglyph_side = "A" if info["a_engine"] == "chemglyph" else "B"
+            # pick = 1, tie = 0.5, neither = 0 (ChemGlyph was not chosen)
             value = 1.0 if answer == chemglyph_side else (0.5 if answer == "tie" else 0.0)
         picked += value
         style = info["style"]

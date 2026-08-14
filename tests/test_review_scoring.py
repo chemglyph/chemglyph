@@ -66,6 +66,15 @@ def test_score_grader_counts_picks_and_ties() -> None:
     assert score["per_style"]["modern"]["rate"] == pytest.approx(1.0)
 
 
+def test_score_grader_neither_counts_zero_but_stays_in_denominator() -> None:
+    score_review = _load_module()
+    answers = {"pair_001": "neither", "pair_002": "B", "pair_003": "A"}
+    score = score_review.score_grader(answers, _PAIR_KEY)
+    assert score["scored_pairs"] == 3
+    assert score["missing"] == 0
+    assert score["rate"] == pytest.approx(2 / 3)
+
+
 def test_score_grader_missing_answers_count_zero() -> None:
     score_review = _load_module()
     score = score_review.score_grader({"pair_001": "A"}, _PAIR_KEY)
