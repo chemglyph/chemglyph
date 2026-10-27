@@ -25,6 +25,7 @@ classifiers = [
 dependencies = [
   "rdkit>=2024.9", # floor CI-verified at 2024.9.4 (see ci.yml test-minimum-rdkit)
   "mcp>=2.0", # mcp.server.mcpserver.MCPServer first ships in mcp 2.0.0
+  "numpy>=1.24", # glyph-distance geometry in the fixed-scale engine
   "resvg-py>=0.4", # reaction SVGs are rasterized to PNG for MCP clients
 ]
 

@@ -108,10 +108,11 @@ The `acs1996` profile implements the ACS values exactly, and its
 conformance tests measure them in the rendered output (tolerance 2%). Other
 journal profiles are added on demand, each with its source cited here.
 
-Font handling: SVG output names `Arial, Helvetica` first and then the open
-metric-compatible fonts Arimo (Apache-2.0) and Liberation Sans (SIL OFL), so
-viewers that lack Arial lay text out the same way. Raster and PDF output is
-rendered with an open font. No proprietary font is bundled.
+Font handling: labels are drawn with the bundled Liberation Sans (SIL OFL
+1.1), which has the same metrics as Arial, and are embedded in the SVG as
+glyph outlines. Output therefore looks the same everywhere and never
+depends on fonts installed on the reader's machine. No proprietary font is
+bundled. (Implemented in the `acs1996` profile.)
 
 ## 6. Intellectual property rules
 

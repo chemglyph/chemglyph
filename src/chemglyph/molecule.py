@@ -10,8 +10,9 @@ from rdkit import Chem, Geometry
 from rdkit.Chem import Descriptors, rdDepictor, rdMolDescriptors
 from rdkit.Chem.Draw import rdMolDraw2D
 
-from .errors import ChemGlyphParseError, ChemGlyphRenderError
-from .styles import StyleSpec, get_style
+from .errors import ChemGlyphParseError, ChemGlyphRenderError, ChemGlyphStyleError
+from .profiles import PROFILES, Profile
+from .styles import STYLES, StyleSpec, get_style
 from .svg_utils import apply_post, parse_hex_color
 
 _MOLBLOCK_RE = re.compile(r"\bV(2000|3000)\b")
@@ -29,6 +30,7 @@ class RenderResult:
     mol_formula: str
     mol_weight: float
     warnings: list[str] = field(default_factory=list)
+    report: dict = field(default_factory=dict)  # measurements (fixed-scale profiles)
 
 
 def render_molecule(
@@ -39,19 +41,25 @@ def render_molecule(
     transparent: bool = True,
     show_atom_indices: bool = False,
     highlight_atoms: list[int] | None = None,
+    dpi: int = 300,
 ) -> RenderResult:
     """Render a molecule from SMILES, InChI, or molblock.
 
     Args:
         structure: SMILES, an InChI string (``InChI=`` prefix), or a molblock
             (auto-detected via a ``V2000``/``V3000`` line).
-        style: one of ``acs``, ``modern``, ``textbook-cn``.
-        size: canvas size in pixels; ``None`` estimates a canvas from molecule
-            size and lets RDKit auto-scale the drawing.
+        style: ``acs1996`` (fixed-scale profile, sizes in points; see
+            docs/SPEC.md), or one of the older canvas-fitted styles ``acs``,
+            ``modern``, ``textbook-cn``.
+        size: canvas size in pixels for the older styles; ``None`` estimates
+            a canvas from molecule size. Fixed-scale profiles size themselves
+            and ignore it (a warning says so).
         fmt: ``"svg"`` or ``"png"``.
         transparent: emit a transparent background instead of the style background.
         show_atom_indices: draw atom indices next to each atom.
         highlight_atoms: atom indices to highlight with RDKit circles.
+        dpi: PNG resolution for fixed-scale profiles (a 14.4 pt bond is
+            60 px at 300 dpi).
 
     Raises:
         ChemGlyphParseError: the structure could not be parsed.
@@ -59,8 +67,22 @@ def render_molecule(
     """
     mol = _parse_structure(structure)
     _prepare_for_drawing(mol)
-    spec = get_style(style)
     output_fmt = _normalize_fmt(fmt)
+    if style in PROFILES:
+        return _render_with_profile(
+            mol,
+            PROFILES[style],
+            output_fmt,
+            size=size,
+            transparent=transparent,
+            show_atom_indices=show_atom_indices,
+            highlight_atoms=highlight_atoms,
+            dpi=dpi,
+        )
+    if style not in STYLES:
+        choices = ", ".join(sorted(STYLES | set(PROFILES)))
+        raise ChemGlyphStyleError(f"Unknown style {style!r}; choose one of: {choices}")
+    spec = get_style(style)
     options = _build_options(
         spec, mol=mol, transparent=transparent, show_atom_indices=show_atom_indices
     )
@@ -81,6 +103,70 @@ def render_molecule(
         mol_weight=Descriptors.MolWt(mol),
         warnings=warnings,
     )
+
+
+def _render_with_profile(
+    mol: Chem.Mol,
+    profile: Profile,
+    output_fmt: str,
+    *,
+    size: tuple[int, int] | None,
+    transparent: bool,
+    show_atom_indices: bool,
+    highlight_atoms: list[int] | None,
+    dpi: int,
+) -> RenderResult:
+    from .engine import draw  # local import keeps numpy-heavy code off the import path
+
+    drawing = draw(
+        mol,
+        profile,
+        highlight_atoms=highlight_atoms,
+        show_atom_indices=show_atom_indices,
+        background=None if transparent else "#ffffff",
+    )
+    warnings = _stereo_warnings(mol)
+    if size is not None:
+        warnings.append(f"size is ignored: the {profile.name} profile draws at a fixed scale")
+    warnings.extend(drawing.notes)
+    if output_fmt == "svg":
+        data: str | bytes = drawing.svg
+    else:
+        data = _rasterize_pt_svg(drawing.svg, dpi)
+    return RenderResult(
+        data=data,
+        fmt=output_fmt,
+        canonical_smiles=Chem.MolToSmiles(mol),
+        mol_formula=rdMolDescriptors.CalcMolFormula(mol),
+        mol_weight=Descriptors.MolWt(mol),
+        warnings=warnings,
+        report={
+            "profile": profile.name,
+            "width_pt": round(drawing.width_pt, 2),
+            "height_pt": round(drawing.height_pt, 2),
+            "bond_length_pt": [round(v, 3) for v in drawing.bond_length_pt],
+            "label_clearance_pt": (
+                None if drawing.label_clearance_pt is None else round(drawing.label_clearance_pt, 3)
+            ),
+            "shortest_labelled_bond_pt": (
+                None
+                if drawing.shortest_labelled_bond_pt is None
+                else round(drawing.shortest_labelled_bond_pt, 3)
+            ),
+        },
+    )
+
+
+def _rasterize_pt_svg(svg: str, dpi: int) -> bytes:
+    if dpi <= 0:
+        raise ChemGlyphRenderError("dpi must be positive")
+    try:
+        import resvg_py
+    except ImportError as exc:  # pragma: no cover - resvg-py is a dependency
+        raise ChemGlyphRenderError("PNG output needs resvg-py (pip install resvg-py)") from exc
+    # resvg takes unitless sizes; one user unit per point, scaled to the dpi.
+    unitless = re.sub(r'(width|height)="([\d.]+)pt"', r'\1="\2"', svg, count=2)
+    return bytes(resvg_py.svg_to_bytes(svg_string=unitless, zoom=dpi / 72.0))
 
 
 def _parse_structure(structure: str) -> Chem.Mol:

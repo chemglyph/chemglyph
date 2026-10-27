@@ -4,7 +4,30 @@ Each version below is a PyPI release. The tag `vX.Y.Z` marks the exact
 commit the release was built from; for 0.1.0 to 0.1.2 this was verified by
 comparing every file in the published sdist against the repository history.
 
-## 0.1.3 (unreleased)
+## Unreleased
+
+### Added
+
+- `style="acs1996"`: a fixed-scale profile that follows the ACS Document
+  1996 settings. Every molecule is drawn with 14.4 pt bonds, 0.6 pt lines,
+  18% double-bond spacing, and 10 pt labels, so all figures share one scale.
+  The SVG size is given in points and PNG output takes a `dpi` argument.
+  `RenderResult.report` carries the measured bond length, the label
+  clearance, and the shortest bond next to a label.
+- Bond ends next to a label stop 1.6 pt from the glyph outline (the ACS
+  margin width) instead of RDKit's box clipping, which left sulfate with
+  1.4 pt of each S-O bond. Lines, hashed wedges, and solid wedges all
+  follow the rule. When two labels crowd one bond, the margin is relaxed
+  in steps and a warning says so.
+- Hashed wedges are drawn at the 2.5 pt hash spacing with 0.6 pt strokes
+  (RDKit drew 0.15 to 0.3 pt hairlines 0.5 pt apart).
+- Labels use the bundled Liberation Sans (SIL OFL 1.1), metric-compatible
+  with Arial, embedded as outlines, so output does not depend on installed
+  fonts.
+- Conformance tests (`tests/test_acs1996.py`) measure these numbers in the
+  rendered SVG for all 20 blind-test molecules.
+
+## 0.1.3 (2026-10-27)
 
 ### Fixed
 

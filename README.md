@@ -39,6 +39,23 @@ chemglyph.render_molecule(smiles, style="textbook-cn")  # bold monochrome, textb
 All styles default to a transparent background (`transparent=True`) and
 support `fmt="png"`.
 
+### Fixed-scale profile (preview for 0.2)
+
+`style="acs1996"` draws every molecule at one physical scale that follows
+the ACS Document 1996 settings: 14.4 pt bonds, 0.6 pt lines, 10 pt labels,
+and bond ends that stop 1.6 pt from each label. Two structures drawn this
+way have the same bond length and label size, so they line up in a paper.
+The SVG size is given in points; PNG output takes a `dpi`.
+
+```python
+result = chemglyph.render_molecule("CC(=O)Oc1ccccc1C(=O)O", style="acs1996")
+result.report  # {'bond_length_pt': [14.4, 14.4], 'label_clearance_pt': 1.6, ...}
+png = chemglyph.render_molecule(smiles, style="acs1996", fmt="png", dpi=600)
+```
+
+These numbers are measured in the rendered output by the test suite
+(`tests/test_acs1996.py`).
+
 ## Reactions
 
 ```python
