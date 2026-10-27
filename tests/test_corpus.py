@@ -10,6 +10,7 @@ list that is fixed should be removed from it.
 from __future__ import annotations
 
 import csv
+import platform
 import re
 from pathlib import Path
 
@@ -23,8 +24,9 @@ from chemglyph.engine import _distance_to_edges, _flatten
 ROWS = list(csv.DictReader((Path(__file__).parents[1] / "benchmarks" / "corpus.csv").open()))
 
 # Severe layout problems no candidate layout avoids yet (docs/progress, phase 1).
-# Layouts differ between RDKit releases, so the list is kept for one release;
-# on others only the warning is checked.
+# Layouts differ between RDKit releases and, through floating point, between
+# platforms (helicene on macOS arm64), so the list is kept for one release on
+# Linux x86-64; elsewhere only the warning is checked.
 LAYOUT_LIMITS_RDKIT = "2026.09"
 KNOWN_LAYOUT_LIMITS = {
     "fullerene C60",  # a sphere has no planar drawing
@@ -120,8 +122,9 @@ def test_label_margin_holds_or_is_reported(row: dict, renders) -> None:
 
 
 _same_rdkit = pytest.mark.skipif(
-    not rdkit.__version__.startswith(LAYOUT_LIMITS_RDKIT),
-    reason=f"layout limits are tracked for RDKit {LAYOUT_LIMITS_RDKIT}",
+    not rdkit.__version__.startswith(LAYOUT_LIMITS_RDKIT)
+    or (platform.system(), platform.machine()) != ("Linux", "x86_64"),
+    reason=f"layout limits are tracked for RDKit {LAYOUT_LIMITS_RDKIT} on Linux x86-64",
 )
 
 
