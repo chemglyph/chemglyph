@@ -88,11 +88,22 @@ def embed_png(png: bytes, mol: Chem.Mol) -> bytes:
 
 
 def read_structure(figure: str | bytes) -> Chem.Mol:
-    """Read the structure embedded in a ChemGlyph SVG or PNG.
+    """Read the structure embedded in a ChemGlyph SVG, PNG, or PDF.
 
     Raises:
         ChemGlyphParseError: the figure carries no readable structure.
     """
+    if isinstance(figure, bytes) and figure.startswith(b"%PDF-"):
+        from .pdf import read_info
+
+        molfile = read_info(figure).get("ChemGlyphMolfile")
+        if not molfile:
+            raise ChemGlyphParseError("The PDF carries no embedded structure.")
+        with quiet():
+            mol = Chem.MolFromMolBlock(molfile)
+        if mol is None:
+            raise ChemGlyphParseError("The molfile embedded in the PDF could not be parsed.")
+        return mol
     if isinstance(figure, bytes) and figure.startswith(_PNG_SIGNATURE):
         with quiet():
             mol = Chem.MolFromPNGString(figure)

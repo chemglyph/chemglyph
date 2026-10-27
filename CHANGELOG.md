@@ -29,6 +29,13 @@ comparing every file in the published sdist against the repository history.
   colours for O, N, S, and Cl; `textbook` uses 0.8 pt lines, 12 pt labels,
   and 20% bond spacing. Coloured bond halves are joined, clipped as one
   line, and split again, so label clearance holds in colour too.
+- `fmt="pdf"`: a one-page vector PDF sized in points, written directly
+  from the figure's geometry with no extra dependency, carrying the
+  structure in its document information. `fmt="mol"` returns the molfile
+  with the drawn 2D coordinates for editing in a structure editor. Both
+  need a fixed-scale style.
+- Highlighted bonds draw a band of about 4 pt. RDKit's ACS1996 preset sets
+  a multiplier that made the band 19 pt wide, wider than the bond is long.
 - Figures from the fixed-scale profiles carry their structure: SVG output
   holds a `chemglyph:structure` record (SMILES, InChI, InChIKey, formula,
   and the full molfile) and PNG output holds RDKit's standard SMILES and

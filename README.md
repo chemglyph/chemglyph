@@ -45,7 +45,9 @@ support `fmt="png"`.
 the ACS Document 1996 settings: 14.4 pt bonds, 0.6 pt lines, 10 pt labels,
 and bond ends that stop 1.6 pt from each label. Two structures drawn this
 way have the same bond length and label size, so they line up in a paper.
-The SVG size is given in points; PNG output takes a `dpi`.
+The SVG size is given in points; PNG output takes a `dpi`; `fmt="pdf"`
+gives a vector PDF for LaTeX and `fmt="mol"` a molfile with the drawn
+coordinates for a structure editor.
 
 `style="screen"` keeps that geometry and colours O, N, S, and Cl (classic
 CPK) for screens and chat. `style="textbook"` uses heavier 0.8 pt lines and

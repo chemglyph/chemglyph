@@ -55,7 +55,9 @@ def render_molecule(
         size: canvas size in pixels for the older styles; ``None`` estimates
             a canvas from molecule size. Fixed-scale profiles size themselves
             and ignore it (a warning says so).
-        fmt: ``"svg"`` or ``"png"``.
+        fmt: ``"svg"`` or ``"png"``; fixed-scale profiles also give ``"pdf"``
+            (vector, sized in points) and ``"mol"`` (molfile with the drawn
+            2D coordinates, for editing in a structure editor).
         transparent: emit a transparent background instead of the style background.
         show_atom_indices: draw atom indices next to each atom.
         highlight_atoms: atom indices to highlight with RDKit circles.
@@ -88,6 +90,10 @@ def render_molecule(
     if style not in STYLES:
         choices = ", ".join(sorted(STYLES | set(PROFILES)))
         raise ChemGlyphStyleError(f"Unknown style {style!r}; choose one of: {choices}")
+    if output_fmt in {"pdf", "mol"}:
+        raise ChemGlyphRenderError(
+            f"fmt={output_fmt!r} needs a fixed-scale style: acs1996, screen, or textbook"
+        )
     spec = get_style(style)
     options = _build_options(
         spec, mol=mol, transparent=transparent, show_atom_indices=show_atom_indices
@@ -126,6 +132,7 @@ def _render_with_profile(
     from . import __version__
     from .engine import draw  # local import keeps numpy-heavy code off the import path
     from .metadata import embed_png, embed_svg, identity
+    from .pdf import svg_to_pdf
 
     drawing = draw(
         mol,
@@ -146,8 +153,23 @@ def _render_with_profile(
         warnings.append(name_check["detail"])
     if output_fmt == "svg":
         data: str | bytes = svg
-    else:
+    elif output_fmt == "png":
         data = embed_png(_rasterize_pt_svg(drawing.svg, dpi), mol)
+    elif output_fmt == "pdf":
+        ident = identity(mol)
+        data = svg_to_pdf(
+            drawing.svg,
+            info={
+                "ChemGlyphProfile": profile.name,
+                "ChemGlyphSMILES": ident["smiles"],
+                "ChemGlyphInChI": ident["inchi"],
+                "ChemGlyphInChIKey": ident["inchikey"],
+                "ChemGlyphFormula": ident["formula"],
+                "ChemGlyphMolfile": Chem.MolToMolBlock(mol),
+            },
+        )
+    else:  # mol: the structure with the coordinates used for the drawing
+        data = Chem.MolToMolBlock(mol)
     return RenderResult(
         data=data,
         fmt=output_fmt,
@@ -610,8 +632,10 @@ def _set_position(mol: Chem.Mol, atom_index: int, point: tuple[float, float]) ->
 
 def _normalize_fmt(fmt: str) -> str:
     normalized = fmt.strip().lower()
-    if normalized not in {"svg", "png"}:
-        raise ChemGlyphRenderError(f"Unsupported format {fmt!r}; use 'svg' or 'png'.")
+    if normalized not in {"svg", "png", "pdf", "mol"}:
+        raise ChemGlyphRenderError(
+            f"Unsupported format {fmt!r}; use 'svg', 'png', 'pdf', or 'mol'."
+        )
     return normalized
 
 

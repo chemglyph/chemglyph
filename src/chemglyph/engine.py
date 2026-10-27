@@ -164,6 +164,11 @@ def _options(
     options.fontFile = font_file()
     options.addAtomIndices = show_atom_indices
     options.prepareMolsBeforeDrawing = False
+    # ACS1996 mode sets a highlight multiplier of 32, which at our resolution
+    # makes a highlighted bond a 19 pt band, wider than the bond is long.
+    # Measured: each unit adds about 2 pt of band at a 0.6 pt line, so 2 gives
+    # a band of about 4 pt, a quarter of the bond length.
+    options.highlightBondWidthMultiplier = 2
     if profile.atom_colours:
         palette = {z: parse_hex_color(colour) for z, colour in profile.atom_colours.items()}
         setter = getattr(options, "setAtomPalette", None)

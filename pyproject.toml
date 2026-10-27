@@ -40,6 +40,7 @@ dev = [
   "pytest>=8",
   "ruff>=0.8",
   "epam.indigo>=1.45", # reference panels for the blind test (benchmarks/reference_panels.py)
+  "pypdf>=4", # reads the PDF output in tests
 ]
 
 [project.scripts]
