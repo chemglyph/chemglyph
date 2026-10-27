@@ -4,7 +4,10 @@ Each version below is a PyPI release. The tag `vX.Y.Z` marks the exact
 commit the release was built from; for 0.1.0 to 0.1.2 this was verified by
 comparing every file in the published sdist against the repository history.
 
-## Unreleased
+## 0.2.0 (2026-10-27)
+
+Molecules done right: every drawing at one physical scale, checked as it
+is made. The review of this phase is in docs/progress/phase1-review.md.
 
 ### Changed
 

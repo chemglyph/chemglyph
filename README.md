@@ -214,27 +214,25 @@ writes shuffled, numbered PNG/SVG figures plus `answer_key.json`:
 python benchmarks/generate_blind_test.py --seed 1234
 ```
 
-The deck, methodology, and scoring tooling are all open-sourced: the fixed
-molecule list, the A/B deck generator (which pairs ChemGlyph against an
-open-source reference renderer), the runbook, and the scorer live in
-[benchmarks/](benchmarks/). Anyone can run the protocol and contribute
-results. The pass threshold and procedure are documented in
-[benchmarks/RUNBOOK.md](benchmarks/RUNBOOK.md).
+The protocol, the A/B deck generator, the runbook, and the scorer are all
+in [benchmarks/](benchmarks/); the pass threshold and procedure are in
+[benchmarks/RUNBOOK.md](benchmarks/RUNBOOK.md). Anyone can run it and
+contribute results.
 
-![ChemGlyph vs open-source reference](https://raw.githubusercontent.com/chemglyph/chemglyph/main/docs/images/comparison_vs_reference.png)
-
-Blind test vs ChemDraw: pending. The image above is an author-generated
-comparison of ChemGlyph `modern` against the open-source reference renderer
-(Indigo, the engine behind Ketcher) - it is not an independent review.
+No blind test against ChemDraw has been run yet, so no comparison is
+claimed. Every render is instead checked as it is made (see "Checked
+figures"), and `tests/test_corpus.py` renders a 416-structure corpus
+on every commit.
 
 ## Known limitations
 
-- Blind-test figures for ferrocene (metal complex) and the free-base
-  porphyrin (large conjugated macrocycle) are excluded from the benchmark
-  denominator and recorded separately.
-- RDKit has no clean 2D layout for paclitaxel: its gem-dimethyl substituent
-  placement inside the central 8-membered ring is a documented layout
-  limitation.
+- 14 of the 416 corpus structures have a layout problem that is reported
+  with a warning: helicene and fullerene (no planar drawing); BINAP,
+  morphine, codeine, paclitaxel, vinblastine, tetrodotoxin (crowded
+  polycycles); and cyclodextrins, amphotericin B, forskolin, rifampicin,
+  sitagliptin (labels in crowded places). Passing a molfile with your own
+  coordinates avoids them. The list is in `tests/test_corpus.py`.
+- Reaction schemes still use the 0.1 renderer, not the fixed scale.
 - Full automatic Chinese name-to-structure parsing is not implemented;
   Chinese names resolve through a small built-in dictionary plus an optional
   translator hook. English names resolve through OPSIN.
@@ -247,13 +245,15 @@ quality gates are in [docs/SPEC.md](docs/SPEC.md); release notes are in
 [CHANGELOG.md](CHANGELOG.md).
 
 - 0.1.3: fixes and release hygiene.
-- 0.2: molecules done right. One fixed physical scale for every drawing,
-  style profiles measured against published standards (ACS Document 1996
-  settings first), a verification report with every render, automated
-  layout checks, PDF and MOL output.
+- 0.2 (released): molecules done right. One fixed physical scale for every
+  drawing, style profiles measured against published standards (ACS
+  Document 1996 settings first), a verification report with every render,
+  automated layout checks, abbreviations, compound numbers, PDF and MOL
+  output.
 - 0.3: formulas and equations in mhchem syntax, with atom and charge
   balance checks.
-- 0.4: reaction schemes on the shared scale, with compound numbering.
+- 0.4: reaction schemes on the shared scale, with an object API for
+  compounds and figures.
 - 0.5: mechanism (curved) arrows anchored to atoms and bonds.
 
 ## Non-goals

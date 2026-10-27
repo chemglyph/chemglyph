@@ -6,7 +6,7 @@ from .naming import parse_name
 from .reaction import render_reaction
 from .validate import ValidationReport, validate_structure
 
-__version__ = "0.1.3"
+__version__ = "0.2.0"
 
 __all__ = [
     "parse_name",

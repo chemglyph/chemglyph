@@ -74,10 +74,17 @@ each phase the plan is reviewed and this section is updated.
 
 Phase reviews: [phase 1](progress/phase1-review.md).
 
+The blind test against reference-editor panels (benchmarks/RUNBOOK.md) is
+the gate for public claims and announcements, not for a release: no
+comparison with ChemDraw is stated, and the project is not announced, until
+a run with two or more independent graders passes at 40% or more. It was
+moved out of the 0.2 exit criteria when no graders were available; the
+reference panels can come from Indigo, the renderer behind Ketcher.
+
 | Version | Phase | Main deliverables | Exit criteria |
 | --- | --- | --- | --- |
 | 0.1.3 | Housekeeping | known fixes, CHANGELOG, verified tags, trusted publishing, this spec | PyPI matches the README; CI green |
-| 0.2 | Molecules done right | fixed-scale engine, profiles, kept input coordinates, best-of layouts with automated layout checks, abbreviations, compound labels, SVG metadata, PDF and MOL output, verification report | ACS profile conformance tests pass; no unregistered severe layout issues on a corpus of 300+ molecules; blind test against ChemDraw ACS panels at 40% or more |
+| 0.2 | Molecules done right | fixed-scale engine, profiles, kept input coordinates, best-of layouts with automated layout checks, abbreviations, compound labels, SVG metadata, PDF and MOL output, verification report | ACS profile conformance tests pass; no unregistered severe layout issues on a corpus of 300+ molecules |
 | 0.3 | Formulas and equations | mhchem-syntax parser, real sub- and superscript typesetting, atom and charge balance checks with balancing suggestions, formulas inside reaction conditions | every supported syntax category renders correctly; balance checks correct on a set of textbook equations |
 | 0.4 | Reaction schemes | object API (`Compound`, `Figure`), layout rebuilt on the shared scale, unchanged scaffolds kept in the same orientation, compound numbering, structures above arrows, reaction SMILES and RXN input | five typical schemes from recent papers reproduced and accepted in a blind review |
 | 0.5 | Mechanisms | curved arrows anchored to atoms and bonds, electron pairs, partial charges, transition-state brackets, multi-frame strips | ten textbook mechanisms drawn correctly from a single agent call |

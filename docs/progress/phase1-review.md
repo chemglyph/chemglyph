@@ -8,7 +8,7 @@ Date: 2026-10-27. Covers the work after 0.1.3 up to the 0.2 release candidate.
 | --- | --- |
 | ACS profile conformance tests pass | Met. Bond length, line width, label size, bond spacing, and label margin are measured in the rendered SVG for all three profiles (`tests/test_profiles.py`). |
 | No unregistered severe layout issue on a corpus of 300+ molecules | Met. 416 structures from PubChem (CIDs recorded) plus hand-written entries; 14 have registered severe issues, each with its cause, in `tests/test_corpus.py`. A new severe issue, or a fixed one still on the list, fails CI. |
-| Blind test against ChemDraw ACS panels, ChemGlyph chosen at 40% or more | Not run. It needs a proctor who makes the reference panels (ChemDraw, or the free Ketcher) and two or three chemists as graders (benchmarks/RUNBOOK.md). The generator now uses the new profiles. |
+| Blind test against ChemDraw ACS panels, ChemGlyph chosen at 40% or more | Not run: no graders were available. Moved from the release gate to the gate for public claims and announcements (docs/SPEC.md, section 4); 0.2 is released without any comparison claim. The generator now uses the new profiles. |
 
 ## What was built
 
