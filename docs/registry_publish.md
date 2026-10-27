@@ -12,18 +12,17 @@ The registry is in preview; its flow may change.
   `<!-- mcp-name: io.github.random-orbit/chemglyph -->`. The registry checks
   for this string in the published PyPI description, so it must ship in a
   PyPI release.
-- Version bumped to `0.1.2` in `pyproject.toml` for that release.
+- The registry entry must be republished by hand after each PyPI release,
+  because GitHub Actions in the `chemglyph` organization cannot
+  authenticate for the `io.github.random-orbit` namespace.
 
 ## Steps
 
-1. Create a new PyPI API token (the previous one was revoked), then:
-
-   ```bash
-   TWINE_USERNAME='__token__' TWINE_PASSWORD='pypi-...' \
-     .venv/bin/python -m build
-   TWINE_USERNAME='__token__' TWINE_PASSWORD='pypi-...' \
-    .venv/bin/twine upload dist/chemglyph-0.1.2*
-   ```
+1. Release to PyPI first. Bump the version in `pyproject.toml`,
+   `src/chemglyph/__init__.py`, and both fields of `server.json`, then push
+   the tag `vX.Y.Z`. The Release workflow (`.github/workflows/release.yml`)
+   checks that all versions agree, builds, and publishes through PyPI
+   trusted publishing. No upload token is created or shared.
 
 2. Install the publisher CLI (Homebrew or the release binary):
 

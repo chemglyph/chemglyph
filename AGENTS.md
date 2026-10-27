@@ -11,7 +11,8 @@
    comments, PyPI metadata) must read like a person wrote it. No AI-flavored
    writing: avoid em-dashes and empty superlatives, write plain direct
    sentences, use lists only when they carry information, and proofread
-   every outgoing text before publishing.
+   every outgoing text before publishing. Commit messages carry no AI
+   co-author or tool attribution trailers.
 4. Scope: keep changes minimal and within the assigned task. Add tests for
    behavior changes and keep `ruff check`, `ruff format`, and the test suite
    green.

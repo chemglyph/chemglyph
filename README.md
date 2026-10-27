@@ -172,11 +172,20 @@ comparison of ChemGlyph `modern` against the open-source reference renderer
 
 ## Roadmap
 
-- v0.2: Chinese naming (built-in dictionary plus translator hook), down-arrow
-  line wrapping, arrow column alignment, cropped fragments. All shipped.
-- Next: mechanism (electron-pushing) arrows, see
-  [docs/progress/v02-research.md](docs/progress/v02-research.md).
-- Later: a larger Chinese dictionary as an optional data extra.
+Work proceeds in phases, and each phase ships as a minor version once its
+exit criteria pass. The plan, the standards ChemGlyph follows, and the
+quality gates are in [docs/SPEC.md](docs/SPEC.md); release notes are in
+[CHANGELOG.md](CHANGELOG.md).
+
+- 0.1.3: fixes and release hygiene.
+- 0.2: molecules done right. One fixed physical scale for every drawing,
+  style profiles measured against published standards (ACS Document 1996
+  settings first), a verification report with every render, automated
+  layout checks, PDF and MOL output.
+- 0.3: formulas and equations in mhchem syntax, with atom and charge
+  balance checks.
+- 0.4: reaction schemes on the shared scale, with compound numbering.
+- 0.5: mechanism (curved) arrows anchored to atoms and bonds.
 
 ## Non-goals
 
