@@ -1,0 +1,417 @@
+name,category,source,cid,formula,smiles
+methanol,functional-groups,pubchem,887,CH4O,CO
+ethanol,functional-groups,pubchem,702,C2H6O,CCO
+acetone,functional-groups,pubchem,180,C3H6O,CC(=O)C
+acetaldehyde,functional-groups,pubchem,177,C2H4O,CC=O
+acetic acid,functional-groups,pubchem,176,C2H4O2,CC(=O)O
+ethyl acetate,functional-groups,pubchem,8857,C4H8O2,CCOC(=O)C
+acetamide,functional-groups,pubchem,178,C2H5NO,CC(=O)N
+acetonitrile,functional-groups,pubchem,6342,C2H3N,CC#N
+nitromethane,functional-groups,pubchem,6375,CH3NO2,C[N+](=O)[O-]
+dimethyl sulfoxide,functional-groups,pubchem,679,C2H6OS,CS(=O)C
+dimethyl sulfone,functional-groups,pubchem,6213,C2H6O2S,CS(=O)(=O)C
+methanesulfonic acid,functional-groups,pubchem,6395,CH4O3S,CS(=O)(=O)O
+methylamine,functional-groups,pubchem,6329,CH5N,CN
+trimethylamine,functional-groups,pubchem,1146,C3H9N,CN(C)C
+phenol,functional-groups,pubchem,996,C6H6O,C1=CC=C(C=C1)O
+aniline,functional-groups,pubchem,6115,C6H7N,C1=CC=C(C=C1)N
+benzaldehyde,functional-groups,pubchem,240,C7H6O,C1=CC=C(C=C1)C=O
+benzonitrile,functional-groups,pubchem,7505,C7H5N,C1=CC=C(C=C1)C#N
+nitrobenzene,functional-groups,pubchem,7416,C6H5NO2,C1=CC=C(C=C1)[N+](=O)[O-]
+thiophenol,functional-groups,pubchem,7969,C6H6S,C1=CC=C(C=C1)S
+anisole,functional-groups,pubchem,7519,C7H8O,COC1=CC=CC=C1
+acetophenone,functional-groups,pubchem,7410,C8H8O,CC(=O)C1=CC=CC=C1
+benzoyl chloride,functional-groups,pubchem,7412,C7H5ClO,C1=CC=C(C=C1)C(=O)Cl
+acetic anhydride,functional-groups,pubchem,7918,C4H6O3,CC(=O)OC(=O)C
+urea,functional-groups,pubchem,1176,CH4N2O,C(=O)(N)N
+guanidine,functional-groups,pubchem,3520,CH5N3,C(=N)(N)N
+hydroxylamine,functional-groups,pubchem,787,H3NO,NO
+hydrazine,functional-groups,pubchem,9321,H4N2,NN
+diazomethane,functional-groups,pubchem,9550,CH2N2,C=[N+]=[N-]
+phenyl isocyanate,functional-groups,pubchem,7672,C7H5NO,C1=CC=C(C=C1)N=C=O
+methyl isothiocyanate,functional-groups,pubchem,11167,C2H3NS,CN=C=S
+triphenylphosphine oxide,functional-groups,pubchem,13097,C18H15OP,C1=CC=C(C=C1)P(=O)(C2=CC=CC=C2)C3=CC=CC=C3
+trimethyl phosphate,functional-groups,pubchem,10541,C3H9O4P,COP(=O)(OC)OC
+boric acid,functional-groups,pubchem,7628,BH3O3,B(O)(O)O
+phenylboronic acid,functional-groups,pubchem,66827,C6H7BO2,B(C1=CC=CC=C1)(O)O
+chlorotrimethylsilane,functional-groups,pubchem,6397,C3H9ClSi,C[Si](C)(C)Cl
+tetramethylsilane,functional-groups,pubchem,6396,C4H12Si,C[Si](C)(C)C
+ethylene oxide,functional-groups,pubchem,6354,C2H4O,C1CO1
+aziridine,functional-groups,pubchem,9033,C2H5N,C1CN1
+"N,N-dimethylformamide",functional-groups,pubchem,6228,C3H7NO,CN(C)C=O
+tetrahydrofuran,functional-groups,pubchem,8028,C4H8O,C1CCOC1
+"1,4-dioxane",functional-groups,pubchem,31275,C4H8O2,C1COCCO1
+morpholine,functional-groups,pubchem,8083,C4H9NO,C1COCCN1
+piperidine,functional-groups,pubchem,8082,C5H11N,C1CCNCC1
+piperazine,functional-groups,pubchem,4837,C4H10N2,C1CNCCN1
+pyrrolidine,functional-groups,pubchem,31268,C4H9N,C1CCNC1
+dimethyl carbonate,functional-groups,pubchem,12021,C3H6O3,COC(=O)OC
+methyl acrylate,functional-groups,pubchem,7294,C4H6O2,COC(=O)C=C
+acrylonitrile,functional-groups,pubchem,7855,C3H3N,C=CC#N
+allyl alcohol,functional-groups,pubchem,7858,C3H6O,C=CCO
+propargyl alcohol,functional-groups,pubchem,7859,C3H4O,C#CCO
+phenylacetylene,functional-groups,pubchem,10821,C8H6,C#CC1=CC=CC=C1
+azobenzene,functional-groups,pubchem,2272,C12H10N2,C1=CC=C(C=C1)N=NC2=CC=CC=C2
+benzophenone,functional-groups,pubchem,3102,C13H10O,C1=CC=C(C=C1)C(=O)C2=CC=CC=C2
+chloroform,halogens,pubchem,6212,CHCl3,C(Cl)(Cl)Cl
+dichloromethane,halogens,pubchem,6344,CH2Cl2,C(Cl)Cl
+bromobenzene,halogens,pubchem,7961,C6H5Br,C1=CC=C(C=C1)Br
+iodobenzene,halogens,pubchem,11575,C6H5I,C1=CC=C(C=C1)I
+fluorobenzene,halogens,pubchem,10008,C6H5F,C1=CC=C(C=C1)F
+trifluoroacetic acid,halogens,pubchem,6422,C2HF3O2,C(=O)(C(F)(F)F)O
+benzotrifluoride,halogens,pubchem,7368,C7H5F3,C1=CC=C(C=C1)C(F)(F)F
+hexafluorobenzene,halogens,pubchem,9805,C6F6,C1(=C(C(=C(C(=C1F)F)F)F)F)F
+carbon tetrachloride,halogens,pubchem,5943,CCl4,C(Cl)(Cl)(Cl)Cl
+thionyl chloride,halogens,pubchem,24386,Cl2OS,O=S(Cl)Cl
+phosphoryl chloride,halogens,pubchem,24813,Cl3OP,O=P(Cl)(Cl)Cl
+sulfuryl chloride,halogens,pubchem,24648,Cl2O2S,O=S(=O)(Cl)Cl
+bromoform,halogens,pubchem,5558,CHBr3,C(Br)(Br)Br
+"1,2-dibromoethane",halogens,pubchem,7839,C2H4Br2,C(CBr)Br
+N-bromosuccinimide,halogens,pubchem,67184,C4H4BrNO2,C1CC(=O)N(C1=O)Br
+triflic acid,halogens,pubchem,62406,CHF3O3S,C(F)(F)(F)S(=O)(=O)O
+pyridine,heteroaromatics,pubchem,1049,C5H5N,C1=CC=NC=C1
+pyrimidine,heteroaromatics,pubchem,9260,C4H4N2,C1=CN=CN=C1
+pyrazine,heteroaromatics,pubchem,9261,C4H4N2,C1=CN=CC=N1
+pyridazine,heteroaromatics,pubchem,9259,C4H4N2,C1=CC=NN=C1
+pyrrole,heteroaromatics,pubchem,8027,C4H5N,C1=CNC=C1
+furan,heteroaromatics,pubchem,8029,C4H4O,C1=COC=C1
+thiophene,heteroaromatics,pubchem,8030,C4H4S,C1=CSC=C1
+imidazole,heteroaromatics,pubchem,795,C3H4N2,C1=CN=CN1
+pyrazole,heteroaromatics,pubchem,1048,C3H4N2,C1=CNN=C1
+oxazole,heteroaromatics,pubchem,9255,C3H3NO,C1=COC=N1
+thiazole,heteroaromatics,pubchem,9256,C3H3NS,C1=CSC=N1
+isoxazole,heteroaromatics,pubchem,9254,C3H3NO,C1=CON=C1
+"1,2,4-triazole",heteroaromatics,pubchem,9257,C2H3N3,C1=NC=NN1
+tetrazole,heteroaromatics,pubchem,67519,CH2N4,C1=NNN=N1
+indole,heteroaromatics,pubchem,798,C8H7N,C1=CC=C2C(=C1)C=CN2
+benzofuran,heteroaromatics,pubchem,9223,C8H6O,C1=CC=C2C(=C1)C=CO2
+benzothiophene,heteroaromatics,pubchem,7221,C8H6S,C1=CC=C2C(=C1)C=CS2
+quinoline,heteroaromatics,pubchem,7047,C9H7N,C1=CC=C2C(=C1)C=CC=N2
+isoquinoline,heteroaromatics,pubchem,8405,C9H7N,C1=CC=C2C=NC=CC2=C1
+quinoxaline,heteroaromatics,pubchem,7045,C8H6N2,C1=CC=C2C(=C1)N=CC=N2
+purine,heteroaromatics,pubchem,1044,C5H4N4,C1=C2C(=NC=N1)N=CN2
+adenine,heteroaromatics,pubchem,190,C5H5N5,C1=NC2=NC=NC(=C2N1)N
+guanine,heteroaromatics,pubchem,135398634,C5H5N5O,C1=NC2=C(N1)C(=O)NC(=N2)N
+cytosine,heteroaromatics,pubchem,597,C4H5N3O,C1=C(NC(=O)N=C1)N
+thymine,heteroaromatics,pubchem,1135,C5H6N2O2,CC1=CNC(=O)NC1=O
+uracil,heteroaromatics,pubchem,1174,C4H4N2O2,C1=CNC(=O)NC1=O
+carbazole,heteroaromatics,pubchem,6854,C12H9N,C1=CC=C2C(=C1)C3=CC=CC=C3N2
+acridine,heteroaromatics,pubchem,9215,C13H9N,C1=CC=C2C(=C1)C=C3C=CC=CC3=N2
+phenothiazine,heteroaromatics,pubchem,7108,C12H9NS,C1=CC=C2C(=C1)NC3=CC=CC=C3S2
+"2,2'-bipyridine",heteroaromatics,pubchem,1474,C10H8N2,C1=CC=NC(=C1)C2=CC=CC=N2
+"1,10-phenanthroline",heteroaromatics,pubchem,1318,C12H8N2,C1=CC2=C(C3=C(C=CC=N3)C=C2)N=C1
+DMAP,heteroaromatics,pubchem,14284,C7H10N2,CN(C)C1=CC=NC=C1
+benzimidazole,heteroaromatics,pubchem,5798,C7H6N2,C1=CC=C2C(=C1)NC=N2
+pteridine,heteroaromatics,pubchem,1043,C6H4N4,C1=CN=C2C(=N1)C=NC=N2
+naphthalene,polycyclic-aromatics,pubchem,931,C10H8,C1=CC=C2C=CC=CC2=C1
+anthracene,polycyclic-aromatics,pubchem,8418,C14H10,C1=CC=C2C=C3C=CC=CC3=CC2=C1
+phenanthrene,polycyclic-aromatics,pubchem,995,C14H10,C1=CC=C2C(=C1)C=CC3=CC=CC=C32
+pyrene,polycyclic-aromatics,pubchem,31423,C16H10,C1=CC2=C3C(=C1)C=CC4=CC=CC(=C43)C=C2
+biphenyl,polycyclic-aromatics,pubchem,7095,C12H10,C1=CC=C(C=C1)C2=CC=CC=C2
+fluorene,polycyclic-aromatics,pubchem,6853,C13H10,C1C2=CC=CC=C2C3=CC=CC=C31
+azulene,polycyclic-aromatics,pubchem,9231,C10H8,C1=CC=C2C=CC=C2C=C1
+triphenylene,polycyclic-aromatics,pubchem,9170,C18H12,C1=CC=C2C(=C1)C3=CC=CC=C3C4=CC=CC=C24
+coronene,polycyclic-aromatics,pubchem,9115,C24H12,C1=CC2=C3C4=C1C=CC5=C4C6=C(C=C5)C=CC7=C6C3=C(C=C2)C=C7
+perylene,polycyclic-aromatics,pubchem,9142,C20H12,C1=CC2=C3C(=C1)C4=CC=CC5=C4C(=CC=C5)C3=CC=C2
+tetracene,polycyclic-aromatics,pubchem,7080,C18H12,C1=CC=C2C=C3C=C4C=CC=CC4=CC3=CC2=C1
+chrysene,polycyclic-aromatics,pubchem,9171,C18H12,C1=CC=C2C(=C1)C=CC3=C2C=CC4=CC=CC=C43
+fullerene C60,polycyclic-aromatics,pubchem,123591,C60,C12=C3C4=C5C6=C1C7=C8C9=C1C%10=C%11C(=C29)C3=C2C3=C4C4=C5C5=C9C6=C7C6=C7C8=C1C1=C8C%10=C%10C%11=C2C2=C3C3=C4C4=C5C5=C%11C%12=C(C6=C95)C7=C1C1=C%12C5=C%11C4=C3C3=C5C(=C81)C%10=C23
+helicene,polycyclic-aromatics,pubchem,98863,C26H16,C1=CC=C2C(=C1)C=CC3=C2C4=C(C=C3)C=CC5=C4C6=CC=CC=C6C=C5
+binaphthol,polycyclic-aromatics,pubchem,2755260,C20H14O,C1=CC=C2C(=C1)C=CC=C2C3=C(C=CC4=CC=CC=C43)O
+cyclopropane,rings-and-cages,pubchem,6351,C3H6,C1CC1
+cyclobutane,rings-and-cages,pubchem,9250,C4H8,C1CCC1
+cyclopentane,rings-and-cages,pubchem,9253,C5H10,C1CCCC1
+cyclohexane,rings-and-cages,pubchem,8078,C6H12,C1CCCCC1
+cycloheptane,rings-and-cages,pubchem,9265,C7H14,C1CCCCCC1
+cyclooctane,rings-and-cages,pubchem,9266,C8H16,C1CCCCCCC1
+cyclododecane,rings-and-cages,pubchem,9268,C12H24,C1CCCCCCCCCCC1
+adamantane,rings-and-cages,pubchem,9238,C10H16,C1C2CC3CC1CC(C2)C3
+norbornane,rings-and-cages,pubchem,9233,C7H12,C1CC2CCC1C2
+camphor,rings-and-cages,pubchem,2537,C10H16O,CC1(C2CCC1(C(=O)C2)C)C
+decalin,rings-and-cages,pubchem,7044,C10H18,C1CCC2CCCCC2C1
+bicyclo[2.2.2]octane,rings-and-cages,pubchem,9235,C8H14,C1CC2CCC1CC2
+cubane,rings-and-cages,pubchem,136090,C8H8,C12C3C4C1C5C2C3C45
+[2.2]paracyclophane,rings-and-cages,pubchem,74210,C16H16,C1CC2=CC=C(CCC3=CC=C1C=C3)C=C2
+spiropentane,rings-and-cages,pubchem,9088,C5H8,C1CC12CC2
+cyclooctatetraene,rings-and-cages,pubchem,637866,C8H8,C\1=C\C=C/C=C\C=C1
+bicyclo[1.1.1]pentane,rings-and-cages,pubchem,136153,C5H8,C1C2CC1C2
+DABCO,rings-and-cages,pubchem,9237,C6H12N2,C1CN2CCN1CC2
+quinuclidine,rings-and-cages,pubchem,7527,C7H13N,C1CN2CCC1CC2
+hexamine,rings-and-cages,pubchem,4101,C6H12N4,C1N2CN3CN1CN(C2)C3
+D-glyceraldehyde,stereochemistry,pubchem,79014,C3H6O3,C([C@H](C=O)O)O
+L-alanine,stereochemistry,pubchem,5950,C3H7NO2,C[C@@H](C(=O)O)N
+L-proline,stereochemistry,pubchem,145742,C5H9NO2,C1C[C@H](NC1)C(=O)O
+L-serine,stereochemistry,pubchem,5951,C3H7NO3,C([C@@H](C(=O)O)N)O
+L-cysteine,stereochemistry,pubchem,5862,C3H7NO2S,C([C@@H](C(=O)O)N)S
+L-threonine,stereochemistry,pubchem,6288,C4H9NO3,C[C@H]([C@@H](C(=O)O)N)O
+L-isoleucine,stereochemistry,pubchem,6306,C6H13NO2,CC[C@H](C)[C@@H](C(=O)O)N
+D-glucose,stereochemistry,pubchem,5793,C6H12O6,C([C@@H]1[C@H]([C@@H]([C@H](C(O1)O)O)O)O)O
+D-fructose,stereochemistry,pubchem,2723872,C6H12O6,C1[C@H]([C@H]([C@@H](C(O1)(CO)O)O)O)O
+sucrose,stereochemistry,pubchem,5988,C12H22O11,C([C@@H]1[C@H]([C@@H]([C@H]([C@H](O1)O[C@]2([C@H]([C@@H]([C@H](O2)CO)O)O)CO)O)O)O)O
+lactose,stereochemistry,pubchem,6134,C12H22O11,C([C@@H]1[C@@H]([C@@H]([C@H]([C@@H](O1)O[C@@H]2[C@H](O[C@H]([C@@H]([C@H]2O)O)O)CO)O)O)O)O
+L-menthol,stereochemistry,pubchem,16666,C10H20O,C[C@@H]1CC[C@H]([C@@H](C1)O)C(C)C
+(S)-limonene,stereochemistry,pubchem,439250,C10H16,CC1=CC[C@H](CC1)C(=C)C
+(R)-carvone,stereochemistry,pubchem,439570,C10H14O,CC1=CC[C@H](CC1=O)C(=C)C
+(S)-carvone,stereochemistry,pubchem,16724,C10H14O,CC1=CC[C@@H](CC1=O)C(=C)C
+cis-2-butene,stereochemistry,pubchem,5287573,C4H8,C/C=C\C
+trans-2-butene,stereochemistry,pubchem,62695,C4H8,C/C=C/C
+maleic acid,stereochemistry,pubchem,444266,C4H4O4,C(=C\C(=O)O)\C(=O)O
+fumaric acid,stereochemistry,pubchem,444972,C4H4O4,C(=C/C(=O)O)\C(=O)O
+L-tartaric acid,stereochemistry,pubchem,444305,C4H6O6,[C@@H]([C@H](C(=O)O)O)(C(=O)O)O
+meso-tartaric acid,stereochemistry,pubchem,447315,C4H6O6,[C@@H]([C@@H](C(=O)O)O)(C(=O)O)O
+ephedrine,stereochemistry,pubchem,9294,C10H15NO,C[C@@H]([C@@H](C1=CC=CC=C1)O)NC
+pseudoephedrine,stereochemistry,pubchem,7028,C10H15NO,C[C@@H]([C@H](C1=CC=CC=C1)O)NC
+epinephrine,stereochemistry,pubchem,5816,C9H13NO3,CNC[C@@H](C1=CC(=C(C=C1)O)O)O
+naproxen,stereochemistry,pubchem,156391,C14H14O3,C[C@@H](C1=CC2=C(C=C1)C=C(C=C2)OC)C(=O)O
+retinol,stereochemistry,pubchem,445354,C20H30O,CC1=C(C(CCC1)(C)C)/C=C/C(=C/C=C/C(=C/CO)/C)/C
+beta-carotene,stereochemistry,pubchem,5280489,C40H56,CC1=C(C(CCC1)(C)C)/C=C/C(=C/C=C/C(=C/C=C/C=C(/C=C/C=C(/C=C/C2=C(CCCC2(C)C)C)\C)\C)/C)/C
+oleic acid,stereochemistry,pubchem,445639,C18H34O2,CCCCCCCC/C=C\CCCCCCCC(=O)O
+elaidic acid,stereochemistry,pubchem,637517,C18H34O2,CCCCCCCC/C=C/CCCCCCCC(=O)O
+linoleic acid,stereochemistry,pubchem,5280450,C18H32O2,CCCCC/C=C\C/C=C\CCCCCCCC(=O)O
+L-ascorbic acid,stereochemistry,pubchem,54670067,C6H8O6,C([C@@H]([C@@H]1C(=C(C(=O)O1)O)O)O)O
+D-ribose,stereochemistry,pubchem,10975657,C5H10O5,C1[C@H]([C@H]([C@H](C(O1)O)O)O)O
+2-deoxy-D-ribose,stereochemistry,pubchem,5460005,C5H10O4,C(C=O)[C@@H]([C@@H](CO)O)O
+L-DOPA,stereochemistry,pubchem,6047,C9H11NO4,C1=CC(=C(C=C1C[C@@H](C(=O)O)N)O)O
+thalidomide,stereochemistry,pubchem,5426,C13H10N2O4,C1CC(=O)NC(=O)C1N2C(=O)C3=CC=CC=C3C2=O
+(R)-BINAP,stereochemistry,pubchem,634876,C44H32P2,C1=CC=C(C=C1)P(C2=CC=CC=C2)C3=C(C4=CC=CC=C4C=C3)C5=C(C=CC6=CC=CC=C65)P(C7=CC=CC=C7)C8=CC=CC=C8
+(S)-proline methyl ester,stereochemistry,pubchem,853477,C6H11NO2,COC(=O)[C@@H]1CCCN1
+inositol,stereochemistry,pubchem,892,C6H12O6,C1(C(C(C(C(C1O)O)O)O)O)O
+sodium acetate,charges-and-salts,pubchem,31372,C2H3NaO2,CC(=O)[O-].[Na+]
+sodium chloride,charges-and-salts,pubchem,5234,ClNa,[Na+].[Cl-]
+potassium permanganate,charges-and-salts,pubchem,516875,KMnO4,[O-][Mn](=O)(=O)=O.[K+]
+ammonium chloride,charges-and-salts,pubchem,25517,ClH4N,[NH4+].[Cl-]
+sodium bicarbonate,charges-and-salts,pubchem,516892,CHNaO3,C(=O)(O)[O-].[Na+]
+calcium carbonate,charges-and-salts,pubchem,10112,CCaO3,C(=O)([O-])[O-].[Ca+2]
+betaine,charges-and-salts,pubchem,247,C5H11NO2,C[N+](C)(C)CC(=O)[O-]
+choline chloride,charges-and-salts,pubchem,6209,C5H14ClNO,C[N+](C)(C)CCO.[Cl-]
+tetrabutylammonium bromide,charges-and-salts,pubchem,74236,C16H36BrN,CCCC[N+](CCCC)(CCCC)CCCC.[Br-]
+pyridinium chloride,charges-and-salts,pubchem,10176127,C5H6ClN,C1=CC=NC=C1.Cl
+sodium dodecyl sulfate,charges-and-salts,pubchem,3423265,C12H25NaO4S,CCCCCCCCCCCCOS(=O)(=O)[O-].[Na+]
+trimethylsulfonium iodide,charges-and-salts,pubchem,75127,C3H9IS,C[S+](C)C.[I-]
+nitric acid,charges-and-salts,pubchem,944,HNO3,[N+](=O)(O)[O-]
+sulfuric acid,charges-and-salts,pubchem,1118,H2O4S,OS(=O)(=O)O
+phosphoric acid,charges-and-salts,pubchem,1004,H3O4P,OP(=O)(O)O
+guanidine hydrochloride,charges-and-salts,pubchem,5742,CH6ClN3,C(=N)(N)N.Cl
+1-butyl-3-methylimidazolium chloride,charges-and-salts,pubchem,2734161,C8H15ClN2,CCCCN1C=C[N+](=C1)C.[Cl-]
+tropylium tetrafluoroborate,charges-and-salts,pubchem,152926,C7H7BF4,[B-](F)(F)(F)F.C1=CC=C[CH+]C=C1
+sodium borohydride,charges-and-salts,pubchem,4311764,BH4Na,[BH4-].[Na+]
+lithium aluminium hydride,charges-and-salts,pubchem,28112,AlH4Li,[Li+].[AlH4-]
+potassium tert-butoxide,charges-and-salts,pubchem,23665647,C4H9KO,CC(C)(C)[O-].[K+]
+sodium azide,charges-and-salts,pubchem,33557,N3Na,[N-]=[N+]=[N-].[Na+]
+tetraphenylphosphonium bromide,charges-and-salts,pubchem,2724163,C24H20BrP,C1=CC=C(C=C1)[P+](C2=CC=CC=C2)(C3=CC=CC=C3)C4=CC=CC=C4.[Br-]
+ammonium sulfate,charges-and-salts,pubchem,6097028,H8N2O4S,[NH4+].[NH4+].[O-]S(=O)(=O)[O-]
+trimethylamine N-oxide,charges-and-salts,pubchem,1145,C3H9NO,C[N+](C)(C)[O-]
+pyridine N-oxide,charges-and-salts,pubchem,12753,C5H5NO,C1=CC=[N+](C=C1)[O-]
+ferrocene,organometallics,pubchem,10219726,C10H10Fe,C1=C[CH]C=C1.C1=C[CH]C=C1.[Fe]
+cisplatin,organometallics,pubchem,5702198,Cl2H6N2Pt,N.N.Cl[Pt]Cl
+Wilkinson's catalyst,organometallics,pubchem,84599,C54H45ClP3Rh-,C1=CC=C(C=C1)P(C2=CC=CC=C2)C3=CC=CC=C3.C1=CC=C(C=C1)P(C2=CC=CC=C2)C3=CC=CC=C3.C1=CC=C(C=C1)P(C2=CC=CC=C2)C3=CC=CC=C3.[Cl-].[Rh]
+tetrakis(triphenylphosphine)palladium(0),organometallics,pubchem,11979704,C72H60P4Pd,C1=CC=C(C=C1)P(C2=CC=CC=C2)C3=CC=CC=C3.C1=CC=C(C=C1)P(C2=CC=CC=C2)C3=CC=CC=C3.C1=CC=C(C=C1)P(C2=CC=CC=C2)C3=CC=CC=C3.C1=CC=C(C=C1)P(C2=CC=CC=C2)C3=CC=CC=C3.[Pd]
+palladium(II) acetate,organometallics,pubchem,167845,C4H6O4Pd,CC(=O)[O-].CC(=O)[O-].[Pd+2]
+diethylzinc,organometallics,pubchem,101667988,C4H10Zn,C[CH2].C[CH2].[Zn]
+n-butyllithium,organometallics,pubchem,53627823,C4H9Li,[Li].CCC[CH2]
+methylmagnesium bromide,organometallics,pubchem,6349,CH3BrMg,[CH3-].[Mg+2].[Br-]
+trimethylaluminum,organometallics,pubchem,16682925,C3H9Al,C[Al](C)C
+tetraethyllead,organometallics,pubchem,6511,C8H20Pb,CC[Pb](CC)(CC)CC
+nickel tetracarbonyl,organometallics,pubchem,26039,C4NiO4,[C-]#[O+].[C-]#[O+].[C-]#[O+].[C-]#[O+].[Ni]
+iron pentacarbonyl,organometallics,pubchem,26040,C5FeO5,[C]=O.[C]=O.[C]=O.[C]=O.[C]=O.[Fe]
+chromium hexacarbonyl,organometallics,pubchem,25589,C6CrO6,[C-]#[O+].[C-]#[O+].[C-]#[O+].[C-]#[O+].[C-]#[O+].[C-]#[O+].[Cr]
+cobaltocene,organometallics,pubchem,92884,C10H10Co,[CH-]1C=CC=C1.[CH-]1C=CC=C1.[Co+2]
+copper(II) sulfate pentahydrate,organometallics,pubchem,24463,CuH10O9S,O.O.O.O.O.[O-]S(=O)(=O)[O-].[Cu+2]
+Grubbs catalyst,organometallics,pubchem,6392641,C43H74Cl2P2Ru+2,C1CCC(CC1)[PH+](C2CCCCC2)C3CCCCC3.C1CCC(CC1)[PH+](C2CCCCC2)C3CCCCC3.C1=CC=C(C=C1)C=[Ru](Cl)Cl
+zeise's salt,organometallics,pubchem,71311337,C2H6Cl3KOPt,C=C.O.Cl[Pt-](Cl)Cl.[K+]
+titanocene dichloride,organometallics,pubchem,76030824,C10H10Cl2Ti,[CH-]1C=CC=C1.[CH-]1C=CC=C1.[Cl-].[Cl-].[Ti+4]
+cyanocobalamin,organometallics,pubchem,166596686,C63H88CoN14O14P,CC1=CC2=C(C=C1C)[N+](=CN2)[C@@H]3[C@@H]([C@@H]([C@H](O3)CO)OP(=O)(O)O[C@H](C)CNC(=O)CC[C@@]4([C@H]([C@@H]5[C@]6([C@@]([C@@H](C(=N6)/C(=C\7/[C@@]([C@@H](/C(=C/C8=N/C(=C(\C4=N5)/C)/[C@H](C8(C)C)CCC(=N)[O-])/N7)CCC(=N)[O-])(C)CC(=O)N)/C)CCC(=N)[O-])(C)CC(=O)N)C)CC(=O)N)C)O.[C]#N.[Co+2]
+hemin,organometallics,pubchem,455658,C34H32ClFeN4O4,CC1=C(C2=CC3=C(C(=C([N-]3)C=C4C(=C(C(=N4)C=C5C(=C(C(=N5)C=C1[N-]2)C)C=C)C)C=C)C)CCC(=O)O)CCC(=O)O.[Cl-].[Fe+3]
+18-crown-6,macrocycles,pubchem,28557,C12H24O6,C1COCCOCCOCCOCCOCCO1
+15-crown-5,macrocycles,pubchem,36336,C10H20O5,C1COCCOCCOCCOCCO1
+12-crown-4,macrocycles,pubchem,9269,C8H16O4,C1COCCOCCOCCO1
+beta-cyclodextrin,macrocycles,pubchem,444041,C42H70O35,C([C@@H]1[C@@H]2[C@@H]([C@H]([C@H](O1)O[C@@H]3[C@H](O[C@@H]([C@@H]([C@H]3O)O)O[C@@H]4[C@H](O[C@@H]([C@@H]([C@H]4O)O)O[C@@H]5[C@H](O[C@@H]([C@@H]([C@H]5O)O)O[C@@H]6[C@H](O[C@@H]([C@@H]([C@H]6O)O)O[C@@H]7[C@H](O[C@@H]([C@@H]([C@H]7O)O)O[C@@H]8[C@H](O[C@H](O2)[C@@H]([C@H]8O)O)CO)CO)CO)CO)CO)CO)O)O)O
+alpha-cyclodextrin,macrocycles,pubchem,444913,C36H60O30,C([C@@H]1[C@@H]2[C@@H]([C@H]([C@H](O1)O[C@@H]3[C@H](O[C@@H]([C@@H]([C@H]3O)O)O[C@@H]4[C@H](O[C@@H]([C@@H]([C@H]4O)O)O[C@@H]5[C@H](O[C@@H]([C@@H]([C@H]5O)O)O[C@@H]6[C@H](O[C@@H]([C@@H]([C@H]6O)O)O[C@@H]7[C@H](O[C@H](O2)[C@@H]([C@H]7O)O)CO)CO)CO)CO)CO)O)O)O
+porphine,macrocycles,pubchem,66868,C20H14N4,C1=CC2=CC3=CC=C(N3)C=C4C=CC(=N4)C=C5C=CC(=N5)C=C1N2
+phthalocyanine,macrocycles,pubchem,86280045,C32H18N8,C1=CC=C2C(=C1)C3=NC4=NC(=NC5=C6C=CC=CC6=C(N5)N=C7C8=CC=CC=C8C(=N7)N=C2N3)C9=CC=CC=C94
+chlorophyll a,macrocycles,pubchem,12085802,C55H72MgN4O5,CCC1=C(C2=NC1=CC3=C(C4=C([N-]3)C(=C5[C@H]([C@@H](C(=N5)C=C6C(=C(C(=C2)[N-]6)C=C)C)C)CCC(=O)OC/C=C(\C)/CCC[C@H](C)CCC[C@H](C)CCCC(C)C)[C@H](C4=O)C(=O)OC)C)C.[Mg+2]
+valinomycin,macrocycles,pubchem,3000706,C54H90N6O18,C[C@H]1C(=O)N[C@H](C(=O)O[C@@H](C(=O)N[C@@H](C(=O)O[C@H](C(=O)N[C@H](C(=O)O[C@@H](C(=O)N[C@@H](C(=O)O[C@H](C(=O)N[C@H](C(=O)O[C@@H](C(=O)N[C@@H](C(=O)O1)C(C)C)C(C)C)C(C)C)C)C(C)C)C(C)C)C(C)C)C)C(C)C)C(C)C)C(C)C
+cyclosporine,macrocycles,pubchem,5284373,C62H111N11O12,CC[C@H]1C(=O)N(CC(=O)N([C@H](C(=O)N[C@H](C(=O)N([C@H](C(=O)N[C@H](C(=O)N[C@@H](C(=O)N([C@H](C(=O)N([C@H](C(=O)N([C@H](C(=O)N([C@H](C(=O)N1)[C@@H]([C@H](C)C/C=C/C)O)C)C(C)C)C)CC(C)C)C)CC(C)C)C)C)C)CC(C)C)C)C(C)C)CC(C)C)C)C
+vancomycin,macrocycles,pubchem,14969,C66H75Cl2N9O24,C[C@H]1[C@H]([C@@](C[C@@H](O1)O[C@@H]2[C@H]([C@@H]([C@H](O[C@H]2OC3=C4C=C5C=C3OC6=C(C=C(C=C6)[C@H]([C@H](C(=O)N[C@H](C(=O)N[C@H]5C(=O)N[C@@H]7C8=CC(=C(C=C8)O)C9=C(C=C(C=C9O)O)[C@H](NC(=O)[C@H]([C@@H](C1=CC(=C(O4)C=C1)Cl)O)NC7=O)C(=O)O)CC(=O)N)NC(=O)[C@@H](CC(C)C)NC)O)Cl)CO)O)O)(C)N)O
+erythromycin,macrocycles,pubchem,12560,C37H67NO13,CC[C@@H]1[C@@]([C@@H]([C@H](C(=O)[C@@H](C[C@@]([C@@H]([C@H]([C@@H]([C@H](C(=O)O1)C)O[C@H]2C[C@@]([C@H]([C@@H](O2)C)O)(C)OC)C)O[C@H]3[C@@H]([C@H](C[C@H](O3)C)N(C)C)O)(C)O)C)C)O)(C)O
+sirolimus,macrocycles,pubchem,5284616,C51H79NO13,C[C@@H]1CC[C@H]2C[C@@H](/C(=C/C=C/C=C/[C@H](C[C@H](C(=O)[C@@H]([C@@H](/C(=C/[C@H](C(=O)C[C@H](OC(=O)[C@@H]3CCCCN3C(=O)C(=O)[C@@]1(O2)O)[C@H](C)C[C@@H]4CC[C@H]([C@@H](C4)OC)O)C)/C)O)OC)C)C)/C)OC
+4-tert-butylcalix[4]arene,macrocycles,pubchem,335377,C44H56O4,CC(C)(C)C1=CC2=C(C(=C1)CC3=CC(=CC(=C3O)CC4=CC(=CC(=C4O)CC5=C(C(=CC(=C5)C(C)(C)C)C2)O)C(C)(C)C)C(C)(C)C)O
+dibenzo-18-crown-6,macrocycles,pubchem,26541,C20H24O6,C1COC2=CC=CC=C2OCCOCCOC3=CC=CC=C3OCCO1
+cryptand 222,macrocycles,pubchem,72801,C18H36N2O6,C1COCCOCCN2CCOCCOCCN1CCOCCOCC2
+nonactin,macrocycles,pubchem,72519,C40H64O12,C[C@@H]1C[C@H]2CC[C@H](O2)[C@@H](C(=O)O[C@H](C[C@@H]3CC[C@@H](O3)[C@H](C(=O)O[C@@H](C[C@H]4CC[C@H](O4)[C@@H](C(=O)O[C@H](C[C@@H]5CC[C@@H](O5)[C@H](C(=O)O1)C)C)C)C)C)C)C
+gramicidin S,macrocycles,pubchem,73357,C60H92N12O10,CC(C)C[C@H]1C(=O)N[C@@H](C(=O)N2CCC[C@H]2C(=O)N[C@H](C(=O)N[C@H](C(=O)N[C@H](C(=O)N[C@@H](C(=O)N3CCC[C@H]3C(=O)N[C@H](C(=O)N[C@H](C(=O)N1)CCCN)C(C)C)CC4=CC=CC=C4)CC(C)C)CCCN)C(C)C)CC5=CC=CC=C5
+cholesterol,natural-products,pubchem,5997,C27H46O,C[C@H](CCCC(C)C)[C@H]1CC[C@@H]2[C@@]1(CC[C@H]3[C@H]2CC=C4[C@@]3(CC[C@@H](C4)O)C)C
+testosterone,natural-products,pubchem,6013,C19H28O2,C[C@]12CC[C@H]3[C@H]([C@@H]1CC[C@@H]2O)CCC4=CC(=O)CC[C@]34C
+estradiol,natural-products,pubchem,5757,C18H24O2,C[C@]12CC[C@H]3[C@H]([C@@H]1CC[C@@H]2O)CCC4=C3C=CC(=C4)O
+progesterone,natural-products,pubchem,5994,C21H30O2,CC(=O)[C@H]1CC[C@@H]2[C@@]1(CC[C@H]3[C@H]2CCC4=CC(=O)CC[C@]34C)C
+cortisol,natural-products,pubchem,5754,C21H30O5,C[C@]12CCC(=O)C=C1CC[C@@H]3[C@@H]2[C@H](C[C@]4([C@H]3CC[C@@]4(C(=O)CO)O)C)O
+morphine,natural-products,pubchem,5288826,C17H19NO3,CN1CC[C@]23[C@@H]4[C@H]1CC5=C2C(=C(C=C5)O)O[C@H]3[C@H](C=C4)O
+codeine,natural-products,pubchem,5284371,C18H21NO3,CN1CC[C@]23[C@@H]4[C@H]1CC5=C2C(=C(C=C5)OC)O[C@H]3[C@H](C=C4)O
+quinine,natural-products,pubchem,3034034,C20H24N2O2,COC1=CC2=C(C=CN=C2C=C1)[C@H]([C@@H]3C[C@@H]4CCN3C[C@@H]4C=C)O
+strychnine,natural-products,pubchem,441071,C21H22N2O2,C1CN2CC3=CCO[C@H]4CC(=O)N5[C@H]6[C@H]4[C@H]3C[C@H]2[C@@]61C7=CC=CC=C75
+nicotine,natural-products,pubchem,89594,C10H14N2,CN1CCC[C@H]1C2=CN=CC=C2
+caffeine,natural-products,pubchem,2519,C8H10N4O2,CN1C=NC2=C1C(=O)N(C(=O)N2C)C
+theobromine,natural-products,pubchem,5429,C7H8N4O2,CN1C=NC2=C1C(=O)NC(=O)N2C
+capsaicin,natural-products,pubchem,1548943,C18H27NO3,CC(C)/C=C/CCCCC(=O)NCC1=CC(=C(C=C1)O)OC
+curcumin,natural-products,pubchem,969516,C21H20O6,COC1=C(C=CC(=C1)/C=C/C(=O)CC(=O)/C=C/C2=CC(=C(C=C2)O)OC)O
+resveratrol,natural-products,pubchem,445154,C14H12O3,C1=CC(=CC=C1/C=C/C2=CC(=CC(=C2)O)O)O
+quercetin,natural-products,pubchem,5280343,C15H10O7,C1=CC(=C(C=C1C2=C(C(=O)C3=C(C=C(C=C3O2)O)O)O)O)O
+citral,natural-products,pubchem,638011,C10H16O,CC(=CCC/C(=C/C=O)/C)C
+geraniol,natural-products,pubchem,637566,C10H18O,CC(=CCC/C(=C/CO)/C)C
+linalool,natural-products,pubchem,6549,C10H18O,CC(=CCCC(C)(C=C)O)C
+vanillin,natural-products,pubchem,1183,C8H8O3,COC1=C(C=CC(=C1)C=O)O
+eugenol,natural-products,pubchem,3314,C10H12O2,COC1=C(C=CC(=C1)CC=C)O
+cinnamaldehyde,natural-products,pubchem,637511,C9H8O,C1=CC=C(C=C1)/C=C/C=O
+alpha-pinene,natural-products,pubchem,6654,C10H16,CC1=CCC2CC1C2(C)C
+beta-caryophyllene,natural-products,pubchem,5281515,C15H24,C/C/1=C\CCC(=C)[C@H]2CC([C@@H]2CC1)(C)C
+artemisinin,natural-products,pubchem,68827,C15H22O5,C[C@@H]1CC[C@H]2[C@H](C(=O)O[C@H]3[C@@]24[C@H]1CC[C@](O3)(OO4)C)C
+paclitaxel,natural-products,pubchem,36314,C47H51NO14,CC1=C2[C@H](C(=O)[C@@]3([C@H](C[C@@H]4[C@]([C@H]3[C@@H]([C@@](C2(C)C)(C[C@@H]1OC(=O)[C@@H]([C@H](C5=CC=CC=C5)NC(=O)C6=CC=CC=C6)O)O)OC(=O)C7=CC=CC=C7)(CO4)OC(=O)C)O)C)OC(=O)C
+vinblastine,natural-products,pubchem,13342,C46H58N4O9,CC[C@@]1(C[C@H]2C[C@@](C3=C(CCN(C2)C1)C4=CC=CC=C4N3)(C5=C(C=C6C(=C5)[C@]78CCN9[C@H]7[C@@](C=CC9)([C@H]([C@@]([C@@H]8N6C)(C(=O)OC)O)OC(=O)C)CC)OC)C(=O)OC)O
+reserpine,natural-products,pubchem,5770,C33H40N2O9,CO[C@H]1[C@@H](C[C@@H]2CN3CCC4=C([C@H]3C[C@@H]2[C@@H]1C(=O)OC)NC5=C4C=CC(=C5)OC)OC(=O)C6=CC(=C(C(=C6)OC)OC)OC
+penicillin G,natural-products,pubchem,5904,C16H18N2O4S,CC1([C@@H](N2[C@H](S1)[C@@H](C2=O)NC(=O)CC3=CC=CC=C3)C(=O)O)C
+tetracycline,natural-products,pubchem,54675776,C22H24N2O8,C[C@@]1([C@H]2C[C@H]3[C@@H](C(=O)C(=C([C@]3(C(=O)C2=C(C4=C1C=CC=C4O)O)O)O)C(=O)N)N(C)C)O
+streptomycin,natural-products,pubchem,19649,C21H39N7O12,C[C@H]1[C@@]([C@H]([C@@H](O1)O[C@@H]2[C@H]([C@@H]([C@H]([C@@H]([C@H]2O)O)N=C(N)N)O)N=C(N)N)O[C@H]3[C@H]([C@@H]([C@H]([C@@H](O3)CO)O)O)NC)(C=O)O
+amphotericin B,natural-products,pubchem,5280965,C47H73NO17,C[C@H]1/C=C/C=C/C=C/C=C/C=C/C=C/C=C/[C@@H](C[C@H]2[C@@H]([C@H](C[C@](O2)(C[C@H](C[C@H]([C@@H](CC[C@H](C[C@H](CC(=O)O[C@H]([C@@H]([C@@H]1O)C)C)O)O)O)O)O)O)O)C(=O)O)O[C@H]3[C@H]([C@H]([C@@H]([C@H](O3)C)O)N)O
+tetrodotoxin,natural-products,pubchem,11174599,C11H17N3O8,C([C@@]1([C@H]2[C@@H]3[C@H](N=C(N[C@@]34[C@@H]([C@@H]1O[C@]([C@H]4O)(O2)O)O)N)O)O)O
+atropine,natural-products,pubchem,174174,C17H23NO3,CN1[C@@H]2CC[C@H]1CC(C2)OC(=O)C(CO)C3=CC=CC=C3
+colchicine,natural-products,pubchem,6167,C22H25NO6,CC(=O)N[C@H]1CCC2=CC(=C(C(=C2C3=CC=C(C(=O)C=C13)OC)OC)OC)OC
+podophyllotoxin,natural-products,pubchem,10607,C22H22O8,COC1=CC(=CC(=C1OC)OC)[C@H]2[C@@H]3[C@H](COC3=O)[C@H](C4=CC5=C(C=C24)OCO5)O
+camptothecin,natural-products,pubchem,24360,C20H16N2O4,CC[C@@]1(C2=C(COC1=O)C(=O)N3CC4=CC5=CC=CC=C5N=C4C3=C2)O
+digoxin,natural-products,pubchem,2724385,C41H64O14,C[C@@H]1[C@H]([C@H](C[C@@H](O1)O[C@@H]2[C@H](O[C@H](C[C@@H]2O)O[C@@H]3[C@H](O[C@H](C[C@@H]3O)O[C@H]4CC[C@]5([C@@H](C4)CC[C@@H]6[C@@H]5C[C@H]([C@]7([C@@]6(CC[C@@H]7C8=CC(=O)OC8)O)C)O)C)C)C)O)O
+salicin,natural-products,pubchem,439503,C13H18O7,C1=CC=C(C(=C1)CO)O[C@H]2[C@@H]([C@H]([C@@H]([C@H](O2)CO)O)O)O
+berberine,natural-products,pubchem,2353,C20H18NO4+,COC1=C(C2=C[N+]3=C(C=C2C=C1)C4=CC5=C(C=C4CC3)OCO5)OC
+galantamine,natural-products,pubchem,9651,C17H21NO3,CN1CC[C@@]23C=C[C@@H](C[C@@H]2OC4=C(C=CC(=C34)C1)OC)O
+brucine,natural-products,pubchem,442021,C23H26N2O4,COC1=C(C=C2C(=C1)[C@]34CCN5[C@H]3C[C@@H]6[C@@H]7[C@@H]4N2C(=O)C[C@@H]7OCC=C6C5)OC
+lycopene,natural-products,pubchem,446925,C40H56,CC(=CCC/C(=C/C=C/C(=C/C=C/C(=C/C=C/C=C(/C=C/C=C(/C=C/C=C(/CCC=C(C)C)\C)\C)\C)/C)/C)/C)C
+ergosterol,natural-products,pubchem,444679,C28H44O,C[C@H](/C=C/[C@H](C)C(C)C)[C@H]1CC[C@@H]2[C@@]1(CC[C@H]3C2=CC=C4[C@@]3(CC[C@@H](C4)O)C)C
+abscisic acid,natural-products,pubchem,5280896,C15H20O4,CC1=CC(=O)CC([C@]1(/C=C/C(=C\C(=O)O)/C)O)(C)C
+gibberellic acid,natural-products,pubchem,6466,C19H22O6,C[C@@]12[C@H](C=C[C@@]3([C@@H]1[C@@H]([C@]45[C@H]3CC[C@](C4)(C(=C)C5)O)C(=O)O)OC2=O)O
+forskolin,natural-products,pubchem,47936,C22H34O7,CC(=O)O[C@H]1[C@H]([C@@H]2[C@]([C@H](CCC2(C)C)O)([C@@]3([C@@]1(O[C@@](CC3=O)(C)C=C)C)O)C)O
+aspirin,drugs,pubchem,2244,C9H8O4,CC(=O)OC1=CC=CC=C1C(=O)O
+ibuprofen,drugs,pubchem,3672,C13H18O2,CC(C)CC1=CC=C(C=C1)C(C)C(=O)O
+acetaminophen,drugs,pubchem,1983,C8H9NO2,CC(=O)NC1=CC=C(C=C1)O
+diclofenac,drugs,pubchem,3033,C14H11Cl2NO2,C1=CC=C(C(=C1)CC(=O)O)NC2=C(C=CC=C2Cl)Cl
+celecoxib,drugs,pubchem,2662,C17H14F3N3O2S,CC1=CC=C(C=C1)C2=CC(=NN2C3=CC=C(C=C3)S(=O)(=O)N)C(F)(F)F
+atorvastatin,drugs,pubchem,60823,C33H35FN2O5,CC(C)C1=C(C(=C(N1CC[C@H](C[C@H](CC(=O)O)O)O)C2=CC=C(C=C2)F)C3=CC=CC=C3)C(=O)NC4=CC=CC=C4
+simvastatin,drugs,pubchem,54454,C25H38O5,CCC(C)(C)C(=O)O[C@H]1C[C@H](C=C2[C@H]1[C@H]([C@H](C=C2)C)CC[C@@H]3C[C@H](CC(=O)O3)O)C
+rosuvastatin,drugs,pubchem,446157,C22H28FN3O6S,CC(C)C1=NC(=NC(=C1/C=C/[C@H](C[C@H](CC(=O)O)O)O)C2=CC=C(C=C2)F)N(C)S(=O)(=O)C
+metformin,drugs,pubchem,4091,C4H11N5,CN(C)C(=N)N=C(N)N
+sitagliptin,drugs,pubchem,4369359,C16H15F6N5O,C1CN2C(=NN=C2C(F)(F)F)CN1C(=O)C[C@@H](CC3=CC(=C(C=C3F)F)F)N
+lisinopril,drugs,pubchem,5362119,C21H31N3O5,C1C[C@H](N(C1)C(=O)[C@H](CCCCN)N[C@@H](CCC2=CC=CC=C2)C(=O)O)C(=O)O
+enalapril,drugs,pubchem,5388962,C20H28N2O5,CCOC(=O)[C@H](CCC1=CC=CC=C1)N[C@@H](C)C(=O)N2CCC[C@H]2C(=O)O
+losartan,drugs,pubchem,3961,C22H23ClN6O,CCCCC1=NC(=C(N1CC2=CC=C(C=C2)C3=CC=CC=C3C4=NNN=N4)CO)Cl
+valsartan,drugs,pubchem,60846,C24H29N5O3,CCCCC(=O)N(CC1=CC=C(C=C1)C2=CC=CC=C2C3=NNN=N3)[C@@H](C(C)C)C(=O)O
+amlodipine,drugs,pubchem,2162,C20H25ClN2O5,CCOC(=O)C1=C(NC(=C(C1C2=CC=CC=C2Cl)C(=O)OC)C)COCCN
+nifedipine,drugs,pubchem,4485,C17H18N2O6,CC1=C(C(C(=C(N1)C)C(=O)OC)C2=CC=CC=C2[N+](=O)[O-])C(=O)OC
+metoprolol,drugs,pubchem,4171,C15H25NO3,CC(C)NCC(COC1=CC=C(C=C1)CCOC)O
+propranolol,drugs,pubchem,4946,C16H21NO2,CC(C)NCC(COC1=CC=CC2=CC=CC=C21)O
+atenolol,drugs,pubchem,2249,C14H22N2O3,CC(C)NCC(COC1=CC=C(C=C1)CC(=O)N)O
+warfarin,drugs,pubchem,54678486,C19H16O4,CC(=O)CC(C1=CC=CC=C1)C2=C(C3=CC=CC=C3OC2=O)O
+clopidogrel,drugs,pubchem,60606,C16H16ClNO2S,COC(=O)[C@H](C1=CC=CC=C1Cl)N2CCC3=C(C2)C=CS3
+apixaban,drugs,pubchem,10182969,C25H25N5O4,COC1=CC=C(C=C1)N2C3=C(CCN(C3=O)C4=CC=C(C=C4)N5CCCCC5=O)C(=N2)C(=O)N
+omeprazole,drugs,pubchem,4594,C17H19N3O3S,CC1=CN=C(C(=C1OC)C)CS(=O)C2=NC3=C(N2)C=C(C=C3)OC
+esomeprazole,drugs,pubchem,9568614,C17H19N3O3S,CC1=CN=C(C(=C1OC)C)C[S@](=O)C2=NC3=C(N2)C=C(C=C3)OC
+ranitidine,drugs,pubchem,3001055,C13H22N4O3S,CN/C(=C\[N+](=O)[O-])/NCCSCC1=CC=C(O1)CN(C)C
+loratadine,drugs,pubchem,3957,C22H23ClN2O2,CCOC(=O)N1CCC(=C2C3=C(CCC4=C2N=CC=C4)C=C(C=C3)Cl)CC1
+cetirizine,drugs,pubchem,2678,C21H25ClN2O3,C1CN(CCN1CCOCC(=O)O)C(C2=CC=CC=C2)C3=CC=C(C=C3)Cl
+fexofenadine,drugs,pubchem,3348,C32H39NO4,CC(C)(C1=CC=C(C=C1)C(CCCN2CCC(CC2)C(C3=CC=CC=C3)(C4=CC=CC=C4)O)O)C(=O)O
+sertraline,drugs,pubchem,68617,C17H17Cl2N,CN[C@H]1CC[C@H](C2=CC=CC=C12)C3=CC(=C(C=C3)Cl)Cl
+fluoxetine,drugs,pubchem,3386,C17H18F3NO,CNCCC(C1=CC=CC=C1)OC2=CC=C(C=C2)C(F)(F)F
+citalopram,drugs,pubchem,2771,C20H21FN2O,CN(C)CCCC1(C2=C(CO1)C=C(C=C2)C#N)C3=CC=C(C=C3)F
+escitalopram,drugs,pubchem,146570,C20H21FN2O,CN(C)CCC[C@@]1(C2=C(CO1)C=C(C=C2)C#N)C3=CC=C(C=C3)F
+venlafaxine,drugs,pubchem,5656,C17H27NO2,CN(C)CC(C1=CC=C(C=C1)OC)C2(CCCCC2)O
+bupropion,drugs,pubchem,444,C13H18ClNO,CC(C(=O)C1=CC(=CC=C1)Cl)NC(C)(C)C
+diazepam,drugs,pubchem,3016,C16H13ClN2O,CN1C(=O)CN=C(C2=C1C=CC(=C2)Cl)C3=CC=CC=C3
+alprazolam,drugs,pubchem,2118,C17H13ClN4,CC1=NN=C2N1C3=C(C=C(C=C3)Cl)C(=NC2)C4=CC=CC=C4
+haloperidol,drugs,pubchem,3559,C21H23ClFNO2,C1CN(CCC1(C2=CC=C(C=C2)Cl)O)CCCC(=O)C3=CC=C(C=C3)F
+risperidone,drugs,pubchem,5073,C23H27FN4O2,CC1=C(C(=O)N2CCCCC2=N1)CCN3CCC(CC3)C4=NOC5=C4C=CC(=C5)F
+olanzapine,drugs,pubchem,135398745,C17H20N4S,CC1=CC2=C(S1)NC3=CC=CC=C3N=C2N4CCN(CC4)C
+quetiapine,drugs,pubchem,5002,C21H25N3O2S,C1CN(CCN1CCOCCO)C2=NC3=CC=CC=C3SC4=CC=CC=C42
+aripiprazole,drugs,pubchem,60795,C23H27Cl2N3O2,C1CC(=O)NC2=C1C=CC(=C2)OCCCCN3CCN(CC3)C4=C(C(=CC=C4)Cl)Cl
+donepezil,drugs,pubchem,3152,C24H29NO3,COC1=C(C=C2C(=C1)CC(C2=O)CC3CCN(CC3)CC4=CC=CC=C4)OC
+gabapentin,drugs,pubchem,3446,C9H17NO2,C1CCC(CC1)(CC(=O)O)CN
+pregabalin,drugs,pubchem,5486971,C8H17NO2,CC(C)C[C@@H](CC(=O)O)CN
+sildenafil,drugs,pubchem,135398744,C22H30N6O4S,CCCC1=NN(C2=C1N=C(NC2=O)C3=C(C=CC(=C3)S(=O)(=O)N4CCN(CC4)C)OCC)C
+tadalafil,drugs,pubchem,110635,C22H19N3O4,CN1CC(=O)N2[C@@H](C1=O)CC3=C([C@H]2C4=CC5=C(C=C4)OCO5)NC6=CC=CC=C36
+imatinib,drugs,pubchem,5291,C29H31N7O,CC1=C(C=C(C=C1)NC(=O)C2=CC=C(C=C2)CN3CCN(CC3)C)NC4=NC=CC(=N4)C5=CN=CC=C5
+gefitinib,drugs,pubchem,123631,C22H24ClFN4O3,COC1=C(C=C2C(=C1)N=CN=C2NC3=CC(=C(C=C3)F)Cl)OCCCN4CCOCC4
+erlotinib,drugs,pubchem,176870,C22H23N3O4,COCCOC1=C(C=C2C(=C1)C(=NC=N2)NC3=CC=CC(=C3)C#C)OCCOC
+osimertinib,drugs,pubchem,71496458,C28H33N7O2,CN1C=C(C2=CC=CC=C21)C3=NC(=NC=C3)NC4=C(C=C(C(=C4)NC(=O)C=C)N(C)CCN(C)C)OC
+ibrutinib,drugs,pubchem,24821094,C25H24N6O2,C=CC(=O)N1CCC[C@H](C1)N2C3=NC=NC(=C3C(=N2)C4=CC=C(C=C4)OC5=CC=CC=C5)N
+tamoxifen,drugs,pubchem,2733526,C26H29NO,CC/C(=C(\C1=CC=CC=C1)/C2=CC=C(C=C2)OCCN(C)C)/C3=CC=CC=C3
+letrozole,drugs,pubchem,3902,C17H11N5,C1=CC(=CC=C1C#N)C(C2=CC=C(C=C2)C#N)N3C=NC=N3
+methotrexate,drugs,pubchem,126941,C20H22N8O5,CN(CC1=CN=C2C(=N1)C(=NC(=N2)N)N)C3=CC=C(C=C3)C(=O)N[C@@H](CCC(=O)O)C(=O)O
+cyclophosphamide,drugs,pubchem,2907,C7H15Cl2N2O2P,C1CNP(=O)(OC1)N(CCCl)CCCl
+doxorubicin,drugs,pubchem,31703,C27H29NO11,C[C@H]1[C@H]([C@H](C[C@@H](O1)O[C@H]2C[C@@](CC3=C2C(=C4C(=C3O)C(=O)C5=C(C4=O)C(=CC=C5)OC)O)(C(=O)CO)O)N)O
+ciprofloxacin,drugs,pubchem,2764,C17H18FN3O3,C1CC1N2C=C(C(=O)C3=CC(=C(C=C32)N4CCNCC4)F)C(=O)O
+amoxicillin,drugs,pubchem,33613,C16H19N3O5S,CC1([C@@H](N2[C@H](S1)[C@@H](C2=O)NC(=O)[C@@H](C3=CC=C(C=C3)O)N)C(=O)O)C
+ceftriaxone,drugs,pubchem,5479530,C18H18N8O7S3,CN1C(=NC(=O)C(=O)N1)SCC2=C(N3[C@@H]([C@@H](C3=O)NC(=O)/C(=N\OC)/C4=CSC(=N4)N)SC2)C(=O)O
+azithromycin,drugs,pubchem,447043,C38H72N2O12,CC[C@@H]1[C@@]([C@@H]([C@H](N(C[C@@H](C[C@@]([C@@H]([C@H]([C@@H]([C@H](C(=O)O1)C)O[C@H]2C[C@@]([C@H]([C@@H](O2)C)O)(C)OC)C)O[C@H]3[C@@H]([C@H](C[C@H](O3)C)N(C)C)O)(C)O)C)C)C)O)(C)O
+oseltamivir,drugs,pubchem,65028,C16H28N2O4,CCC(CC)O[C@@H]1C=C(C[C@@H]([C@H]1NC(=O)C)N)C(=O)OCC
+remdesivir,drugs,pubchem,121304016,C27H35N6O8P,CCC(CC)COC(=O)[C@H](C)N[P@](=O)(OC[C@@H]1[C@H]([C@H]([C@](O1)(C#N)C2=CC=C3N2N=CN=C3N)O)O)OC4=CC=CC=C4
+sofosbuvir,drugs,pubchem,45375808,C22H29FN3O9P,C[C@@H](C(=O)OC(C)C)N[P@](=O)(OC[C@@H]1[C@H]([C@@]([C@@H](O1)N2C=CC(=O)NC2=O)(C)F)O)OC3=CC=CC=C3
+ritonavir,drugs,pubchem,392622,C37H48N6O5S2,CC(C)C1=NC(=CS1)CN(C)C(=O)N[C@@H](C(C)C)C(=O)N[C@@H](CC2=CC=CC=C2)C[C@@H]([C@H](CC3=CC=CC=C3)NC(=O)OCC4=CN=CS4)O
+nirmatrelvir,drugs,pubchem,155903259,C23H32F3N5O4,CC1([C@@H]2[C@H]1[C@H](N(C2)C(=O)[C@H](C(C)(C)C)NC(=O)C(F)(F)F)C(=O)N[C@@H](C[C@@H]3CCNC3=O)C#N)C
+dexamethasone,drugs,pubchem,5743,C22H29FO5,C[C@@H]1C[C@H]2[C@@H]3CCC4=CC(=O)C=C[C@@]4([C@]3([C@H](C[C@@]2([C@]1(C(=O)CO)O)C)O)F)C
+prednisone,drugs,pubchem,5865,C21H26O5,C[C@]12CC(=O)[C@H]3[C@H]([C@@H]1CC[C@@]2(C(=O)CO)O)CCC4=CC(=O)C=C[C@]34C
+levothyroxine,drugs,pubchem,5819,C15H11I4NO4,C1=C(C=C(C(=C1I)OC2=CC(=C(C(=C2)I)O)I)I)C[C@@H](C(=O)O)N
+furosemide,drugs,pubchem,3440,C12H11ClN2O5S,C1=COC(=C1)CNC2=CC(=C(C=C2C(=O)O)S(=O)(=O)N)Cl
+hydrochlorothiazide,drugs,pubchem,3639,C7H8ClN3O4S2,C1NC2=CC(=C(C=C2S(=O)(=O)N1)S(=O)(=O)N)Cl
+allopurinol,drugs,pubchem,135401907,C5H4N4O,C1=NNC2=C1C(=O)NC=N2
+acyclovir,drugs,pubchem,135398513,C8H11N5O3,C1=NC2=C(N1COCCO)N=C(NC2=O)N
+zidovudine,drugs,pubchem,35370,C10H13N5O4,CC1=CN(C(=O)NC1=O)[C@H]2C[C@@H]([C@H](O2)CO)N=[N+]=[N-]
+isoniazid,drugs,pubchem,3767,C6H7N3O,C1=CN=CC=C1C(=O)NN
+rifampicin,drugs,pubchem,135398735,C43H58N4O12,C[C@H]1/C=C/C=C(\C(=O)NC2=C(C(=C3C(=C2O)C(=C(C4=C3C(=O)[C@](O4)(O/C=C/[C@@H]([C@H]([C@H]([C@@H]([C@@H]([C@@H]([C@H]1O)C)O)C)OC(=O)C)C)OC)C)C)O)O)/C=N/N5CCN(CC5)C)/C
+chloroquine,drugs,pubchem,2719,C18H26ClN3,CCN(CC)CCCC(C)NC1=C2C=CC(=CC2=NC=C1)Cl
+artesunate,drugs,pubchem,6917864,C19H28O8,C[C@@H]1CC[C@H]2[C@H]([C@@H](O[C@H]3[C@@]24[C@H]1CC[C@](O3)(OO4)C)OC(=O)CCC(=O)O)C
+lenalidomide,drugs,pubchem,216326,C13H13N3O3,C1CC(=O)NC(=O)C1N2CC3=C(C2=O)C=CC=C3N
+venetoclax,drugs,pubchem,49846579,C45H50ClN7O7S,CC1(CCC(=C(C1)C2=CC=C(C=C2)Cl)CN3CCN(CC3)C4=CC(=C(C=C4)C(=O)NS(=O)(=O)C5=CC(=C(C=C5)NCC6CCOCC6)[N+](=O)[O-])OC7=CN=C8C(=C7)C=CN8)C
+beta-damascone,fragrance,pubchem,32052,C13H20O,CC=CC(=O)C1=C(CCCC1(C)C)C
+beta-ionone,fragrance,pubchem,638014,C13H20O,CC1=C(C(CCC1)(C)C)/C=C/C(=O)C
+alpha-ionone,fragrance,pubchem,5282108,C13H20O,CC1=CCCC(C1/C=C/C(=O)C)(C)C
+methyl dihydrojasmonate,fragrance,pubchem,102861,C13H22O3,CCCCCC1C(CCC1=O)CC(=O)OC
+galaxolide,fragrance,pubchem,91497,C18H26O,CC1COCC2=CC3=C(C=C12)C(C(C3(C)C)C)(C)C
+muscone,fragrance,pubchem,7160826,C16H30O,C[C@@H]1CCCCCCCCCCCCC(=O)C1
+ambroxide,fragrance,pubchem,10857465,C16H28O,C[C@]12CCCC([C@@H]1CC[C@@]3([C@@H]2CCO3)C)(C)C
+coumarin,fragrance,pubchem,323,C9H6O2,C1=CC=C2C(=C1)C=CC(=O)O2
+ethyl vanillin,fragrance,pubchem,8467,C9H10O3,CCOC1=C(C=CC(=C1)C=O)O
+maltol,fragrance,pubchem,8369,C6H6O3,CC1=C(C(=O)C=CO1)O
+furaneol,fragrance,pubchem,19309,C6H8O3,CC1C(=O)C(=C(O1)C)O
+gamma-decalactone,fragrance,pubchem,12813,C10H18O2,CCCCCCC1CCC(=O)O1
+cis-3-hexen-1-ol,fragrance,pubchem,5281167,C6H12O,CC/C=C\CCO
+rose oxide,fragrance,pubchem,27866,C10H18O,CC1CCOC(C1)C=C(C)C
+nootkatone,fragrance,pubchem,1268142,C15H22O,C[C@@H]1CC(=O)C=C2[C@]1(C[C@@H](CC2)C(=C)C)C
+iso E super,fragrance,pubchem,1808124,C16H26O,C[C@H]1CC2=C(C[C@]1(C)C(=O)C)C(CCC2)(C)C
+hydroxycitronellal,fragrance,pubchem,7888,C10H20O2,CC(CCCC(C)(C)O)CC=O
+lilial,fragrance,pubchem,228987,C14H20O,CC(CC1=CC=C(C=C1)C(C)(C)C)C=O
+cashmeran,fragrance,pubchem,92292,C14H22O,CC1C(C2=C(C1(C)C)C(=O)CCC2)(C)C
+ethyl maltol,fragrance,pubchem,21059,C7H8O3,CCC1=C(C(=O)C=CO1)O
+deuterium oxide,isotopes,pubchem,24602,H2O,[2H]O[2H]
+chloroform-d,isotopes,pubchem,71583,CHCl3,[2H]C(Cl)(Cl)Cl
+dimethyl sulfoxide-d6,isotopes,pubchem,75151,C2H6OS,[2H]C([2H])([2H])S(=O)C([2H])([2H])[2H]
+fludeoxyglucose F-18,isotopes,pubchem,68614,C6H11FO5,C([C@H]([C@H]([C@@H]([C@H](C=O)[18F])O)O)O)O
+methane-13C,isotopes,pubchem,105026,CH4,[13CH4]
+benzene-d6,isotopes,pubchem,71601,C6H6,[2H]C1=C(C(=C(C(=C1[2H])[2H])[2H])[2H])[2H]
+tritium oxide,isotopes,pubchem,104752,H2O,[3H]O[3H]
+TEMPO,radicals,pubchem,2724126,C9H18NO,CC1(CCCC(N1[O])(C)C)C
+nitric oxide,radicals,pubchem,145068,NO,[N]=O
+galvinoxyl,radicals,pubchem,123158,C29H41O2,CC(C)CC1=CC(=CC(=C1[O])CC(C)C)C=C2C=C(C(=O)C(=C2)CC(C)C)CC(C)C
+water,small-inorganic,pubchem,962,H2O,O
+ammonia,small-inorganic,pubchem,222,H3N,N
+hydrogen peroxide,small-inorganic,pubchem,784,H2O2,OO
+ozone,small-inorganic,pubchem,24823,O3,[O-][O+]=O
+carbon dioxide,small-inorganic,pubchem,280,CO2,C(=O)=O
+sulfur dioxide,small-inorganic,pubchem,1119,O2S,O=S=O
+sulfur hexafluoride,small-inorganic,pubchem,17358,F6S,FS(F)(F)(F)(F)F
+xenon tetrafluoride,small-inorganic,pubchem,123324,F4Xe,F[Xe](F)(F)F
+phosphorus pentachloride,small-inorganic,pubchem,24819,Cl5P,P(Cl)(Cl)(Cl)(Cl)Cl
+boron trifluoride,small-inorganic,pubchem,6356,BF3,B(F)(F)F
+nitrous oxide,small-inorganic,pubchem,948,N2O,[N-]=[N+]=O
+hydrogen cyanide,small-inorganic,pubchem,768,CHN,C#N
+carbon monoxide,small-inorganic,pubchem,281,CO,[C-]#[O+]
+nitrogen dioxide,small-inorganic,pubchem,3032552,NO2,N(=O)[O]
+phosphine,small-inorganic,pubchem,24404,H3P,P
+silane,small-inorganic,pubchem,23953,H4Si,[SiH4]
+triphenylmethyl radical,radicals,manual,,C19H15,[C](c1ccccc1)(c1ccccc1)c1ccccc1
+cis-decalin,stereochemistry,manual,,C10H18,C1CC[C@H]2CCCC[C@H]2C1
+trans-decalin,stereochemistry,manual,,C10H18,C1CC[C@@H]2CCCC[C@H]2C1

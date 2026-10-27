@@ -7,10 +7,11 @@ import re
 from dataclasses import dataclass, field
 
 from rdkit import Chem, Geometry
-from rdkit.Chem import Descriptors, rdDepictor, rdMolDescriptors
+from rdkit.Chem import Descriptors, rdMolDescriptors
 from rdkit.Chem.Draw import rdMolDraw2D
 
 from .errors import ChemGlyphParseError, ChemGlyphRenderError, ChemGlyphStyleError
+from .layout import LayoutReport, best_layout, check_layout
 from .profiles import PROFILES, Profile
 from .styles import STYLES, StyleSpec, get_style
 from .svg_utils import apply_post, parse_hex_color
@@ -73,13 +74,14 @@ def render_molecule(
         ChemGlyphRenderError: invalid ``fmt`` or a missing PNG backend.
     """
     mol = _parse_structure(structure)
-    _prepare_for_drawing(mol)
+    layout = _prepare_for_drawing(mol)
     output_fmt = _normalize_fmt(fmt)
     if style in PROFILES:
         return _render_with_profile(
             mol,
             PROFILES[style],
             output_fmt,
+            layout=layout,
             size=size,
             transparent=transparent,
             show_atom_indices=show_atom_indices,
@@ -122,6 +124,7 @@ def _render_with_profile(
     profile: Profile,
     output_fmt: str,
     *,
+    layout: tuple[str, LayoutReport],
     size: tuple[int, int] | None,
     transparent: bool,
     show_atom_indices: bool,
@@ -142,6 +145,13 @@ def _render_with_profile(
         background=None if transparent else "#ffffff",
     )
     warnings = _stereo_warnings(mol)
+    layout_method, layout_report = layout
+    if layout_report.severe:
+        warnings.append(
+            f"layout check: {layout_report.severe} problem(s) that can make the drawing "
+            f"misleading, e.g. {layout_report.examples[0]}; pass a molfile with your own "
+            "coordinates to control the layout"
+        )
     if size is not None:
         warnings.append(f"size is ignored: the {profile.name} profile draws at a fixed scale")
     warnings.extend(drawing.notes)
@@ -190,6 +200,12 @@ def _render_with_profile(
                 if drawing.shortest_labelled_bond_pt is None
                 else round(drawing.shortest_labelled_bond_pt, 3)
             ),
+            "layout": {
+                "method": layout_method,
+                "severe": layout_report.severe,
+                "problems": {k: v for k, v in layout_report.counts.items() if v},
+                "examples": layout_report.examples,
+            },
             "identity": identity(mol),
             "checks": checks,
             "verified": all(checks.values()),
@@ -337,17 +353,18 @@ def _quick_fix_suggestion(structure: str) -> str:
     return "Suggested fix: check bracket pairing, ring-closure numbers, and atom valences."
 
 
-def _prepare_for_drawing(mol: Chem.Mol) -> None:
-    # Sanitize-only cleaning per §5: no tautomer or functional-group
-    # normalization, so the drawn structure matches the input.
+def _prepare_for_drawing(mol: Chem.Mol) -> tuple[str, LayoutReport]:
+    """Sanitize and lay out; returns the layout method and its check report.
+
+    Sanitize-only cleaning: no tautomer or functional-group normalization, so
+    the drawn structure matches the input.
+    """
     Chem.SanitizeMol(mol)
     if _has_usable_2d_coords(mol):
         # A molfile from a structure editor carries the author's layout;
         # keep it exactly, including where substituents were placed.
-        return
-    rdDepictor.SetPreferCoordGen(True)
-    rdDepictor.Compute2DCoords(mol)
-    _repair_ring_embeddings(mol)
+        return "input", check_layout(mol)
+    return best_layout(mol, repair=_repair_ring_embeddings)
 
 
 def _has_usable_2d_coords(mol: Chem.Mol) -> bool:

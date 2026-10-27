@@ -48,3 +48,27 @@ Document 1996 numbers (bond 14.4 pt, line 0.6 pt, bond spacing 18%, labels
 - Implement glyph-outline label clearance with the profile's margin width.
 - Bundle Liberation Sans (OFL) so raster and PDF output look the same on
   every platform; SVG keeps naming Arial and Helvetica first.
+
+## Follow-up: corpus and layout checks (2026-10-27)
+
+The 416-structure corpus (`benchmarks/corpus.csv`) was rendered in all
+three profiles, 1248 renders: no crash, every figure verified. Findings:
+
+- PubChem name lookups are not always what the name says: "triphenylmethyl
+  radical" resolves to triphenylmethane, and cis- and trans-decalin resolve
+  to decalin without stereo. Those entries are hand-written and checked by
+  formula. This is the failure the `name=` check exists for.
+- With CoordGen alone, 17 structures had severe layout problems. Most were
+  bridged ring systems, which chemists draw in perspective; RDKit's ring
+  templates give those drawings for 18 corpus structures. After best-of
+  selection 12 remain (fullerene, helicene, adamantane, cubane,
+  bicyclo[1.1.1]pentane, hexamine, BINAP, morphine, codeine, paclitaxel,
+  vinblastine, tetrodotoxin). They render with a layout warning and are
+  listed as known limitations in `tests/test_corpus.py`. Own templates for
+  the common cages are the next step for them.
+- Hashed wedges toward labelled atoms needed the same flare-aware pull-back
+  as solid wedges; the corpus found ten such cases the blind-test set did
+  not have.
+- RDKit writes carbon-free formulas with hydrogen first (H3BO3) where the
+  Hill system, used by PubChem and journals, sorts alphabetically (BH3O3).
+  The formula phase must order formulas itself.

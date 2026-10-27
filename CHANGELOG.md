@@ -29,6 +29,23 @@ comparing every file in the published sdist against the repository history.
   colours for O, N, S, and Cl; `textbook` uses 0.8 pt lines, 12 pt labels,
   and 20% bond spacing. Coloured bond halves are joined, clipped as one
   line, and split again, so label clearance holds in colour too.
+- Layout checks (`chemglyph.layout`): atoms that nearly coincide, atoms on
+  bonds, crossing bonds, atoms inside rings, and uneven bonds, measured on
+  the 2D coordinates. Without input coordinates, the layout is now the best
+  of CoordGen, RDKit's depictor, and RDKit with seeded sampling, and a
+  bridged ring system with an RDKit ring template (camphor, quinuclidine,
+  morphine, atropine, artemisinin) is drawn from the template in the usual
+  perspective. Crossings inside a bridged system count as perspective, not
+  as errors. `report["layout"]` names the method and the problems, and a
+  severe problem is also a warning.
+- A 416-structure corpus (`benchmarks/corpus.csv`, from PubChem with CIDs,
+  plus three hand-written entries PubChem resolves wrongly by name) is part
+  of the test suite: every structure must render, verify, and keep the
+  label margin unless a warning says otherwise, and severe layout problems
+  must stay within a list of known limitations.
+- Hashed wedges pull their wide end back until every hash mark, not only
+  the bond axis, keeps the label margin (a hash toward an added stereo H
+  came within 1.3 pt).
 - `fmt="pdf"`: a one-page vector PDF sized in points, written directly
   from the figure's geometry with no extra dependency, carrying the
   structure in its document information. `fmt="mol"` returns the molfile

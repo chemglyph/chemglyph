@@ -524,19 +524,30 @@ def _redraw_hashes(
         full = math.dist(p_narrow, p_wide)
         ux, uy = (q2[0] - q1[0]) / length, (q2[1] - q1[1]) / length
         nx, ny = -uy, ux
-        count = max(3, round(length / (profile.hash_spacing_pt * k)))
-        spacing = length / count
-        lines = []
-        for step in range(count):
-            t = length - step * spacing  # from the wide end back toward the centre
-            cx, cy = q1[0] + ux * t, q1[1] + uy * t
-            # Width grows linearly from the stereocentre (distance from p_narrow).
-            from_centre = math.dist(p_narrow, (cx, cy))
-            half = max(wide_width * from_centre / full, profile.line_width_pt * k) / 2
-            lines.append(
-                f"M {cx - nx * half:.1f},{cy - ny * half:.1f} "
-                f"L {cx + nx * half:.1f},{cy + ny * half:.1f}"
-            )
+        line_half = profile.line_width_pt * k / 2
+
+        geometry = (q1, (ux, uy), (nx, ny), p_narrow, full, wide_width, profile.line_width_pt * k)
+
+        def hash_lines(span: float, geometry=geometry) -> list[tuple[float, float, float, float]]:
+            return _hash_lines(span, profile.hash_spacing_pt * k, *geometry)
+
+        # The axis keeps the margin; the flared hash lines must keep it too,
+        # so the wide end is pulled back until every line clears the labels.
+        span = length
+        labelled = [clipper.glyphs[atom] for atom in (narrow, wide) if atom in clipper.glyphs]
+        step_back = _STEP_PT * k
+        while labelled:
+            samples = np.vstack([np.linspace(line[:2], line[2:], 9) for line in hash_lines(span)])
+            nearest = min(float(_distance_to_edges(samples, edges).min()) for edges in labelled)
+            if nearest - line_half >= clipper.margin - 1e-6:
+                break
+            if span - step_back < profile.hash_spacing_pt * k:
+                clipper.notes.append(
+                    f"hashed bond {narrow}-{wide}: too short to keep the label margin"
+                )
+                break
+            span -= step_back
+        lines = [f"M {x1:.1f},{y1:.1f} L {x2:.1f},{y2:.1f}" for x1, y1, x2, y2 in hash_lines(span)]
         colour = profile.atom_colours.get(mol.GetAtomWithIdx(narrow).GetAtomicNum(), "#000000")
         paths.append(
             f"<path class='bond-{index} atom-{narrow} atom-{wide} hash' d='{' '.join(lines)}' "
@@ -638,3 +649,38 @@ def _redraw_wedges(svg: str, mol: Chem.Mol, wedged: set[int], clipper: _Clipper)
         return f"<path class='bond-{index} atom-{narrow} atom-{wide} wedge' d='{d}'{style}/>"
 
     return _WEDGE_PATH.sub(replace, svg)
+
+
+def _hash_lines(
+    span: float,
+    hash_spacing: float,
+    start: tuple[float, float],
+    unit: tuple[float, float],
+    normal: tuple[float, float],
+    centre: tuple[float, float],
+    full: float,
+    wide_width: float,
+    line_width: float,
+) -> list[tuple[float, float, float, float]]:
+    """Hash marks along ``start + t * unit`` for t in (0, span], wide end first.
+
+    Each mark is perpendicular to the bond and as wide as the wedge at that
+    point: zero at the stereocentre ``centre``, ``wide_width`` at ``full``.
+    """
+    count = max(3, round(span / hash_spacing))
+    spacing = span / count
+    lines = []
+    for step in range(count):
+        t = span - step * spacing  # from the wide end back toward the centre
+        cx, cy = start[0] + unit[0] * t, start[1] + unit[1] * t
+        from_centre = math.dist(centre, (cx, cy))
+        half = max(wide_width * from_centre / full, line_width) / 2
+        lines.append(
+            (
+                cx - normal[0] * half,
+                cy - normal[1] * half,
+                cx + normal[0] * half,
+                cy + normal[1] * half,
+            )
+        )
+    return lines

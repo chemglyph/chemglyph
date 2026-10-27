@@ -1,0 +1,260 @@
+"""Layout checks and best-of layout selection (docs/SPEC.md, section 7).
+
+A drawing can pass every structural check (all bonds drawn, the right
+structure embedded) and still be unreadable: atoms on top of each other,
+bonds through atoms, crossing bonds. These checks measure such problems on
+the 2D coordinates, in units of the mean bond length, and the layout step
+uses them to pick the best of several RDKit layouts.
+
+Checks:
+
+- ``close_atoms``: two atoms that are not bonded closer than 0.35 bonds,
+  close enough to be read as one atom.
+- ``atom_on_bond``: an atom within a quarter bond of a bond it is not part of.
+- ``bond_crossings``: two bonds without a shared atom that cross.
+- ``atom_in_ring``: a non-ring atom inside a ring of up to 8 members.
+- ``uneven_bonds``: bonds more than 15% off the mean length.
+
+The first four make a figure misleading and count as severe, with one
+exception: bridged ring systems (camphor, adamantane, morphine) are drawn in
+perspective by convention, so a crossing, an atom on a bond, or an atom
+inside a ring whose atoms all belong to a bridged system is counted as
+``perspective`` instead. Uneven bonds only look untidy.
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+
+import numpy as np
+from rdkit import Chem
+from rdkit.Chem import rdDepictor
+
+_SEVERE = ("close_atoms", "atom_on_bond", "bond_crossings", "atom_in_ring")
+_CLOSE = 0.35  # bonds
+
+
+@dataclass
+class LayoutReport:
+    """Layout problems found on a molecule's 2D coordinates."""
+
+    counts: dict[str, int] = field(default_factory=dict)
+    examples: list[str] = field(default_factory=list)
+
+    @property
+    def severe(self) -> int:
+        return sum(self.counts.get(name, 0) for name in _SEVERE)
+
+    @property
+    def score(self) -> float:
+        """Lower is better: severe problems dominate, untidiness breaks ties."""
+        return 100.0 * self.severe + self.counts.get("uneven_bonds", 0)
+
+
+def check_layout(mol: Chem.Mol) -> LayoutReport:
+    """Measure layout problems on the molecule's current 2D conformer."""
+    report = LayoutReport(counts=dict.fromkeys((*_SEVERE, "perspective", "uneven_bonds"), 0))
+    if mol.GetNumConformers() == 0 or mol.GetNumAtoms() < 2:
+        return report
+    conformer = mol.GetConformer()
+    xy = np.array(
+        [
+            [conformer.GetAtomPosition(i).x, conformer.GetAtomPosition(i).y]
+            for i in range(mol.GetNumAtoms())
+        ]
+    )
+    bonds = np.array([[b.GetBeginAtomIdx(), b.GetEndAtomIdx()] for b in mol.GetBonds()], dtype=int)
+    if len(bonds) == 0:
+        return report
+    lengths = np.linalg.norm(xy[bonds[:, 0]] - xy[bonds[:, 1]], axis=1)
+    mean = float(lengths.mean()) or 1.0
+    xy = xy / mean  # every distance below is in bond lengths
+
+    bonded = {(int(a), int(b)) for a, b in bonds} | {(int(b), int(a)) for a, b in bonds}
+    fragment_of = _fragments(mol)
+    bridged = bridged_atoms(mol)
+
+    def perspective(*atoms: int) -> bool:
+        if all(int(atom) in bridged for atom in atoms):
+            report.counts["perspective"] += 1
+            return True
+        return False
+
+    # close_atoms: non-bonded pairs in one fragment that nearly coincide
+    diff = xy[:, None, :] - xy[None, :, :]
+    distance = np.sqrt((diff**2).sum(axis=2))
+    for i, j in zip(*np.nonzero(distance < _CLOSE), strict=True):
+        if i < j and (int(i), int(j)) not in bonded and fragment_of[i] == fragment_of[j]:
+            report.counts["close_atoms"] += 1
+            _note(report, f"atoms {i} and {j} are {distance[i, j]:.2f} bonds apart")
+
+    # atom_on_bond: an atom near the inside of a bond it does not belong to
+    a, b = xy[bonds[:, 0]], xy[bonds[:, 1]]
+    ab = b - a
+    length2 = np.maximum((ab**2).sum(axis=1), 1e-12)
+    t = ((xy[:, None, :] - a[None, :, :]) * ab[None, :, :]).sum(axis=2) / length2[None, :]
+    closest = a[None, :, :] + np.clip(t, 0, 1)[:, :, None] * ab[None, :, :]
+    gap = np.sqrt(((xy[:, None, :] - closest) ** 2).sum(axis=2))
+    for atom, bond in zip(*np.nonzero((gap < 0.25) & (t > 0.05) & (t < 0.95)), strict=True):
+        if atom in bonds[bond] or fragment_of[atom] != fragment_of[bonds[bond][0]]:
+            continue
+        if perspective(atom, *bonds[bond]):
+            continue
+        report.counts["atom_on_bond"] += 1
+        _note(report, f"atom {atom} sits on bond {bond}")
+
+    # bond_crossings: proper intersections between bonds with no shared atom
+    for i in range(len(bonds)):
+        for j in range(i + 1, len(bonds)):
+            if set(bonds[i]) & set(bonds[j]) or not _cross(a[i], b[i], a[j], b[j]):
+                continue
+            if perspective(*bonds[i], *bonds[j]):
+                continue
+            report.counts["bond_crossings"] += 1
+            _note(report, f"bonds {i} and {j} cross")
+
+    # atom_in_ring: a non-ring atom inside a small ring
+    for ring in mol.GetRingInfo().AtomRings():
+        if len(ring) > 8:
+            continue
+        polygon = xy[list(ring)]
+        for atom in range(len(xy)):
+            if atom in ring or fragment_of[atom] != fragment_of[ring[0]]:
+                continue
+            if not _inside(xy[atom], polygon) or perspective(atom, *ring):
+                continue
+            report.counts["atom_in_ring"] += 1
+            _note(report, f"atom {atom} sits inside ring {tuple(ring)}")
+
+    report.counts["uneven_bonds"] = int((np.abs(lengths / mean - 1.0) > 0.15).sum())
+    return report
+
+
+def best_layout(mol: Chem.Mol, repair=None) -> tuple[str, LayoutReport]:
+    """Lay the molecule out and keep the best layout; deterministic.
+
+    A bridged ring system that RDKit has a ring template for is drawn from
+    the template, the conventional perspective drawing, and is not repaired
+    (the repair would flatten the perspective). Otherwise CoordGen, RDKit's
+    own depictor, and RDKit with seeded flip sampling are scored by
+    :func:`check_layout` (each after ``repair``), and the lowest score wins;
+    ties keep the earlier candidate.
+    """
+    if bridged_atoms(mol) and _template_applies(mol):
+        return "ring-template", check_layout(mol)
+    candidates: list[tuple[str, np.ndarray, LayoutReport]] = []
+    for name in ("coordgen", "rdkit", "rdkit-sampled"):
+        if not _compute(mol, name):
+            continue
+        if repair is not None:
+            repair(mol)
+        report = check_layout(mol)
+        candidates.append((name, mol.GetConformer().GetPositions().copy(), report))
+        if report.score == 0:
+            break  # a clean layout earlier in the preference order wins outright
+    name, positions, report = min(candidates, key=lambda item: item[2].score)
+    conformer = mol.GetConformer()
+    for index, (x, y, z) in enumerate(positions):
+        conformer.SetAtomPosition(index, (float(x), float(y), float(z)))
+    return name, report
+
+
+def bridged_atoms(mol: Chem.Mol) -> set[int]:
+    """Atoms drawn in perspective: bridged ring systems and their substituents.
+
+    A ring system is the set of rings joined by shared bonds; it is bridged
+    when two of its rings share three or more atoms (norbornane, morphinan).
+    The zone covers every ring atom of such a system plus the atoms bonded to
+    it, since a perspective drawing also places substituents (camphor's
+    gem-dimethyl) over the ring outlines.
+    """
+    rings = [set(ring) for ring in mol.GetRingInfo().AtomRings()]
+    systems: list[list[set[int]]] = []
+    for ring in rings:
+        joined = [system for system in systems if any(len(ring & other) >= 2 for other in system)]
+        merged = [ring] + [other for system in joined for other in system]
+        systems = [system for system in systems if system not in joined] + [merged]
+    zone: set[int] = set()
+    for system in systems:
+        bridged = any(
+            len(first & second) >= 3
+            for index, first in enumerate(system)
+            for second in system[index + 1 :]
+        )
+        if not bridged:
+            continue
+        atoms = set().union(*system)
+        zone |= atoms
+        for atom in atoms:
+            zone.update(n.GetIdx() for n in mol.GetAtomWithIdx(atom).GetNeighbors())
+    return zone
+
+
+def _template_applies(mol: Chem.Mol) -> bool:
+    """Lay out with RDKit's ring templates; True if a template changed the result."""
+    if not _compute(mol, "rdkit"):
+        return False
+    plain = mol.GetConformer().GetPositions().copy()
+    if not _compute(mol, "rdkit-templates"):
+        return False
+    return not np.allclose(plain, mol.GetConformer().GetPositions(), atol=1e-3)
+
+
+def _compute(mol: Chem.Mol, name: str) -> bool:
+    try:
+        if name == "coordgen":
+            rdDepictor.SetPreferCoordGen(True)
+            rdDepictor.Compute2DCoords(mol)
+        elif name == "rdkit":
+            rdDepictor.Compute2DCoords(mol, forceRDKit=True)
+        elif name == "rdkit-templates":
+            rdDepictor.Compute2DCoords(mol, forceRDKit=True, useRingTemplates=True)
+        else:
+            rdDepictor.Compute2DCoords(
+                mol,
+                forceRDKit=True,
+                nFlipsPerSample=3,
+                nSample=50,
+                sampleSeed=42,
+                permuteDeg4Nodes=True,
+            )
+    except (TypeError, RuntimeError, ValueError):
+        return False  # an option missing from this RDKit, or a layout failure
+    finally:
+        rdDepictor.SetPreferCoordGen(True)
+    return True
+
+
+def _fragments(mol: Chem.Mol) -> list[int]:
+    fragment_of = [0] * mol.GetNumAtoms()
+    for number, atoms in enumerate(Chem.GetMolFrags(mol)):
+        for atom in atoms:
+            fragment_of[atom] = number
+    return fragment_of
+
+
+def _cross(p1: np.ndarray, p2: np.ndarray, q1: np.ndarray, q2: np.ndarray) -> bool:
+    def orient(a: np.ndarray, b: np.ndarray, c: np.ndarray) -> float:
+        return float((b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0]))
+
+    d1, d2 = orient(q1, q2, p1), orient(q1, q2, p2)
+    d3, d4 = orient(p1, p2, q1), orient(p1, p2, q2)
+    return d1 * d2 < -1e-9 and d3 * d4 < -1e-9
+
+
+def _inside(point: np.ndarray, polygon: np.ndarray) -> bool:
+    x, y = point
+    inside = False
+    previous = len(polygon) - 1
+    for current in range(len(polygon)):
+        x1, y1 = polygon[current]
+        x2, y2 = polygon[previous]
+        if (y1 > y) != (y2 > y) and x < (x2 - x1) * (y - y1) / (y2 - y1) + x1:
+            inside = not inside
+        previous = current
+    return inside
+
+
+def _note(report: LayoutReport, text: str) -> None:
+    if len(report.examples) < 10:
+        report.examples.append(text)
