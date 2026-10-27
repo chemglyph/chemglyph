@@ -61,6 +61,17 @@ in 1.0.
 These numbers are measured in the rendered output by the test suite
 (`tests/test_profiles.py`).
 
+### Compound numbers
+
+```python
+chemglyph.render_molecule(smiles, style="acs1996", number="12a")
+```
+
+The number is set in bold at the label size, centred half a bond length
+under the structure, as in ACS journals. It is also stored with the
+embedded structure (the molfile title line), so a figure still says which
+compound it shows when it is read back.
+
 ### Abbreviations
 
 ```python

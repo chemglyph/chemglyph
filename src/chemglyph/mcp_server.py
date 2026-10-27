@@ -53,7 +53,8 @@ server = MCPServer(
         "against it offline and a mismatch is reported, which catches a wrong "
         "SMILES before the user sees the figure. Set abbreviate to true to draw "
         "protecting groups as labels (Boc, Ts, TBS, OAc), or to a list such as "
-        '["Ph", "t-Bu", "CO2Me"]; the embedded structure keeps every atom.'
+        '["Ph", "t-Bu", "CO2Me"]; the embedded structure keeps every atom. '
+        "Set number (e.g. '12a') to put a bold compound number under the structure."
     ),
     structured_output=False,
 )
@@ -67,6 +68,7 @@ def render_molecule_tool(
     save: bool = True,
     name: str | None = None,
     abbreviate: bool | list[str] = False,
+    number: str | None = None,
 ) -> list[ImageContent | TextContent]:
     """MCP wrapper for :func:`chemglyph.render_molecule`."""
     try:
@@ -79,6 +81,7 @@ def render_molecule_tool(
             highlight_atoms=highlight_atoms,
             name=name,
             abbreviate=abbreviate,
+            number=number,
         )
     except ChemGlyphError as exc:
         return [_error(str(exc))]
@@ -100,6 +103,7 @@ def render_molecule_tool(
                 show_atom_indices=show_atom_indices,
                 highlight_atoms=highlight_atoms,
                 abbreviate=abbreviate,
+                number=number,
             )
             parts.append(TextContent(type="text", text=f"SVG source:\n{svg.data}"))
         except ChemGlyphError:

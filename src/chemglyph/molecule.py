@@ -49,6 +49,7 @@ def render_molecule(
     dpi: int = 300,
     name: str | None = None,
     abbreviate: bool | list[str] = False,
+    number: str | None = None,
 ) -> RenderResult:
     """Render a molecule from SMILES, InChI, or molblock.
 
@@ -81,6 +82,9 @@ def render_molecule(
             Only the drawing changes: the embedded structure, the identity,
             and the molfile output keep every atom. ``highlight_atoms`` and
             atom indices still refer to the full molecule.
+        number: compound number, such as ``"1"`` or ``"12a"``, set in bold
+            under the structure at the label size (the ACS convention). It is
+            also stored with the embedded structure, as the molfile title.
 
     Raises:
         ChemGlyphParseError: the structure could not be parsed.
@@ -100,6 +104,10 @@ def render_molecule(
         choices = ", ".join(PROFILES)
         raise ChemGlyphStyleError(f"Unknown style {style!r}; choose one of: {choices}")
     groups = select_abbreviations(abbreviate)
+    if number is not None:
+        number = str(number).strip()
+        if "<" in number or ">" in number or "\n" in number:
+            raise ChemGlyphRenderError("number must be plain text on one line, e.g. '12a'")
     mol, layout = _prepare_for_drawing(_parse_structure(structure))
     result = _render_with_profile(
         mol,
@@ -113,6 +121,7 @@ def render_molecule(
         dpi=dpi,
         name=name,
         abbreviations=groups,
+        number=number or None,
     )
     result.warnings[:0] = renamed
     return result
@@ -174,6 +183,7 @@ def _render_with_profile(
     dpi: int,
     name: str | None,
     abbreviations: list | None = None,
+    number: str | None = None,
 ) -> RenderResult:
     from . import __version__
     from .engine import draw  # local import keeps numpy-heavy code off the import path
@@ -192,6 +202,7 @@ def _render_with_profile(
             highlight_atoms=form.highlight_atoms,
             show_atom_indices=form.show_atom_indices,
             background=None if transparent else "#ffffff",
+            number=number,
         )
         if abbreviated is None:
             break
@@ -210,7 +221,9 @@ def _render_with_profile(
             for i in sorted(clashing)
         ]
         abbreviated = abbreviated.without(clashing)
-    record = mol if abbreviated is None else abbreviated.labelled
+    record = Chem.Mol(mol if abbreviated is None else abbreviated.labelled)
+    if number:
+        record.SetProp("_Name", number)  # the molfile title line
     found = (
         []
         if abbreviated is None
@@ -229,7 +242,7 @@ def _render_with_profile(
     if size is not None:
         warnings.append(f"size is ignored: the {profile.name} profile draws at a fixed scale")
     warnings.extend(drawing.notes)
-    svg = embed_svg(drawing.svg, record, profile=profile.name, version=__version__)
+    svg = embed_svg(drawing.svg, record, profile=profile.name, version=__version__, number=number)
     checks, problems = _verify_drawing(
         form.mol, svg, expected=mol, wedges_match=drawing.wedges_match_stereo
     )
@@ -252,6 +265,7 @@ def _render_with_profile(
                 "ChemGlyphInChIKey": ident["inchikey"],
                 "ChemGlyphFormula": ident["formula"],
                 "ChemGlyphMolfile": molblock(record),
+                **({"ChemGlyphNumber": number} if number else {}),
             },
         )
     else:  # mol: every atom, the drawn coordinates, abbreviations as SUP groups
@@ -283,6 +297,7 @@ def _render_with_profile(
                 "examples": layout_report.examples,
                 "added_hydrogens": layout_report.added_hydrogens,
             },
+            "number": number,
             "abbreviations": found,
             "abbreviations_drawn_in_full": skipped,
             "identity": identity(mol),

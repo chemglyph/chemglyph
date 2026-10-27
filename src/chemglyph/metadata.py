@@ -74,20 +74,22 @@ def molblock(mol: Chem.Mol) -> str:
     return _SAP_LINE.sub(lambda match: match.group(1) + " ", Chem.MolToMolBlock(mol))
 
 
-def embed_svg(svg: str, mol: Chem.Mol, *, profile: str, version: str) -> str:
+def embed_svg(
+    svg: str, mol: Chem.Mol, *, profile: str, version: str, number: str | None = None
+) -> str:
     """Insert the structure record right after the root ``<svg>`` tag."""
     ident = identity(mol)
-    attributes = " ".join(
-        f'{name}="{escape(value, quote=True)}"'
-        for name, value in (
-            ("version", version),
-            ("profile", profile),
-            ("smiles", ident["smiles"]),
-            ("inchi", ident["inchi"]),
-            ("inchikey", ident["inchikey"]),
-            ("formula", ident["formula"]),
-        )
-    )
+    fields = [
+        ("version", version),
+        ("profile", profile),
+        ("smiles", ident["smiles"]),
+        ("inchi", ident["inchi"]),
+        ("inchikey", ident["inchikey"]),
+        ("formula", ident["formula"]),
+    ]
+    if number:
+        fields.append(("number", number))
+    attributes = " ".join(f'{name}="{escape(value, quote=True)}"' for name, value in fields)
     record = (
         f'<metadata><chemglyph:structure xmlns:chemglyph="{NAMESPACE}" {attributes}>'
         f"<![CDATA[{molblock(mol)}]]></chemglyph:structure></metadata>"
@@ -97,8 +99,18 @@ def embed_svg(svg: str, mol: Chem.Mol, *, profile: str, version: str) -> str:
 
 
 def embed_png(png: bytes, mol: Chem.Mol) -> bytes:
-    """Add RDKit's standard SMILES and molfile text chunks to a PNG."""
-    return bytes(Chem.MolMetadataToPNGString(mol, png))
+    """Add RDKit's standard structure chunks (pickle and SMILES) to a PNG."""
+    # Keep molecule properties, such as the compound number in _Name, in the
+    # pickle; RDKit leaves them out by default. The setting is global, so it
+    # is restored afterwards.
+    previous = Chem.GetDefaultPickleProperties()
+    Chem.SetDefaultPickleProperties(
+        Chem.PropertyPickleOptions.MolProps | Chem.PropertyPickleOptions.PrivateProps
+    )
+    try:
+        return bytes(Chem.MolMetadataToPNGString(mol, png))
+    finally:
+        Chem.SetDefaultPickleProperties(previous)
 
 
 def read_structure(figure: str | bytes) -> Chem.Mol:

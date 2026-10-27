@@ -65,9 +65,10 @@ class Drawing:
     wedges_match_stereo: bool = True
 
 
-def font_file() -> str:
-    """Path to the bundled label font (Liberation Sans, SIL OFL 1.1)."""
-    return str(resources.files("chemglyph") / "fonts" / "LiberationSans-Regular.ttf")
+def font_file(bold: bool = False) -> str:
+    """Path to a bundled font (Liberation Sans, SIL OFL 1.1)."""
+    name = "LiberationSans-Bold.ttf" if bold else "LiberationSans-Regular.ttf"
+    return str(resources.files("chemglyph") / "fonts" / name)
 
 
 def draw(
@@ -77,8 +78,13 @@ def draw(
     highlight_atoms: list[int] | None = None,
     show_atom_indices: bool = False,
     background: str | None = None,
+    number: str | None = None,
 ) -> Drawing:
-    """Draw a molecule that already has 2D coordinates at the profile's scale."""
+    """Draw a molecule that already has 2D coordinates at the profile's scale.
+
+    ``number`` is a compound number set in bold below the structure, centred,
+    half a bond length under the lowest ink, at the profile's label size.
+    """
     prepared = rdMolDraw2D.PrepareMolForDrawing(mol, wedgeBonds=False)
     _place_added_hydrogens(prepared, mol.GetNumAtoms())
     if prepared.GetNumConformers():
@@ -129,6 +135,8 @@ def draw(
     floor = profile.line_width_pt * k
     body = _STROKE_WIDTH.sub(lambda m: f"stroke-width:{max(float(m.group(1)), floor):.1f}px", body)
 
+    if number:
+        body = _add_number(body, number, profile)
     box = content_viewbox(body, margin=profile.canvas_margin_pt * k)
     rect = ""
     if background is not None:
@@ -156,6 +164,52 @@ def draw(
         label_overlaps=_label_overlaps(body, glyphs, 0.5 * k),
         wedges_match_stereo=_wedges_match_stereo(prepared),
     )
+
+
+def _add_number(body: str, number: str, profile: Profile) -> str:
+    """Append a bold compound number centred under the drawing's ink."""
+    k = UNITS_PER_PT
+    ink = content_viewbox(body, margin=0.0)
+    size = profile.font_size_pt * k
+    # RDKit's DrawString ignores the font file, but atom labels honour it, so
+    # the number is drawn as the label of a lone dummy atom in the bold font.
+    holder = Chem.RWMol()
+    holder.AddAtom(Chem.Atom(0))
+    holder.GetAtomWithIdx(0).SetProp("atomLabel", number)
+    conformer = Chem.Conformer(1)
+    holder.AddConformer(conformer)
+    drawer = rdMolDraw2D.MolDraw2DSVG(int(size * (len(number) + 4)), int(size * 4))
+    options = rdMolDraw2D.MolDrawOptions()
+    options.fontFile = font_file(bold=True)
+    options.fixedFontSize = int(round(size))
+    options.padding = 0.0
+    options.clearBackground = False
+    options.prepareMolsBeforeDrawing = False
+    drawer.SetDrawOptions(options)
+    drawer.DrawMolecule(holder.GetMol())
+    drawer.FinishDrawing()
+    paths = re.findall(r"<path class='atom-0' d='([^']+)'", drawer.GetDrawingText())
+    if not paths:
+        return body
+    points = np.array([(float(x), float(y)) for d in paths for x, y in _PAIR.findall(d)])
+    left, top = points.min(axis=0)
+    right = points[:, 0].max()
+    dx = ink.x + ink.width / 2 - (left + right) / 2
+    dy = ink.y + ink.height + 0.5 * profile.bond_length_pt * k - top
+
+    def place(match: re.Match[str]) -> str:
+        return f"{float(match.group(1)) + dx:.1f},{float(match.group(2)) + dy:.1f}"
+
+    shapes = "".join(
+        f"<path class='compound-number' d='{_PAIR.sub(place, d).strip()}' "
+        "style='fill:#000000;fill-rule:evenodd;stroke:none'/>"
+        for d in paths
+    )
+    return body.replace("</svg>", shapes + "</svg>")
+
+
+# RDKit writes outline points as "x y" after M and L, and "x y, x y" after Q.
+_PAIR = re.compile(r"(-?\d+(?:\.\d+)?)[ ,](-?\d+(?:\.\d+)?)")
 
 
 def _wedges_match_stereo(prepared: Chem.Mol) -> bool:

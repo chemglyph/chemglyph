@@ -23,6 +23,10 @@ comparing every file in the published sdist against the repository history.
 
 ### Added
 
+- `number="12a"` sets a compound number in bold (Liberation Sans Bold, SIL
+  OFL 1.1, now bundled) at the label size, centred half a bond length under
+  the structure. It is stored as the title of the embedded molfile in every
+  output format, and in the SVG record and PDF Info.
 - `abbreviate=True` draws protecting and activating groups as labels (Ac,
   Bz, Piv, Boc, Cbz, Fmoc, Alloc, Troc, Bn, PMB, Tr, MOM, THP, TMS, TES,
   TBS, TIPS, TBDPS, Ts, Ms, Tf), and a list of labels also picks common
