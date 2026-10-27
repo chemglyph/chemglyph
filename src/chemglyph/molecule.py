@@ -228,9 +228,34 @@ def _prepare_for_drawing(mol: Chem.Mol) -> None:
     # Sanitize-only cleaning per §5: no tautomer or functional-group
     # normalization, so the drawn structure matches the input.
     Chem.SanitizeMol(mol)
+    if _has_usable_2d_coords(mol):
+        # A molfile from a structure editor carries the author's layout;
+        # keep it exactly, including where substituents were placed.
+        return
     rdDepictor.SetPreferCoordGen(True)
     rdDepictor.Compute2DCoords(mol)
     _repair_ring_embeddings(mol)
+
+
+def _has_usable_2d_coords(mol: Chem.Mol) -> bool:
+    """True for input that brought its own 2D layout (a molblock with coordinates).
+
+    SMILES and InChI carry no coordinates. Molfiles with all-zero or 3D
+    coordinates get a fresh 2D layout instead.
+    """
+    if mol.GetNumConformers() == 0:
+        return False
+    conformer = mol.GetConformer()
+    if conformer.Is3D():
+        return False
+    positions = [conformer.GetAtomPosition(i) for i in range(mol.GetNumAtoms())]
+    if any(abs(position.z) > 1e-6 for position in positions):
+        return False
+    if len(positions) == 1:
+        return True
+    xs = [position.x for position in positions]
+    ys = [position.y for position in positions]
+    return max(xs) - min(xs) > 1e-6 or max(ys) - min(ys) > 1e-6
 
 
 def _repair_ring_embeddings(mol: Chem.Mol) -> None:

@@ -29,6 +29,10 @@ comparing every file in the published sdist against the repository history.
   colours for O, N, S, and Cl; `textbook` uses 0.8 pt lines, 12 pt labels,
   and 20% bond spacing. Coloured bond halves are joined, clipped as one
   line, and split again, so label clearance holds in colour too.
+- A molfile that carries 2D coordinates keeps its layout, so a structure
+  arranged in a drawing program comes out the way its author placed it.
+  SMILES, InChI, and molfiles with all-zero or 3D coordinates still get a
+  fresh 2D layout. This applies to every style.
 - Conformance tests (`tests/test_profiles.py`) measure these numbers in the
   rendered SVG for all 20 blind-test molecules in every profile, and fail
   if any bond falls back to RDKit's own clipping.

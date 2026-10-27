@@ -99,3 +99,44 @@ def test_png_rendering_when_cairo_available() -> None:
     assert result.fmt == "png"
     assert isinstance(result.data, bytes)
     assert result.data.startswith(b"\x89PNG")
+
+
+def _molblock(smiles: str, coords: list[tuple[float, float, float]]) -> str:
+    from rdkit import Geometry
+
+    mol = Chem.MolFromSmiles(smiles)
+    conformer = Chem.Conformer(mol.GetNumAtoms())
+    for index, (x, y, z) in enumerate(coords):
+        conformer.SetAtomPosition(index, Geometry.Point3D(x, y, z))
+    conformer.Set3D(any(z for _, _, z in coords))
+    mol.AddConformer(conformer)
+    return Chem.MolToMolBlock(mol)
+
+
+def _first_bond_angle(svg: str) -> float:
+    """Angle in degrees between the first two drawn bonds (they share atom 1)."""
+    import math
+
+    segments = re.findall(r"d='M ([-\d.]+),([-\d.]+) L ([-\d.]+),([-\d.]+)'", svg)
+    (ax1, ay1, ax2, ay2), (bx1, by1, bx2, by2) = (tuple(map(float, s)) for s in segments[:2])
+    u = (ax2 - ax1, ay2 - ay1)
+    v = (bx2 - bx1, by2 - by1)
+    cos = (u[0] * v[0] + u[1] * v[1]) / (math.hypot(*u) * math.hypot(*v))
+    return math.degrees(math.acos(max(-1.0, min(1.0, cos))))
+
+
+def test_molfile_layout_is_kept() -> None:
+    # A right-angled chain: a fresh 2D layout would use 120-degree angles.
+    bent = _molblock("CCCC", [(0.0, 0.0, 0.0), (1.5, 0.0, 0.0), (1.5, 1.5, 0.0), (3.0, 1.5, 0.0)])
+    result = chemglyph.render_molecule(bent, style="acs1996")
+    assert _first_bond_angle(result.data) == pytest.approx(90.0, abs=1.0)
+    assert result.report["bond_length_pt"] == [14.4, 14.4]
+
+
+def test_molfile_without_usable_coordinates_gets_a_layout() -> None:
+    flat_zero = _molblock("CCCC", [(0.0, 0.0, 0.0)] * 4)
+    fresh = chemglyph.render_molecule(flat_zero, style="acs1996")
+    assert _first_bond_angle(fresh.data) == pytest.approx(60.0, abs=2.0)  # 120-degree zigzag
+    assert fresh.report["bond_length_pt"] == [14.4, 14.4]
+    three_d = _molblock("CCO", [(0.0, 0.0, 0.0), (1.5, 0.0, 0.2), (2.2, 1.2, -0.3)])
+    assert chemglyph.render_molecule(three_d, style="acs1996").report["bond_length_pt"][0] > 0
