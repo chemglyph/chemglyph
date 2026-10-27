@@ -11,7 +11,8 @@ from rdkit.Chem import Descriptors, rdMolDescriptors
 from rdkit.Chem.Draw import rdMolDraw2D
 
 from .errors import ChemGlyphParseError, ChemGlyphRenderError, ChemGlyphStyleError
-from .layout import LayoutReport, best_layout, check_layout
+from .layout import LayoutReport, add_stereo_hydrogens, best_layout, check_layout
+from .metadata import identity
 from .profiles import PROFILES, Profile
 from .styles import STYLES, StyleSpec, get_style
 from .svg_utils import apply_post, parse_hex_color
@@ -73,8 +74,7 @@ def render_molecule(
         ChemGlyphParseError: the structure could not be parsed.
         ChemGlyphRenderError: invalid ``fmt`` or a missing PNG backend.
     """
-    mol = _parse_structure(structure)
-    layout = _prepare_for_drawing(mol)
+    mol, layout = _prepare_for_drawing(_parse_structure(structure))
     output_fmt = _normalize_fmt(fmt)
     if style in PROFILES:
         return _render_with_profile(
@@ -112,7 +112,7 @@ def render_molecule(
     return RenderResult(
         data=data,
         fmt=output_fmt,
-        canonical_smiles=Chem.MolToSmiles(mol),
+        canonical_smiles=identity(mol)["smiles"],
         mol_formula=rdMolDescriptors.CalcMolFormula(mol),
         mol_weight=Descriptors.MolWt(mol),
         warnings=warnings,
@@ -183,7 +183,7 @@ def _render_with_profile(
     return RenderResult(
         data=data,
         fmt=output_fmt,
-        canonical_smiles=Chem.MolToSmiles(mol),
+        canonical_smiles=identity(mol)["smiles"],
         mol_formula=rdMolDescriptors.CalcMolFormula(mol),
         mol_weight=Descriptors.MolWt(mol),
         warnings=warnings,
@@ -205,6 +205,7 @@ def _render_with_profile(
                 "severe": layout_report.severe,
                 "problems": {k: v for k, v in layout_report.counts.items() if v},
                 "examples": layout_report.examples,
+                "added_hydrogens": layout_report.added_hydrogens,
             },
             "identity": identity(mol),
             "checks": checks,
@@ -353,18 +354,30 @@ def _quick_fix_suggestion(structure: str) -> str:
     return "Suggested fix: check bracket pairing, ring-closure numbers, and atom valences."
 
 
-def _prepare_for_drawing(mol: Chem.Mol) -> tuple[str, LayoutReport]:
-    """Sanitize and lay out; returns the layout method and its check report.
+def _prepare_for_drawing(mol: Chem.Mol) -> tuple[Chem.Mol, tuple[str, LayoutReport]]:
+    """Sanitize and lay out; returns the molecule, the layout method, and its report.
 
     Sanitize-only cleaning: no tautomer or functional-group normalization, so
-    the drawn structure matches the input.
+    the drawn structure matches the input. A stereocentre whose configuration
+    no wedge in the chosen layout can show gets an explicit H, so the
+    returned molecule may have more atoms (appended at the end).
     """
     Chem.SanitizeMol(mol)
     if _has_usable_2d_coords(mol):
         # A molfile from a structure editor carries the author's layout;
         # keep it exactly, including where substituents were placed.
-        return "input", check_layout(mol)
-    return best_layout(mol, repair=_repair_ring_embeddings)
+        method, report = "input", check_layout(mol)
+    else:
+        method, report = best_layout(mol, repair=_repair_ring_embeddings)
+    if report.counts.get("stereo_lost"):
+        repaired = add_stereo_hydrogens(mol)
+        if repaired is not None:
+            added = list(range(mol.GetNumAtoms(), repaired.GetNumAtoms()))
+            mol, report = repaired, check_layout(repaired)
+            report.added_hydrogens = [
+                mol.GetAtomWithIdx(h).GetNeighbors()[0].GetIdx() for h in added
+            ]
+    return mol, (method, report)
 
 
 def _has_usable_2d_coords(mol: Chem.Mol) -> bool:

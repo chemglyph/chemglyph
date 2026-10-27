@@ -15,6 +15,7 @@ from pathlib import Path
 
 import numpy as np
 import pytest
+import rdkit
 
 import chemglyph
 from chemglyph.engine import _distance_to_edges, _flatten
@@ -22,6 +23,9 @@ from chemglyph.engine import _distance_to_edges, _flatten
 ROWS = list(csv.DictReader((Path(__file__).parents[1] / "benchmarks" / "corpus.csv").open()))
 
 # Severe layout problems no candidate layout avoids yet (docs/progress, phase 1).
+# Layouts differ between RDKit releases, so the list is kept for one release;
+# on others only the warning is checked.
+LAYOUT_LIMITS_RDKIT = "2026.09"
 KNOWN_LAYOUT_LIMITS = {
     "fullerene C60",  # a sphere has no planar drawing
     "helicene",  # the helix overlaps itself, as in printed drawings
@@ -115,15 +119,27 @@ def test_label_margin_holds_or_is_reported(row: dict, renders) -> None:
                 assert gap >= 1.5, f"bond {gap:.2f} pt from atom {atom} with no warning"
 
 
+_same_rdkit = pytest.mark.skipif(
+    not rdkit.__version__.startswith(LAYOUT_LIMITS_RDKIT),
+    reason=f"layout limits are tracked for RDKit {LAYOUT_LIMITS_RDKIT}",
+)
+
+
+def test_severe_layout_problems_are_warned(renders) -> None:
+    for name, result in renders.items():
+        if result.report["layout"]["severe"]:
+            assert any(w.startswith("layout check:") for w in result.warnings), name
+
+
+@_same_rdkit
 def test_severe_layout_problems_stay_within_known_limits(renders) -> None:
     severe = {name for name, result in renders.items() if result.report["layout"]["severe"]}
     assert severe <= KNOWN_LAYOUT_LIMITS, (
         f"new layout problems: {sorted(severe - KNOWN_LAYOUT_LIMITS)}"
     )
-    for name in severe:
-        assert any(w.startswith("layout check:") for w in renders[name].warnings), name
 
 
+@_same_rdkit
 def test_known_limits_are_still_limits(renders) -> None:
     """A fixed molecule must leave the list, so the list never hides progress."""
     severe = {name for name, result in renders.items() if result.report["layout"]["severe"]}

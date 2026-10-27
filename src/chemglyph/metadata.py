@@ -47,7 +47,8 @@ def identity(mol: Chem.Mol) -> dict[str, str]:
     ring double bonds in macrocycles (porphyrin), and the same structure
     would get a different key with and without coordinates.
     """
-    bare = Chem.Mol(mol)
+    with quiet():
+        bare = Chem.RemoveHs(mol)  # an H drawn only to show a wedge is not identity
     bare.RemoveAllConformers()
     with quiet():
         inchi = Chem.MolToInchi(bare) or ""

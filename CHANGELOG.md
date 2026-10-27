@@ -43,6 +43,14 @@ comparing every file in the published sdist against the repository history.
   of the test suite: every structure must render, verify, and keep the
   label margin unless a warning says otherwise, and severe layout problems
   must stay within a list of known limitations.
+- A layout whose wedges cannot fix a stereocentre (a quinuclidine bridgehead
+  whose ring bonds run nearly straight through it) counts as a layout
+  problem, and if the chosen layout still has one, that centre gets an
+  explicit H with the wedge, as it is usually drawn. Under RDKit 2024.09
+  quinine was otherwise drawn, and embedded, as its C4 epimer; verification
+  caught it. `report["layout"]["added_hydrogens"]` lists such centres.
+- Molecules of hydrogen only (H2, H+, D2) render; CoordGen gave them NaN
+  coordinates.
 - Hashed wedges pull their wide end back until every hash mark, not only
   the bond axis, keeps the label margin (a hash toward an added stereo H
   came within 1.3 pt).

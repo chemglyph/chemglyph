@@ -14,8 +14,13 @@ Checks:
 - ``bond_crossings``: two bonds without a shared atom that cross.
 - ``atom_in_ring``: a non-ring atom inside a ring of up to 8 members.
 - ``uneven_bonds``: bonds more than 15% off the mean length.
+- ``stereo_lost``: the wedges and double-bond geometry this layout allows
+  do not reproduce the stereochemistry. Wedges are chosen from the
+  coordinates, and around a crowded centre (a quinuclidine bridgehead) a
+  layout can leave no bond that fixes the configuration; the figure would
+  then show a different stereoisomer.
 
-The first four make a figure misleading and count as severe, with one
+All but ``uneven_bonds`` make a figure misleading and count as severe, with one
 exception: bridged ring systems (camphor, adamantane, morphine) are drawn in
 perspective by convention, so a crossing, an atom on a bond, or an atom
 inside a ring whose atoms all belong to a bridged system is counted as
@@ -24,13 +29,14 @@ inside a ring whose atoms all belong to a bridged system is counted as
 
 from __future__ import annotations
 
+from contextlib import contextmanager
 from dataclasses import dataclass, field
 
 import numpy as np
-from rdkit import Chem
+from rdkit import Chem, RDLogger
 from rdkit.Chem import rdDepictor
 
-_SEVERE = ("close_atoms", "atom_on_bond", "bond_crossings", "atom_in_ring")
+_SEVERE = ("close_atoms", "atom_on_bond", "bond_crossings", "atom_in_ring", "stereo_lost")
 _CLOSE = 0.35  # bonds
 
 
@@ -40,6 +46,7 @@ class LayoutReport:
 
     counts: dict[str, int] = field(default_factory=dict)
     examples: list[str] = field(default_factory=list)
+    added_hydrogens: list[int] = field(default_factory=list)
 
     @property
     def severe(self) -> int:
@@ -47,8 +54,13 @@ class LayoutReport:
 
     @property
     def score(self) -> float:
-        """Lower is better: severe problems dominate, untidiness breaks ties."""
-        return 100.0 * self.severe + self.counts.get("uneven_bonds", 0)
+        """Lower is better: severe problems dominate, untidiness breaks ties.
+
+        A lost stereocentre weighs less than a geometric problem because
+        :func:`add_stereo_hydrogens` can usually repair it.
+        """
+        lost = self.counts.get("stereo_lost", 0)
+        return 100.0 * (self.severe - lost) + 10.0 * lost + self.counts.get("uneven_bonds", 0)
 
 
 def check_layout(mol: Chem.Mol) -> LayoutReport:
@@ -127,7 +139,55 @@ def check_layout(mol: Chem.Mol) -> LayoutReport:
             _note(report, f"atom {atom} sits inside ring {tuple(ring)}")
 
     report.counts["uneven_bonds"] = int((np.abs(lengths / mean - 1.0) > 0.15).sum())
+    if _stereo_lost(mol):
+        report.counts["stereo_lost"] = 1
+        _note(report, "the wedges of this layout do not fix every stereocentre")
     return report
+
+
+def add_stereo_hydrogens(mol: Chem.Mol) -> Chem.Mol | None:
+    """Draw an explicit H on each stereocentre the layout's wedges cannot fix.
+
+    This is the usual way to draw such centres (the C4 bridgehead H of
+    quinine). Returns the molecule with those hydrogens, laid out in 2D, or
+    None if there is nothing to repair or hydrogens do not repair it. New
+    atoms are appended, so existing atom indices keep their meaning.
+    """
+    if not _stereo_lost(mol):
+        return None
+    with _quiet():
+        back = Chem.MolFromMolBlock(Chem.MolToMolBlock(mol))
+    if back is None:
+        return None
+    wanted = dict(Chem.FindMolChiralCenters(mol, useLegacyImplementation=False))
+    found = dict(
+        Chem.FindMolChiralCenters(back, includeUnassigned=True, useLegacyImplementation=False)
+    )
+    lost = [
+        atom
+        for atom, label in wanted.items()
+        if found.get(atom) != label and mol.GetAtomWithIdx(atom).GetTotalNumHs() == 1
+    ]
+    if not lost:
+        return None
+    with_h = Chem.AddHs(mol, onlyOnAtoms=lost, addCoords=True)
+    if _stereo_lost(with_h):
+        return None
+    return with_h
+
+
+def _stereo_lost(mol: Chem.Mol) -> bool:
+    """True if a molfile written from this layout reads back as another stereoisomer."""
+    if not any(
+        atom.GetChiralTag() != Chem.ChiralType.CHI_UNSPECIFIED for atom in mol.GetAtoms()
+    ) and not any(bond.GetStereo() != Chem.BondStereo.STEREONONE for bond in mol.GetBonds()):
+        return False
+    try:
+        with _quiet():
+            back = Chem.MolFromMolBlock(Chem.MolToMolBlock(mol))
+        return back is None or Chem.MolToSmiles(back) != Chem.MolToSmiles(Chem.RemoveHs(mol))
+    except (RuntimeError, ValueError):
+        return False  # unwritable structures are reported by verification instead
 
 
 def best_layout(mol: Chem.Mol, repair=None) -> tuple[str, LayoutReport]:
@@ -135,17 +195,23 @@ def best_layout(mol: Chem.Mol, repair=None) -> tuple[str, LayoutReport]:
 
     A bridged ring system that RDKit has a ring template for is drawn from
     the template, the conventional perspective drawing, and is not repaired
-    (the repair would flatten the perspective). Otherwise CoordGen, RDKit's
+    (the repair would flatten the perspective), unless its wedges lose a
+    stereocentre; then it competes with the other layouts. Otherwise CoordGen, RDKit's
     own depictor, and RDKit with seeded flip sampling are scored by
     :func:`check_layout` (each after ``repair``), and the lowest score wins;
     ties keep the earlier candidate.
     """
-    if bridged_atoms(mol) and _template_applies(mol):
-        return "ring-template", check_layout(mol)
     candidates: list[tuple[str, np.ndarray, LayoutReport]] = []
+    if bridged_atoms(mol) and _template_applies(mol):
+        report = check_layout(mol)
+        if not report.counts.get("stereo_lost"):
+            return "ring-template", report
+        candidates.append(("ring-template", mol.GetConformer().GetPositions().copy(), report))
     for name in ("coordgen", "rdkit", "rdkit-sampled"):
         if not _compute(mol, name):
             continue
+        if not np.isfinite(mol.GetConformer().GetPositions()).all():
+            continue  # CoordGen returns NaN for molecules of hydrogen only (H2, H+)
         if repair is not None:
             repair(mol)
         report = check_layout(mol)
@@ -218,11 +284,23 @@ def _compute(mol: Chem.Mol, name: str) -> bool:
                 sampleSeed=42,
                 permuteDeg4Nodes=True,
             )
-    except (TypeError, RuntimeError, ValueError):
-        return False  # an option missing from this RDKit, or a layout failure
+    except (TypeError, RuntimeError, ValueError, IndexError):
+        # an option missing from this RDKit, or a layout failure; RDKit
+        # 2024.09 raises IndexError (map::at) from seeded sampling
+        return False
     finally:
         rdDepictor.SetPreferCoordGen(True)
     return True
+
+
+@contextmanager
+def _quiet():
+    """Silence RDKit's log (stereo warnings while testing a layout's wedges)."""
+    RDLogger.DisableLog("rdApp.*")
+    try:
+        yield
+    finally:
+        RDLogger.EnableLog("rdApp.*")
 
 
 def _fragments(mol: Chem.Mol) -> list[int]:
