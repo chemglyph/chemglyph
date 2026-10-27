@@ -1,4 +1,4 @@
-Liberation Sans 2.1.5 (LiberationSans-Regular.ttf), bundled unmodified.
+Liberation Sans 2.1.5 (LiberationSans-Regular.ttf and LiberationSans-Bold.ttf), bundled unmodified.
 
 Copyright:
 Digitized data copyright (c) 2010 Google Corporation with Reserved Font Arimo, Tinos and Cousine.
