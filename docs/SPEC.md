@@ -72,12 +72,14 @@ deprecation warnings once the object API replaces them.
 Each phase ships as one minor version when its exit criteria pass. After
 each phase the plan is reviewed and this section is updated.
 
+Phase reviews: [phase 1](progress/phase1-review.md).
+
 | Version | Phase | Main deliverables | Exit criteria |
 | --- | --- | --- | --- |
 | 0.1.3 | Housekeeping | known fixes, CHANGELOG, verified tags, trusted publishing, this spec | PyPI matches the README; CI green |
-| 0.2 | Molecules done right | fixed-scale engine, profiles, kept input coordinates, best-of layouts with automated layout checks, abbreviations, compound labels, SVG metadata, PDF and MOL output, verification report, object API | ACS profile conformance tests pass; no unregistered severe layout issues on a corpus of 300+ molecules; blind test against ChemDraw ACS panels at 40% or more |
+| 0.2 | Molecules done right | fixed-scale engine, profiles, kept input coordinates, best-of layouts with automated layout checks, abbreviations, compound labels, SVG metadata, PDF and MOL output, verification report | ACS profile conformance tests pass; no unregistered severe layout issues on a corpus of 300+ molecules; blind test against ChemDraw ACS panels at 40% or more |
 | 0.3 | Formulas and equations | mhchem-syntax parser, real sub- and superscript typesetting, atom and charge balance checks with balancing suggestions, formulas inside reaction conditions | every supported syntax category renders correctly; balance checks correct on a set of textbook equations |
-| 0.4 | Reaction schemes | layout rebuilt on the shared scale, unchanged scaffolds kept in the same orientation, compound numbering, structures above arrows, reaction SMILES and RXN input | five typical schemes from recent papers reproduced and accepted in a blind review |
+| 0.4 | Reaction schemes | object API (`Compound`, `Figure`), layout rebuilt on the shared scale, unchanged scaffolds kept in the same orientation, compound numbering, structures above arrows, reaction SMILES and RXN input | five typical schemes from recent papers reproduced and accepted in a blind review |
 | 0.5 | Mechanisms | curved arrows anchored to atoms and bonds, electron pairs, partial charges, transition-state brackets, multi-frame strips | ten textbook mechanisms drawn correctly from a single agent call |
 | 1.0 | Stable | frozen API, documentation site, gallery | |
 
@@ -140,8 +142,8 @@ bundled. (Implemented in the `acs1996` profile.)
 | Structure correctness | atoms and bonds read back from the output match the input; embedded structure round-trips to the same InChIKey | every render, recorded in the report |
 | Profile conformance | measured bond length, line width, font size, and bond spacing within 2% of the profile | CI |
 | Layout checks | label overlap, bond crossings, substituents inside rings, labels on bonds, extreme aspect ratios, each scored | every render; CI tracks the corpus score |
-| Visual regression | perceptual difference against reference images in a pinned container with pinned fonts | CI |
-| Determinism | byte-identical output for the same input and version; RDKit pinned to a tested range | CI |
+| Visual regression | perceptual difference against reference images in a pinned container with pinned fonts | CI, from 0.3 |
+| Determinism | byte-identical output for the same input and version, across processes (`tests/test_determinism.py`); RDKit pinned to a tested range | CI |
 | Identity | name and structure compared by InChIKey when both are given; undefined stereo reported | every render |
 
 Human blind tests (benchmarks/RUNBOOK.md) run once per minor version as the

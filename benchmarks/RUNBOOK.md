@@ -63,10 +63,10 @@ Produce two panels per molecule, saved locally under
 `benchmarks/chemdraw_panels/` (this directory is gitignored — **never commit
 the panels**):
 
-- `chemdraw-acs/{label}.svg|.png` — apply the ACS Document 1996 settings
-  (fixed bond length, Arial labels, black on white) to mirror `chemglyph-acs`.
-- `chemdraw-modern/{label}.svg|.png` — ChemDraw defaults, white background,
-  heteroatoms recolored to match `chemglyph-modern` (classic CPK: O `#FF0D0D`,
+- `chemdraw-acs1996/{label}.svg|.png` — apply the ACS Document 1996 settings
+  (fixed bond length, Arial labels, black on white) to mirror `chemglyph-acs1996`.
+- `chemdraw-screen/{label}.svg|.png` — ChemDraw defaults, white background,
+  heteroatoms recolored to match `chemglyph-screen` (classic CPK: O `#FF0D0D`,
   N `#3050F8`, S `#E8C300`, Cl `#1FB01F`). If per-atom recoloring is too
   laborious, a monochrome panel is an acceptable fallback: record that color
   was excluded from judging for that style.
@@ -94,8 +94,8 @@ python benchmarks/reference_panels.py
 ```
 
 The script writes `benchmarks/blind_review/reference_sheet_page{1,2}.png`
-(gitignored): one row per molecule, columns reference | chemglyph acs |
-chemglyph modern, with every engine at the same ~30 px bond length. The
+(gitignored): one row per molecule, columns reference | chemglyph acs1996 |
+chemglyph screen, with every engine at the same ~30 px bond length. The
 Indigo settings are the publication-convention reference baseline, not raw
 Ketcher defaults:
 
@@ -127,7 +127,7 @@ When Ketcher replaces ChemDraw, follow the same rules with these steps:
    `answer_key.json` ("Paste" accepts SMILES). Do not hand-draw from the
    label.
 3. Choose the canvas size and atom styling to mirror the ChemGlyph style
-   (`acs`: black on white; `modern`: recolored heteroatoms if the UI allows,
+   (`acs1996`: black on white; `screen`: recolored heteroatoms if the UI allows,
    otherwise monochrome and note that color was excluded from judging).
 4. File -> Save as SVG, named per the panel protocol above. Export PNG as
    well (Ketcher offers PNG export) and keep both.
@@ -162,7 +162,7 @@ notes on them are recorded as known limitations instead of being scored.
   only excluded when it is in the known-limitation list or its reference
   panel is unusable, never because both figures scored badly.
 - Aggregate: mean across graders. **Pass: aggregate ≥ 40%.**
-- Report breakdowns per style (`acs`, `modern`) and per molecule. Molecules
+- Report breakdowns per style (`acs1996`, `screen`) and per molecule. Molecules
   where every grader preferred the reference figure, or that drew `neither`
   votes, become the style fix list.
 - On failure: tune the offending style(s), regenerate only the affected
@@ -205,7 +205,7 @@ notes on them are recorded as known limitations instead of being scored.
   "eligible_pairs": 36,
   "selection_rate": 0.55,
   "pass": true,
-  "per_style": {"acs": 0.60, "modern": 0.50},
+  "per_style": {"acs1996": 0.60, "screen": 0.50},
   "per_molecule": {"benzoic-acid": 0.83, "...": 0.0},
   "notes": ["porphyrin and ferrocene recorded as known limitations"]
 }

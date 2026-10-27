@@ -33,7 +33,7 @@ def generate(out_dir: Path, seed: int | None = None) -> dict:
     tasks = [
         (label, smiles, style)
         for label, smiles, _note in BLIND_TEST_MOLECULES
-        for style in ("acs", "modern")
+        for style in ("acs1996", "screen")
     ]
     numbers = list(range(1, len(tasks) + 1))
     rng.shuffle(numbers)
@@ -44,10 +44,11 @@ def generate(out_dir: Path, seed: int | None = None) -> dict:
         stem = f"{number:03d}_{style_key}"
         svg_path = out_dir / f"{stem}.svg"
         png_path = out_dir / f"{stem}.png"
-        svg_path.write_text(render_molecule(smiles, style=style, fmt="svg").data)
+        svg_path.write_text(render_molecule(smiles, style=style, fmt="svg", transparent=False).data)
         png_status = "ok"
         try:
-            png_path.write_bytes(render_molecule(smiles, style=style, fmt="png").data)
+            png = render_molecule(smiles, style=style, fmt="png", transparent=False)
+            png_path.write_bytes(png.data)
         except ChemGlyphRenderError as exc:
             png_status = f"skipped: {exc}"
         figures[stem] = {
@@ -65,7 +66,7 @@ def generate(out_dir: Path, seed: int | None = None) -> dict:
         "seed": seed,
         "chemglyph_version": chemglyph.__version__,
         "rdkit_version": rdkit.__version__,
-        "styles": {"chemglyph-acs": "acs", "chemglyph-modern": "modern"},
+        "styles": {"chemglyph-acs1996": "acs1996", "chemglyph-screen": "screen"},
         "known_limitations_excluded_from_denominator": sorted(KNOWN_LIMITATIONS),
         "figures": figures,
     }

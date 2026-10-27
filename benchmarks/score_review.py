@@ -29,7 +29,7 @@ def score_grader(answers: dict[str, str], pair_key: dict) -> dict:
     picked = 0.0
     missing = 0
     scored = 0
-    per_style: dict[str, dict] = {"acs": {"n": 0, "picked": 0.0}, "modern": {"n": 0, "picked": 0.0}}
+    per_style: dict[str, dict] = {}
     per_molecule: dict[str, dict] = {}
     for pair_id, info in pair_key.items():
         if not isinstance(info, dict):
@@ -47,6 +47,7 @@ def score_grader(answers: dict[str, str], pair_key: dict) -> dict:
             value = 1.0 if answer == chemglyph_side else (0.5 if answer == "tie" else 0.0)
         picked += value
         style = info["style"]
+        per_style.setdefault(style, {"n": 0, "picked": 0.0})
         per_style[style]["n"] += 1
         per_style[style]["picked"] += value
         molecule = info["molecule"]
@@ -73,8 +74,13 @@ def aggregate(grader_scores: list[dict]) -> dict:
     """Average grader rates and apply the 40% pass criterion."""
     rate = sum(score["rate"] for score in grader_scores) / len(grader_scores)
     per_style = {}
-    for style in ("acs", "modern"):
-        rates = [score["per_style"][style]["rate"] for score in grader_scores]
+    styles = sorted({style for score in grader_scores for style in score["per_style"]})
+    for style in styles:
+        rates = [
+            score["per_style"][style]["rate"]
+            for score in grader_scores
+            if style in score["per_style"]
+        ]
         per_style[style] = sum(rates) / len(rates) if rates else 0.0
     return {
         "num_graders": len(grader_scores),
