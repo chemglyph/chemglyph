@@ -58,6 +58,11 @@ class Drawing:
     label_clearance_pt: float | None  # smallest gap from a bond end to a glyph
     shortest_labelled_bond_pt: float | None  # shortest visible bond touching a label
     notes: list[str] = field(default_factory=list)
+    # Labels drawn over another label or over a bond they do not belong to:
+    # {"atom": a, "other_atom": b} or {"atom": a, "bond": (i, j)}.
+    label_overlaps: list[dict] = field(default_factory=list)
+    # Do the drawn wedges, read on their own, give the input's stereocentres?
+    wedges_match_stereo: bool = True
 
 
 def font_file() -> str:
@@ -74,7 +79,10 @@ def draw(
     background: str | None = None,
 ) -> Drawing:
     """Draw a molecule that already has 2D coordinates at the profile's scale."""
-    prepared = rdMolDraw2D.PrepareMolForDrawing(mol)
+    prepared = rdMolDraw2D.PrepareMolForDrawing(mol, wedgeBonds=False)
+    _place_added_hydrogens(prepared, mol.GetNumAtoms())
+    if prepared.GetNumConformers():
+        Chem.WedgeMolBonds(prepared, prepared.GetConformer())
     k = UNITS_PER_PT
     mean = rdMolDraw2D.MeanBondLength(prepared)
     if mean <= 0.0:
@@ -145,6 +153,135 @@ def draw(
             clipper.shortest_visible / k if clipper.shortest_visible is not None else None
         ),
         notes=clipper.notes,
+        label_overlaps=_label_overlaps(body, glyphs, 0.5 * k),
+        wedges_match_stereo=_wedges_match_stereo(prepared),
+    )
+
+
+def _wedges_match_stereo(prepared: Chem.Mol) -> bool:
+    """Read the configuration of every stereocentre back from the drawn wedges."""
+    if prepared.GetNumConformers() == 0:
+        return True
+    reread = Chem.Mol(prepared)
+    for atom in reread.GetAtoms():
+        atom.SetChiralTag(Chem.ChiralType.CHI_UNSPECIFIED)
+    Chem.AssignChiralTypesFromBondDirs(reread)
+    Chem.AssignStereochemistry(reread, force=True, cleanIt=True)
+
+    def centres(mol: Chem.Mol) -> dict[int, str]:
+        heavy = Chem.RemoveHs(mol, sanitize=False)
+        heavy.UpdatePropertyCache(strict=False)
+        Chem.AssignStereochemistry(heavy, force=True, cleanIt=True)
+        return dict(Chem.FindMolChiralCenters(heavy, includeUnassigned=True))
+
+    return centres(reread) == centres(prepared)
+
+
+_ANY_BOND_PATH = re.compile(r"<path class='bond-\d+ atom-(\d+) atom-(\d+)[^']*' d='([^']+)'")
+_POINT = re.compile(r"(-?[\d.]+),(-?[\d.]+)")
+
+
+def _label_overlaps(svg: str, glyphs: dict[int, np.ndarray], inset: float) -> list[dict]:
+    """Labels that overlap another label, or a bond not attached to their atom.
+
+    A label is taken as the box around its glyphs, shrunk by ``inset`` on
+    each side so that glyph side bearings and a bond that only grazes a
+    corner do not count. Labels are horizontal text, so the box is close to
+    what a reader sees.
+    """
+    boxes = {}
+    for atom, edges in glyphs.items():
+        xs = np.concatenate([edges[:, 0], edges[:, 2]])
+        ys = np.concatenate([edges[:, 1], edges[:, 3]])
+        box = (xs.min() + inset, ys.min() + inset, xs.max() - inset, ys.max() - inset)
+        if box[0] < box[2] and box[1] < box[3]:
+            boxes[atom] = box
+    found: list[dict] = []
+    atoms = sorted(boxes)
+    for index, first in enumerate(atoms):
+        a = boxes[first]
+        for second in atoms[index + 1 :]:
+            b = boxes[second]
+            if a[0] < b[2] and b[0] < a[2] and a[1] < b[3] and b[1] < a[3]:
+                found.append({"atom": first, "other_atom": second})
+    seen = set()
+    for match in _ANY_BOND_PATH.finditer(svg):
+        ends = (int(match.group(1)), int(match.group(2)))
+        points = np.array([(float(x), float(y)) for x, y in _POINT.findall(match.group(3))])
+        if len(points) < 2:
+            continue
+        pairs = zip(points, points[1:], strict=False)
+        samples = np.vstack([np.linspace(p, q, 12) for p, q in pairs])
+        for atom, (x0, y0, x1, y1) in boxes.items():
+            if atom in ends or (atom, ends) in seen:
+                continue
+            inside = (samples[:, 0] > x0) & (samples[:, 0] < x1)
+            inside &= (samples[:, 1] > y0) & (samples[:, 1] < y1)
+            if inside.any():
+                seen.add((atom, ends))
+                found.append({"atom": atom, "bond": ends})
+    return found
+
+
+def _place_added_hydrogens(mol: Chem.Mol, first_added: int) -> None:
+    """Move the stereo hydrogens RDKit adds for drawing to where there is room.
+
+    RDKit adds an explicit H to ring-fusion stereocentres (the steroid
+    convention) but can put it on top of another atom (progesterone's C9 H
+    landed on C10). Each added H is tried along the bisector of every gap
+    between its centre's other bonds, at its RDKit length, and kept where it
+    is farthest from other atoms without crossing a bond.
+    Wedges are assigned afterwards from the final positions.
+    """
+    if mol.GetNumConformers() == 0 or mol.GetNumAtoms() <= first_added:
+        return
+    conformer = mol.GetConformer()
+    xy = np.array(conformer.GetPositions())[:, :2]
+    bonds = [(b.GetBeginAtomIdx(), b.GetEndAtomIdx()) for b in mol.GetBonds()]
+    for h in range(first_added, mol.GetNumAtoms()):
+        atom = mol.GetAtomWithIdx(h)
+        if atom.GetAtomicNum() != 1 or atom.GetDegree() != 1:
+            continue
+        centre = atom.GetNeighbors()[0].GetIdx()
+        length = float(np.linalg.norm(xy[h] - xy[centre])) or 1.0
+        others = [n.GetIdx() for n in mol.GetAtomWithIdx(centre).GetNeighbors() if n.GetIdx() != h]
+        angles = sorted(math.atan2(*(xy[o] - xy[centre])[::-1]) for o in others)
+        candidates = [xy[h]]
+        for index, angle in enumerate(angles):
+            following = angles[(index + 1) % len(angles)] + (
+                2 * math.pi if index == len(angles) - 1 else 0
+            )
+            middle = (angle + following) / 2 if len(angles) > 1 else angle + math.pi
+            # Full length only: every bond keeps the profile's fixed length.
+            candidates.append(xy[centre] + length * np.array([math.cos(middle), math.sin(middle)]))
+
+        scores = [_room(point, xy, bonds, h, centre, length) for point in candidates]
+        choice = int(np.argmax(scores))
+        if scores[choice] > scores[0] + 1e-6:  # index 0 is where RDKit put it
+            x, y = candidates[choice]
+            xy[h] = (x, y)
+            conformer.SetAtomPosition(h, (float(x), float(y), 0.0))
+
+
+def _room(point, xy, bonds, h: int, centre: int, length: float) -> float:
+    """Distance from a candidate H position to the nearest other atom; crossings lose."""
+    rest = [i for i in range(len(xy)) if i not in (h, centre)]
+    nearest = min((float(np.linalg.norm(xy[i] - point)) for i in rest), default=length)
+    crossing = any(
+        h not in bond
+        and centre not in bond
+        and _segments_cross(xy[centre], point, xy[bond[0]], xy[bond[1]])
+        for bond in bonds
+    )
+    return nearest - (10.0 * length if crossing else 0.0)
+
+
+def _segments_cross(p1, p2, q1, q2) -> bool:
+    def orient(a, b, c) -> float:
+        return float((b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0]))
+
+    return (
+        orient(q1, q2, p1) * orient(q1, q2, p2) < 0 and orient(p1, p2, q1) * orient(p1, p2, q2) < 0
     )
 
 
@@ -169,6 +306,9 @@ def _options(
     # Measured: each unit adds about 2 pt of band at a 0.6 pt line, so 2 gives
     # a band of about 4 pt, a quarter of the bond length.
     options.highlightBondWidthMultiplier = 2
+    # RDKit marks atoms that nearly touch with a red box. A figure must not
+    # carry that; the layout checks report such atoms instead.
+    options.flagCloseContactsDist = -1
     if profile.atom_colours:
         palette = {z: parse_hex_color(colour) for z, colour in profile.atom_colours.items()}
         setter = getattr(options, "setAtomPalette", None)
@@ -603,12 +743,16 @@ def _redraw_wedges(svg: str, mol: Chem.Mol, wedged: set[int], clipper: _Clipper)
         ux, uy = (p_wide[0] - p_narrow[0]) / full, (p_wide[1] - p_narrow[1]) / full
         nx, ny = -uy, ux
         # Flare: half-width per unit distance from the tip, from RDKit's own shape.
-        flare = max(
-            abs((x - p_narrow[0]) * nx + (y - p_narrow[1]) * ny)
-            / max((x - p_narrow[0]) * ux + (y - p_narrow[1]) * uy, 1e-9)
+        # Corners near the tip give a noisy ratio; a wedge RDKit already cut
+        # short at a label may have none beyond a fifth of the bond.
+        flares = [
+            abs((x - p_narrow[0]) * nx + (y - p_narrow[1]) * ny) / along
             for x, y in corners
-            if (x - p_narrow[0]) * ux + (y - p_narrow[1]) * uy > 0.2 * full
-        )
+            if (along := (x - p_narrow[0]) * ux + (y - p_narrow[1]) * uy) > 0.2 * full
+        ]
+        if not flares:
+            return match.group(0)
+        flare = max(flares)
         q1, q2 = clipper.segment(p_narrow, p_wide, narrow, wide)
         t1 = (q1[0] - p_narrow[0]) * ux + (q1[1] - p_narrow[1]) * uy
         t2 = (q2[0] - p_narrow[0]) * ux + (q2[1] - p_narrow[1]) * uy

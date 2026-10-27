@@ -23,6 +23,30 @@ comparing every file in the published sdist against the repository history.
 
 ### Added
 
+- `abbreviate=True` draws protecting and activating groups as labels (Ac,
+  Bz, Piv, Boc, Cbz, Fmoc, Alloc, Troc, Bn, PMB, Tr, MOM, THP, TMS, TES,
+  TBS, TIPS, TBDPS, Ts, Ms, Tf), and a list of labels also picks common
+  substituents (Me to t-Bu, Cy, Ph, p-Tol, CO2Me, CO2Et, CO2t-Bu, CF3).
+  Spellings follow the J. Org. Chem. list of standard abbreviations. Acyl,
+  carbamate, and benzyl groups are abbreviated only on heteroatoms; a group
+  on a terminal O or NH joins the label (OTs, NHBoc, mirrored to TsO and
+  BocHN when the bond comes from the right). The embedded structure, the
+  identity, the name check, and `fmt="mol"` keep every atom; the molfile
+  carries the abbreviations as SUP groups. A label that would overlap
+  another label or a bond is drawn in full, and `report["abbreviations"]`
+  and `report["abbreviations_drawn_in_full"]` list both.
+- Label overlap check: a label drawn over another label or over a bond it
+  does not belong to is a severe layout problem with a warning. It found 26
+  of the 416 corpus structures; 14 of those came from the next item.
+- The stereo hydrogens RDKit adds at ring fusions (the steroid convention)
+  are moved to the free direction with the most room when RDKit places one
+  on another atom, as it did for progesterone's C9 H; wedges are assigned
+  after the move. RDKit's red close-contact boxes are switched off, since
+  the layout checks report such atoms.
+- Verification reads the configuration of every stereocentre back from the
+  drawn wedges (`checks["wedges_match_stereo"]`). With abbreviations the
+  drawn molecule differs from the embedded one, so the embedded round trip
+  alone does not cover the drawing.
 - `style="acs1996"`: a fixed-scale profile that follows the ACS Document
   1996 settings. Every molecule is drawn with 14.4 pt bonds, 0.6 pt lines,
   18% double-bond spacing, and 10 pt labels, so all figures share one scale.

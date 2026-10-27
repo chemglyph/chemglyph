@@ -11,6 +11,8 @@ from rdkit import Chem, Geometry
 from rdkit.Chem import Descriptors, rdMolDescriptors
 from rdkit.Chem.Draw import rdMolDraw2D
 
+from .abbreviations import abbreviate as abbreviate_groups
+from .abbreviations import select as select_abbreviations
 from .errors import ChemGlyphParseError, ChemGlyphRenderError, ChemGlyphStyleError
 from .layout import LayoutReport, add_stereo_hydrogens, best_layout, check_layout
 from .metadata import identity
@@ -46,6 +48,7 @@ def render_molecule(
     highlight_atoms: list[int] | None = None,
     dpi: int = 300,
     name: str | None = None,
+    abbreviate: bool | list[str] = False,
 ) -> RenderResult:
     """Render a molecule from SMILES, InChI, or molblock.
 
@@ -71,10 +74,17 @@ def render_molecule(
             "cholesterol" or "胆固醇"). It is resolved
             offline with :func:`chemglyph.parse_name` and warn when it names a
             different structure, or the same one with different stereo.
+        abbreviate: ``True`` draws protecting and activating groups as
+            labels (Boc, Ts, TBS, OAc, NHBoc), as in J. Org. Chem.; a list of
+            labels picks groups, including common substituents such as
+            ``["Ph", "t-Bu", "CO2Me"]``. See :mod:`chemglyph.abbreviations`.
+            Only the drawing changes: the embedded structure, the identity,
+            and the molfile output keep every atom. ``highlight_atoms`` and
+            atom indices still refer to the full molecule.
 
     Raises:
         ChemGlyphParseError: the structure could not be parsed.
-        ChemGlyphStyleError: unknown ``style``.
+        ChemGlyphStyleError: unknown ``style`` or abbreviation.
         ChemGlyphRenderError: invalid ``fmt`` or a missing PNG backend.
     """
     renamed = []
@@ -89,6 +99,7 @@ def render_molecule(
     if style not in PROFILES:
         choices = ", ".join(PROFILES)
         raise ChemGlyphStyleError(f"Unknown style {style!r}; choose one of: {choices}")
+    groups = select_abbreviations(abbreviate)
     mol, layout = _prepare_for_drawing(_parse_structure(structure))
     result = _render_with_profile(
         mol,
@@ -101,6 +112,7 @@ def render_molecule(
         highlight_atoms=highlight_atoms,
         dpi=dpi,
         name=name,
+        abbreviations=groups,
     )
     result.warnings[:0] = renamed
     return result
@@ -161,21 +173,53 @@ def _render_with_profile(
     highlight_atoms: list[int] | None,
     dpi: int,
     name: str | None,
+    abbreviations: list | None = None,
 ) -> RenderResult:
     from . import __version__
     from .engine import draw  # local import keeps numpy-heavy code off the import path
-    from .metadata import embed_png, embed_svg, identity
+    from .metadata import embed_png, embed_svg, identity, molblock
     from .pdf import svg_to_pdf
 
-    drawing = draw(
-        mol,
-        profile,
-        highlight_atoms=highlight_atoms,
-        show_atom_indices=show_atom_indices,
-        background=None if transparent else "#ffffff",
-    )
-    warnings = _stereo_warnings(mol)
     layout_method, layout_report = layout
+    warnings = _stereo_warnings(mol)
+    abbreviated = abbreviate_groups(mol, abbreviations or [])
+    skipped: list[dict] = []
+    while True:
+        form = _drawn_form(mol, abbreviated, highlight_atoms, show_atom_indices)
+        drawing = draw(
+            form.mol,
+            profile,
+            highlight_atoms=form.highlight_atoms,
+            show_atom_indices=form.show_atom_indices,
+            background=None if transparent else "#ffffff",
+        )
+        if abbreviated is None:
+            break
+        # An abbreviation label is wider than the atom the layout placed; if
+        # it runs into a label or bond, draw that group in full instead.
+        clashing = {
+            position
+            for position, group in enumerate(abbreviated.groups)
+            for overlap in drawing.label_overlaps
+            if group["drawn_atom"] in (overlap["atom"], overlap.get("other_atom"))
+        }
+        if not clashing:
+            break
+        skipped += [
+            {"label": abbreviated.groups[i]["label"], "atoms": abbreviated.groups[i]["atoms"]}
+            for i in sorted(clashing)
+        ]
+        abbreviated = abbreviated.without(clashing)
+    record = mol if abbreviated is None else abbreviated.labelled
+    found = (
+        []
+        if abbreviated is None
+        else [{"label": g["label"], "atoms": g["atoms"]} for g in abbreviated.groups]
+    )
+    if abbreviated is not None or form.layout is not None:
+        layout_report = form.layout or layout_report
+    _add_label_overlaps(layout_report, drawing.label_overlaps, form.original_index)
+
     if layout_report.severe:
         warnings.append(
             f"layout check: {layout_report.severe} problem(s) that can make the drawing "
@@ -185,8 +229,10 @@ def _render_with_profile(
     if size is not None:
         warnings.append(f"size is ignored: the {profile.name} profile draws at a fixed scale")
     warnings.extend(drawing.notes)
-    svg = embed_svg(drawing.svg, mol, profile=profile.name, version=__version__)
-    checks, problems = _verify_drawing(mol, svg)
+    svg = embed_svg(drawing.svg, record, profile=profile.name, version=__version__)
+    checks, problems = _verify_drawing(
+        form.mol, svg, expected=mol, wedges_match=drawing.wedges_match_stereo
+    )
     warnings.extend(problems)
     name_check = _check_name(mol, name) if name is not None else None
     if name_check is not None and name_check["status"] != "match":
@@ -194,7 +240,7 @@ def _render_with_profile(
     if output_fmt == "svg":
         data: str | bytes = svg
     elif output_fmt == "png":
-        data = embed_png(_rasterize_pt_svg(drawing.svg, dpi), mol)
+        data = embed_png(_rasterize_pt_svg(drawing.svg, dpi), record)
     elif output_fmt == "pdf":
         ident = identity(mol)
         data = svg_to_pdf(
@@ -205,11 +251,11 @@ def _render_with_profile(
                 "ChemGlyphInChI": ident["inchi"],
                 "ChemGlyphInChIKey": ident["inchikey"],
                 "ChemGlyphFormula": ident["formula"],
-                "ChemGlyphMolfile": Chem.MolToMolBlock(mol),
+                "ChemGlyphMolfile": molblock(record),
             },
         )
-    else:  # mol: the structure with the coordinates used for the drawing
-        data = Chem.MolToMolBlock(mol)
+    else:  # mol: every atom, the drawn coordinates, abbreviations as SUP groups
+        data = molblock(record)
     return RenderResult(
         data=data,
         fmt=output_fmt,
@@ -237,6 +283,8 @@ def _render_with_profile(
                 "examples": layout_report.examples,
                 "added_hydrogens": layout_report.added_hydrogens,
             },
+            "abbreviations": found,
+            "abbreviations_drawn_in_full": skipped,
             "identity": identity(mol),
             "checks": checks,
             "verified": all(checks.values()),
@@ -245,9 +293,73 @@ def _render_with_profile(
     )
 
 
-def _verify_drawing(mol: Chem.Mol, svg: str) -> tuple[dict[str, bool], list[str]]:
-    """Check the figure against the input structure (docs/SPEC.md, section 7)."""
+@dataclass
+class _DrawnForm:
+    """The molecule handed to the engine, and how its atoms map back."""
+
+    mol: Chem.Mol
+    original_index: list[int]  # drawn atom -> full-molecule atom
+    highlight_atoms: list[int] | None
+    show_atom_indices: bool
+    layout: LayoutReport | None  # re-checked layout when it differs from the input's
+
+
+def _drawn_form(mol, abbreviated, highlight_atoms, show_atom_indices) -> _DrawnForm:
+    if abbreviated is None:
+        return _DrawnForm(
+            mol, list(range(mol.GetNumAtoms())), highlight_atoms, show_atom_indices, None
+        )
+    drawn = Chem.Mol(abbreviated.drawn)
+    to_drawn = {original: position for position, original in enumerate(abbreviated.original_index)}
+    for group in abbreviated.groups:
+        for atom in group["atoms"]:
+            to_drawn[atom] = group["drawn_atom"]
+    if highlight_atoms:
+        highlight_atoms = sorted({to_drawn[a] for a in highlight_atoms if a in to_drawn})
+    if show_atom_indices:  # RDKit would number the drawn atoms; show the full molecule's
+        for position, original in enumerate(abbreviated.original_index):
+            drawn.GetAtomWithIdx(position).SetProp("atomNote", str(original))
+        show_atom_indices = False
+    report = check_layout(drawn)  # what is drawn, labels as atoms
+    if report.counts.get("stereo_lost"):
+        repaired = add_stereo_hydrogens(drawn)
+        if repaired is not None:
+            drawn, report = repaired, check_layout(repaired)
+    return _DrawnForm(
+        drawn, list(abbreviated.original_index), highlight_atoms, show_atom_indices, report
+    )
+
+
+def _add_label_overlaps(report: LayoutReport, overlaps: list[dict], original: list[int]) -> None:
+    """Count overlapping labels as a severe layout problem, in full-molecule atom numbers."""
+
+    def name(atom: int) -> str:
+        return f"atom {original[atom]}" if atom < len(original) else "an added H"
+
+    report.counts["label_overlaps"] = len(overlaps)
+    for overlap in overlaps:
+        if "other_atom" in overlap:
+            text = (
+                f"the labels of {name(overlap['atom'])} and {name(overlap['other_atom'])} overlap"
+            )
+        else:
+            i, j = overlap["bond"]
+            text = f"the label of {name(overlap['atom'])} lies on the bond {name(i)}-{name(j)}"
+        if len(report.examples) < 10:
+            report.examples.append(text)
+
+
+def _verify_drawing(
+    mol: Chem.Mol, svg: str, expected: Chem.Mol | None = None, wedges_match: bool = True
+) -> tuple[dict[str, bool], list[str]]:
+    """Check the figure against the input structure (docs/SPEC.md, section 7).
+
+    ``mol`` is what was drawn (with abbreviation labels as atoms), and
+    ``expected`` the full structure the embedded record must match.
+    """
     from .metadata import identity, read_structure
+
+    expected = mol if expected is None else expected
 
     problems: list[str] = []
     drawn = {int(value) for value in re.findall(r"class='bond-(\d+)", svg)}
@@ -262,18 +374,25 @@ def _verify_drawing(mol: Chem.Mol, svg: str) -> tuple[dict[str, bool], list[str]
     ]
     if unlabelled:
         problems.append(f"verification: heteroatoms drawn without a label: {unlabelled}")
+    # The drawn wedges, read on their own, must give back the stereocentres
+    # (with abbreviations the drawn molecule is not the embedded one, so the
+    # round trip below does not cover it).
+    wedges_ok = wedges_match
+    if not wedges_ok:
+        problems.append("verification: the drawn wedges do not fix every stereocentre")
     try:
         embedded = identity(read_structure(svg))["inchikey"]
     except ChemGlyphParseError:
         embedded = ""
-    expected = identity(mol)["inchikey"]
-    round_trip = bool(expected) and embedded == expected
+    key = identity(expected)["inchikey"]
+    round_trip = bool(key) and embedded == key
     if not round_trip:
         problems.append("verification: the embedded structure does not read back as the input")
     return (
         {
             "all_bonds_drawn": not missing,
             "heteroatoms_labelled": not unlabelled,
+            "wedges_match_stereo": wedges_ok,
             "embedded_structure_matches": round_trip,
         },
         problems,

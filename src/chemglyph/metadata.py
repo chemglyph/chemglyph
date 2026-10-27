@@ -61,6 +61,19 @@ def identity(mol: Chem.Mol) -> dict[str, str]:
     }
 
 
+_SAP_LINE = re.compile(r"^(M  SAP .*\S)$", re.MULTILINE)
+
+
+def molblock(mol: Chem.Mol) -> str:
+    """A V2000 molfile that RDKit and structure editors read back.
+
+    RDKit writes the attachment id of an abbreviation (SUP group) as one
+    character, and its own reader then rejects the line as too short; the
+    CTfile format gives the id two characters, so the line is padded.
+    """
+    return _SAP_LINE.sub(lambda match: match.group(1) + " ", Chem.MolToMolBlock(mol))
+
+
 def embed_svg(svg: str, mol: Chem.Mol, *, profile: str, version: str) -> str:
     """Insert the structure record right after the root ``<svg>`` tag."""
     ident = identity(mol)
@@ -77,7 +90,7 @@ def embed_svg(svg: str, mol: Chem.Mol, *, profile: str, version: str) -> str:
     )
     record = (
         f'<metadata><chemglyph:structure xmlns:chemglyph="{NAMESPACE}" {attributes}>'
-        f"<![CDATA[{Chem.MolToMolBlock(mol)}]]></chemglyph:structure></metadata>"
+        f"<![CDATA[{molblock(mol)}]]></chemglyph:structure></metadata>"
     )
     head_end = svg.index(">", svg.index("<svg")) + 1
     return svg[:head_end] + record + svg[head_end:]

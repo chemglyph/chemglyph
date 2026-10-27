@@ -51,7 +51,9 @@ server = MCPServer(
         "lines, larger labels); every style draws at a fixed scale. Pass the "
         "compound's name in 'name' when you know it: the structure is checked "
         "against it offline and a mismatch is reported, which catches a wrong "
-        "SMILES before the user sees the figure."
+        "SMILES before the user sees the figure. Set abbreviate to true to draw "
+        "protecting groups as labels (Boc, Ts, TBS, OAc), or to a list such as "
+        '["Ph", "t-Bu", "CO2Me"]; the embedded structure keeps every atom.'
     ),
     structured_output=False,
 )
@@ -64,6 +66,7 @@ def render_molecule_tool(
     highlight_atoms: list[int] | None = None,
     save: bool = True,
     name: str | None = None,
+    abbreviate: bool | list[str] = False,
 ) -> list[ImageContent | TextContent]:
     """MCP wrapper for :func:`chemglyph.render_molecule`."""
     try:
@@ -75,6 +78,7 @@ def render_molecule_tool(
             show_atom_indices=show_atom_indices,
             highlight_atoms=highlight_atoms,
             name=name,
+            abbreviate=abbreviate,
         )
     except ChemGlyphError as exc:
         return [_error(str(exc))]
@@ -95,6 +99,7 @@ def render_molecule_tool(
                 transparent=transparent,
                 show_atom_indices=show_atom_indices,
                 highlight_atoms=highlight_atoms,
+                abbreviate=abbreviate,
             )
             parts.append(TextContent(type="text", text=f"SVG source:\n{svg.data}"))
         except ChemGlyphError:
@@ -241,6 +246,9 @@ def _metadata(result: Any) -> TextContent:
     if report:
         lines.append(f"inchikey: {report['identity']['inchikey']}")
         lines.append(f"verified: {report['verified']} {report['checks']}")
+        if report.get("abbreviations"):
+            labels = ", ".join(group["label"] for group in report["abbreviations"])
+            lines.append(f"abbreviations: {labels}")
         if report.get("name_check"):
             check = report["name_check"]
             lines.append(f"name_check: {check['status']}: {check['detail']}")

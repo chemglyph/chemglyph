@@ -41,6 +41,18 @@ KNOWN_LAYOUT_LIMITS = {
     "paclitaxel",
     "vinblastine",
     "tetrodotoxin",
+    # Labels that run into another label or a bond (label_overlaps). The
+    # layouts place atoms, not label boxes; label-aware placement is the fix.
+    "alpha-cyclodextrin",
+    "beta-cyclodextrin",
+    "amphotericin B",
+    "forskolin",  # two OH labels on neighbouring axial positions
+    "rifampicin",
+    "sitagliptin",  # H2N against an aryl F
+    # PubChem gives these as separate ions, so the labels of neighbouring
+    # fragments collide; drawn as a chemist would (covalent C-Mg, Cp-Ti) they do not.
+    "methylmagnesium bromide",
+    "titanocene dichloride",
 }
 
 # Bonds the clipper leaves as RDKit drew them, with a warning.
@@ -79,6 +91,13 @@ def test_structure_renders_and_verifies(row: dict, renders) -> None:
     result = renders[row["name"]]
     assert result.report["verified"], result.report["checks"]
     assert _composition(result.report["identity"]["formula"]) == _composition(row["formula"])
+
+
+@pytest.mark.parametrize("row", CASES)
+def test_monochrome_figures_carry_no_colour(row: dict, renders) -> None:
+    # No red close-contact boxes or other colour leaks into an ACS figure.
+    colours = set(re.findall(r"(?:fill|stroke):(#[0-9A-Fa-f]{6})", renders[row["name"]].data))
+    assert colours <= {"#000000", "#FFFFFF"}, colours
 
 
 @pytest.mark.parametrize("row", CASES)
@@ -148,3 +167,13 @@ def test_known_limits_are_still_limits(renders) -> None:
     severe = {name for name, result in renders.items() if result.report["layout"]["severe"]}
     fixed = KNOWN_LAYOUT_LIMITS - severe
     assert not fixed, f"now clean, remove from KNOWN_LAYOUT_LIMITS: {sorted(fixed)}"
+
+
+def test_corpus_with_abbreviations_renders_and_verifies() -> None:
+    """Abbreviated figures must still verify and embed the full structure."""
+    abbreviated = 0
+    for row in ROWS:
+        result = chemglyph.render_molecule(row["smiles"], style="acs1996", abbreviate=True)
+        assert result.report["verified"], (row["name"], result.report["checks"])
+        abbreviated += bool(result.report["abbreviations"])
+    assert abbreviated >= 10  # the corpus has protected intermediates and reagents

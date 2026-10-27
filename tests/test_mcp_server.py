@@ -204,3 +204,15 @@ def test_render_molecule_checks_the_name_and_reports_verification() -> None:
     assert "verified: True" in text
     assert "name_check: mismatch" in text
     assert "inchikey: BSYNRYMUTXBXSQ-UHFFFAOYSA-N" in text
+
+
+def test_render_molecule_abbreviates_on_request() -> None:
+    result = _call_tool(
+        "render_molecule",
+        {"structure": "CC(C)(C)OC(=O)N1CCCCC1", "abbreviate": True, "save": False},
+    )
+    assert not result.is_error
+    assert result.content[0].type == "image"
+    text = next(item.text for item in result.content if item.type == "text")
+    assert "abbreviations: Boc" in text
+    assert "verified: True" in text

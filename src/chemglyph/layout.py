@@ -36,7 +36,15 @@ import numpy as np
 from rdkit import Chem, RDLogger
 from rdkit.Chem import rdDepictor
 
-_SEVERE = ("close_atoms", "atom_on_bond", "bond_crossings", "atom_in_ring", "stereo_lost")
+# label_overlaps is filled in after drawing, from the label outlines.
+_SEVERE = (
+    "close_atoms",
+    "atom_on_bond",
+    "bond_crossings",
+    "atom_in_ring",
+    "stereo_lost",
+    "label_overlaps",
+)
 _CLOSE = 0.35  # bonds
 
 
@@ -139,7 +147,7 @@ def check_layout(mol: Chem.Mol) -> LayoutReport:
             _note(report, f"atom {atom} sits inside ring {tuple(ring)}")
 
     report.counts["uneven_bonds"] = int((np.abs(lengths / mean - 1.0) > 0.15).sum())
-    if _stereo_lost(mol):
+    if stereo_lost(mol):
         report.counts["stereo_lost"] = 1
         _note(report, "the wedges of this layout do not fix every stereocentre")
     return report
@@ -153,7 +161,7 @@ def add_stereo_hydrogens(mol: Chem.Mol) -> Chem.Mol | None:
     None if there is nothing to repair or hydrogens do not repair it. New
     atoms are appended, so existing atom indices keep their meaning.
     """
-    if not _stereo_lost(mol):
+    if not stereo_lost(mol):
         return None
     with _quiet():
         back = Chem.MolFromMolBlock(Chem.MolToMolBlock(mol))
@@ -171,12 +179,12 @@ def add_stereo_hydrogens(mol: Chem.Mol) -> Chem.Mol | None:
     if not lost:
         return None
     with_h = Chem.AddHs(mol, onlyOnAtoms=lost, addCoords=True)
-    if _stereo_lost(with_h):
+    if stereo_lost(with_h):
         return None
     return with_h
 
 
-def _stereo_lost(mol: Chem.Mol) -> bool:
+def stereo_lost(mol: Chem.Mol) -> bool:
     """True if a molfile written from this layout reads back as another stereoisomer."""
     if not any(
         atom.GetChiralTag() != Chem.ChiralType.CHI_UNSPECIFIED for atom in mol.GetAtoms()

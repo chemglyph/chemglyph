@@ -85,3 +85,37 @@ def test_layout_that_hides_a_stereocentre_gets_an_explicit_h() -> None:
     assert result.canonical_smiles == Chem.MolToSmiles(Chem.MolFromSmiles(QUININE))
     back = Chem.MolFromMolBlock(result.data)
     assert Chem.MolToSmiles(back) == Chem.MolToSmiles(Chem.MolFromSmiles(QUININE))
+
+
+def test_flipped_wedge_fails_verification() -> None:
+    from rdkit.Chem import rdDepictor
+    from rdkit.Chem.Draw import rdMolDraw2D
+
+    from chemglyph.engine import _wedges_match_stereo
+
+    mol = Chem.MolFromSmiles("C[C@H](N)O")
+    rdDepictor.Compute2DCoords(mol)
+    prepared = rdMolDraw2D.PrepareMolForDrawing(mol)
+    assert _wedges_match_stereo(prepared)
+    for bond in prepared.GetBonds():
+        if bond.GetBondDir() == Chem.BondDir.BEGINWEDGE:
+            bond.SetBondDir(Chem.BondDir.BEGINDASH)
+        elif bond.GetBondDir() == Chem.BondDir.BEGINDASH:
+            bond.SetBondDir(Chem.BondDir.BEGINWEDGE)
+    assert not _wedges_match_stereo(prepared)
+
+
+def test_overlapping_labels_are_a_severe_layout_problem() -> None:
+    # PubChem's ionic form of MeMgBr puts the Mg2+ and Br- labels on top of each other.
+    result = chemglyph.render_molecule("[CH3-].[Mg+2].[Br-]", style="acs1996")
+    assert result.report["layout"]["problems"]["label_overlaps"] == 1
+    assert any("labels of atom 1 and atom 2 overlap" in w for w in result.warnings)
+
+
+def test_ring_fusion_hydrogens_do_not_land_on_atoms() -> None:
+    # RDKit put progesterone's C9 H on C10 and flagged it with a red box.
+    progesterone = "CC(=O)[C@H]1CC[C@@H]2[C@@]1(CC[C@H]3[C@H]2CCC4=CC(=O)CC[C@]34C)C"
+    result = chemglyph.render_molecule(progesterone, style="acs1996")
+    assert result.report["layout"]["severe"] == 0
+    assert result.report["checks"]["wedges_match_stereo"]
+    assert "#FF0000" not in result.data

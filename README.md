@@ -61,13 +61,31 @@ in 1.0.
 These numbers are measured in the rendered output by the test suite
 (`tests/test_profiles.py`).
 
+### Abbreviations
+
+```python
+chemglyph.render_molecule(smiles, abbreviate=True)  # Boc, Ts, TBS, OAc, NHBoc, ...
+chemglyph.render_molecule(smiles, abbreviate=["Ph", "t-Bu", "CO2Me"])
+```
+
+`abbreviate=True` draws protecting and activating groups as labels, with
+the spellings of the J. Org. Chem. list of standard abbreviations. Acyl,
+carbamate, and benzyl groups are abbreviated only on heteroatoms, so a
+benzyl side chain stays a CH2 and a ring; silyl and sulfonyl groups also on
+carbon. A group on a terminal O or NH joins its label (OTs, BocHN). A label
+that would run into another label or a bond is drawn in full instead.
+
+Only the drawing changes. The embedded structure, the identity, and the
+name check use every atom, and `fmt="mol"` keeps the abbreviations as SUP
+groups, which structure editors show as labels and can expand.
+
 ### Checked figures
 
 Figures from these profiles check themselves and carry their structure:
 
 ```python
 result = chemglyph.render_molecule(smiles, style="acs1996", name="cholesterol")
-result.report["verified"]  # every bond drawn, heteroatoms labelled, structure reads back
+result.report["verified"]  # bonds and labels drawn, wedges right, structure reads back
 result.report["name_check"]["status"]  # match, stereo_differs, mismatch, or unchecked
 chemglyph.read_structure(result.data)  # the RDKit molecule embedded in the SVG or PNG
 ```
