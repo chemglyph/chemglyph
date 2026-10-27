@@ -1,7 +1,8 @@
 # Publishing ChemGlyph to the official MCP registry
 
-Status: published. `io.github.random-orbit/chemglyph` version `0.1.2` is live
-in the official registry (verified via the public v0 API on 2026-08-14).
+Status: published. `io.github.random-orbit/chemglyph` version `0.2.0` is the
+latest entry in the official registry (verified via the public v0 API on
+2026-10-28).
 The registry is in preview; its flow may change.
 
 ## What already exists
