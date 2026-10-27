@@ -45,7 +45,13 @@ server = MCPServer(
         "a file; the PNG preview is always included. The PNG is also written "
         "to the user's Downloads/chemglyph folder and the file path is "
         "returned, because some chat clients do not render tool images. "
-        "Set save to false to skip the file."
+        "Set save to false to skip the file. "
+        "Styles: 'acs1996' (journal figures at the ACS Document 1996 sizes), "
+        "'screen' (coloured heteroatoms), 'textbook' (heavier lines); the older "
+        "'acs', 'modern', 'textbook-cn' remain until 0.2. With acs1996, screen, "
+        "or textbook, pass the compound's name in 'name' when you know it: the "
+        "structure is checked against it offline and a mismatch is reported, "
+        "which catches a wrong SMILES before the user sees the figure."
     ),
     structured_output=False,
 )
@@ -57,6 +63,7 @@ def render_molecule_tool(
     show_atom_indices: bool = False,
     highlight_atoms: list[int] | None = None,
     save: bool = True,
+    name: str | None = None,
 ) -> list[ImageContent | TextContent]:
     """MCP wrapper for :func:`chemglyph.render_molecule`."""
     try:
@@ -67,6 +74,7 @@ def render_molecule_tool(
             transparent=transparent,
             show_atom_indices=show_atom_indices,
             highlight_atoms=highlight_atoms,
+            name=name,
         )
     except ChemGlyphError as exc:
         return [_error(str(exc))]
@@ -222,16 +230,21 @@ def _error(message: str) -> TextContent:
 
 
 def _metadata(result: Any) -> TextContent:
-    return TextContent(
-        type="text",
-        text=(
-            f"canonical_smiles: {result.canonical_smiles}\n"
-            f"formula: {result.mol_formula}\n"
-            f"molecular_weight: {result.mol_weight:.4f}\n"
-            f"format: {result.fmt}\n"
-            f"warnings: {result.warnings}"
-        ),
-    )
+    lines = [
+        f"canonical_smiles: {result.canonical_smiles}",
+        f"formula: {result.mol_formula}",
+        f"molecular_weight: {result.mol_weight:.4f}",
+        f"format: {result.fmt}",
+        f"warnings: {result.warnings}",
+    ]
+    report = getattr(result, "report", None) or {}
+    if report:
+        lines.append(f"inchikey: {report['identity']['inchikey']}")
+        lines.append(f"verified: {report['verified']} {report['checks']}")
+        if report.get("name_check"):
+            check = report["name_check"]
+            lines.append(f"name_check: {check['status']}: {check['detail']}")
+    return TextContent(type="text", text="\n".join(lines))
 
 
 def _save_png(data: bytes) -> str:

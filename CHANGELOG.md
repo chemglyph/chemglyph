@@ -29,6 +29,22 @@ comparing every file in the published sdist against the repository history.
   colours for O, N, S, and Cl; `textbook` uses 0.8 pt lines, 12 pt labels,
   and 20% bond spacing. Coloured bond halves are joined, clipped as one
   line, and split again, so label clearance holds in colour too.
+- Figures from the fixed-scale profiles carry their structure: SVG output
+  holds a `chemglyph:structure` record (SMILES, InChI, InChIKey, formula,
+  and the full molfile) and PNG output holds RDKit's standard SMILES and
+  molfile chunks. `chemglyph.read_structure(figure)` reads it back. RDKit's
+  own SVG metadata was not used because it lost E/Z stereo for
+  beta-damascone and could not be read back for azobenzene.
+- `RenderResult.report` gains a verification block: every bond drawn, every
+  heteroatom labelled, and the embedded structure reading back as the input
+  (`report["verified"]`). Any failure is also a warning.
+- `render_molecule(..., name="cholesterol")` checks the structure against
+  the name offline (built-in dictionary or OPSIN) and warns when the name
+  belongs to a different structure, or to the same one with different
+  stereo. The MCP tool takes the same `name` argument and reports the
+  result in its text, so an agent learns about a wrong SMILES even when the
+  client hides images. Identifiers are computed without coordinates, so a
+  2D layout never changes an InChIKey.
 - A molfile that carries 2D coordinates keeps its layout, so a structure
   arranged in a drawing program comes out the way its author placed it.
   SMILES, InChI, and molfiles with all-zero or 3D coordinates still get a

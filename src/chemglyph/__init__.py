@@ -1,5 +1,6 @@
 """ChemGlyph: publication-quality chemical structure & reaction rendering for AI agents."""
 
+from .metadata import read_structure
 from .molecule import RenderResult, render_molecule
 from .naming import parse_name
 from .reaction import render_reaction
@@ -9,6 +10,7 @@ __version__ = "0.1.3"
 
 __all__ = [
     "parse_name",
+    "read_structure",
     "render_molecule",
     "render_reaction",
     "validate_structure",

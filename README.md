@@ -61,6 +61,21 @@ png = chemglyph.render_molecule(smiles, style="acs1996", fmt="png", dpi=600)
 These numbers are measured in the rendered output by the test suite
 (`tests/test_profiles.py`).
 
+### Checked figures
+
+Figures from these profiles check themselves and carry their structure:
+
+```python
+result = chemglyph.render_molecule(smiles, style="acs1996", name="cholesterol")
+result.report["verified"]  # every bond drawn, heteroatoms labelled, structure reads back
+result.report["name_check"]["status"]  # match, stereo_differs, mismatch, or unchecked
+chemglyph.read_structure(result.data)  # the RDKit molecule embedded in the SVG or PNG
+```
+
+A name that belongs to another structure produces a warning, which catches a
+wrong SMILES from an AI model before the figure reaches a manuscript. Names
+resolve offline through the built-in Chinese dictionary or OPSIN.
+
 ## Reactions
 
 ```python

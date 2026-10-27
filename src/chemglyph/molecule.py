@@ -42,6 +42,7 @@ def render_molecule(
     show_atom_indices: bool = False,
     highlight_atoms: list[int] | None = None,
     dpi: int = 300,
+    name: str | None = None,
 ) -> RenderResult:
     """Render a molecule from SMILES, InChI, or molblock.
 
@@ -60,6 +61,10 @@ def render_molecule(
         highlight_atoms: atom indices to highlight with RDKit circles.
         dpi: PNG resolution for fixed-scale profiles (a 14.4 pt bond is
             60 px at 300 dpi).
+        name: optional name the structure is supposed to have (for example
+            "cholesterol" or "胆固醇"). Fixed-scale profiles resolve it
+            offline with :func:`chemglyph.parse_name` and warn when it names a
+            different structure, or the same one with different stereo.
 
     Raises:
         ChemGlyphParseError: the structure could not be parsed.
@@ -78,6 +83,7 @@ def render_molecule(
             show_atom_indices=show_atom_indices,
             highlight_atoms=highlight_atoms,
             dpi=dpi,
+            name=name,
         )
     if style not in STYLES:
         choices = ", ".join(sorted(STYLES | set(PROFILES)))
@@ -115,8 +121,11 @@ def _render_with_profile(
     show_atom_indices: bool,
     highlight_atoms: list[int] | None,
     dpi: int,
+    name: str | None,
 ) -> RenderResult:
+    from . import __version__
     from .engine import draw  # local import keeps numpy-heavy code off the import path
+    from .metadata import embed_png, embed_svg, identity
 
     drawing = draw(
         mol,
@@ -129,10 +138,16 @@ def _render_with_profile(
     if size is not None:
         warnings.append(f"size is ignored: the {profile.name} profile draws at a fixed scale")
     warnings.extend(drawing.notes)
+    svg = embed_svg(drawing.svg, mol, profile=profile.name, version=__version__)
+    checks, problems = _verify_drawing(mol, svg)
+    warnings.extend(problems)
+    name_check = _check_name(mol, name) if name is not None else None
+    if name_check is not None and name_check["status"] != "match":
+        warnings.append(name_check["detail"])
     if output_fmt == "svg":
-        data: str | bytes = drawing.svg
+        data: str | bytes = svg
     else:
-        data = _rasterize_pt_svg(drawing.svg, dpi)
+        data = embed_png(_rasterize_pt_svg(drawing.svg, dpi), mol)
     return RenderResult(
         data=data,
         fmt=output_fmt,
@@ -153,8 +168,84 @@ def _render_with_profile(
                 if drawing.shortest_labelled_bond_pt is None
                 else round(drawing.shortest_labelled_bond_pt, 3)
             ),
+            "identity": identity(mol),
+            "checks": checks,
+            "verified": all(checks.values()),
+            "name_check": name_check,
         },
     )
+
+
+def _verify_drawing(mol: Chem.Mol, svg: str) -> tuple[dict[str, bool], list[str]]:
+    """Check the figure against the input structure (docs/SPEC.md, section 7)."""
+    from .metadata import identity, read_structure
+
+    problems: list[str] = []
+    drawn = {int(value) for value in re.findall(r"class='bond-(\d+)", svg)}
+    missing = sorted(set(range(mol.GetNumBonds())) - drawn)
+    if missing:
+        problems.append(f"verification: bonds not drawn: {missing}")
+    labelled = {int(value) for value in re.findall(r"<path class='atom-(\d+)' d=", svg)}
+    unlabelled = [
+        atom.GetIdx()
+        for atom in mol.GetAtoms()
+        if atom.GetAtomicNum() != 6 and atom.GetIdx() not in labelled
+    ]
+    if unlabelled:
+        problems.append(f"verification: heteroatoms drawn without a label: {unlabelled}")
+    try:
+        embedded = identity(read_structure(svg))["inchikey"]
+    except ChemGlyphParseError:
+        embedded = ""
+    expected = identity(mol)["inchikey"]
+    round_trip = bool(expected) and embedded == expected
+    if not round_trip:
+        problems.append("verification: the embedded structure does not read back as the input")
+    return (
+        {
+            "all_bonds_drawn": not missing,
+            "heteroatoms_labelled": not unlabelled,
+            "embedded_structure_matches": round_trip,
+        },
+        problems,
+    )
+
+
+def _check_name(mol: Chem.Mol, name: str) -> dict[str, str]:
+    """Compare the structure with the one a name resolves to (offline)."""
+    from .errors import ChemGlyphError
+    from .metadata import identity
+    from .naming import parse_name
+
+    try:
+        resolved = parse_name(name)
+    except (NotImplementedError, ChemGlyphError) as exc:
+        return {
+            "name": name,
+            "status": "unchecked",
+            "detail": f"name {name!r} could not be checked: {exc}",
+        }
+    reference = Chem.MolFromSmiles(resolved)
+    given, named = identity(mol), identity(reference)
+    if given["inchikey"] == named["inchikey"]:
+        return {"name": name, "status": "match", "detail": f"structure matches {name!r}"}
+    if given["inchikey"][:14] == named["inchikey"][:14]:
+        return {
+            "name": name,
+            "status": "stereo_differs",
+            "detail": (
+                f"structure has the connectivity of {name!r} but differs in "
+                f"stereochemistry or charge state (expected {resolved})"
+            ),
+        }
+    return {
+        "name": name,
+        "status": "mismatch",
+        "detail": (
+            f"structure does not match {name!r}: drawn {given['formula']}, "
+            f"{name!r} is {named['formula']} ({resolved})"
+        ),
+    }
 
 
 def _rasterize_pt_svg(svg: str, dpi: int) -> bytes:

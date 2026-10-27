@@ -192,3 +192,15 @@ def test_parse_name_unknown_chinese_is_surfaced_as_error_text() -> None:
     assert not result.is_error
     text = next(item for item in result.content if item.type == "text")
     assert "built-in dictionary" in text.text
+
+
+def test_render_molecule_checks_the_name_and_reports_verification() -> None:
+    result = _call_tool(
+        "render_molecule",
+        {"structure": "CC(=O)Oc1ccccc1C(=O)O", "style": "acs1996", "name": "咖啡因"},
+    )
+    assert not result.is_error
+    text = next(item.text for item in result.content if item.type == "text")
+    assert "verified: True" in text
+    assert "name_check: mismatch" in text
+    assert "inchikey: BSYNRYMUTXBXSQ-UHFFFAOYSA-N" in text
