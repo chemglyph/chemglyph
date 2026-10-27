@@ -23,6 +23,14 @@ comparing every file in the published sdist against the repository history.
 
 ### Added
 
+- Cages are drawn in perspective. When every flat layout has a severe
+  problem and at least half the molecule is a bridged system or cage, the
+  layout also tries an orthographic view of the 3D structure (ETKDG, fixed
+  seed), choosing the direction where no atom lands on a bond, no carbon
+  looks linear (it would get a "C" label), and labels have room. Adamantane,
+  bicyclo[1.1.1]pentane, hexamine, and their derivatives (amantadine)
+  now come out as in textbooks; cubane is recognised as a cage and gets
+  RDKit's cube template. All four left the corpus's known limitations.
 - Charge signs are placed like ChemDraw places them: at the upper right of
   the label as a superscript unless a bond leaves the atom in that
   direction, then at the next free corner or side (the O- of a pyridine

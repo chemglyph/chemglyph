@@ -127,3 +127,25 @@ def test_ring_fusion_hydrogens_do_not_land_on_atoms() -> None:
     assert result.report["layout"]["severe"] == 0
     assert result.report["checks"]["wedges_match_stereo"]
     assert "#FF0000" not in result.data
+
+
+@pytest.mark.parametrize(
+    "smiles",
+    [
+        "C1C2CC3CC1CC(C2)C3",  # adamantane
+        "C12C3C4C1C5C2C3C45",  # cubane
+        "C1C2CC1C2",  # bicyclo[1.1.1]pentane
+        "C1N2CN3CN1CN(C2)C3",  # hexamine
+        "NC12CC3CC(CC(C3)C1)C2",  # amantadine
+    ],
+)
+def test_cages_are_drawn_in_perspective_without_problems(smiles: str) -> None:
+    import re
+
+    result = chemglyph.render_molecule(smiles, style="acs1996")
+    assert result.report["layout"]["method"] in {"projection", "ring-template"}
+    assert result.report["layout"]["severe"] == 0, result.report["layout"]["examples"]
+    # No cage carbon may look like a linear carbon and get a "C" label.
+    carbons = {a.GetIdx() for a in Chem.MolFromSmiles(smiles).GetAtoms() if a.GetSymbol() == "C"}
+    labelled = {int(i) for i in re.findall(r"<path class='atom-(\d+)' d=", result.data)}
+    assert not carbons & labelled

@@ -31,10 +31,6 @@ LAYOUT_LIMITS_RDKIT = "2026.09"
 KNOWN_LAYOUT_LIMITS = {
     "fullerene C60",  # a sphere has no planar drawing
     "helicene",  # the helix overlaps itself, as in printed drawings
-    "adamantane",
-    "cubane",
-    "bicyclo[1.1.1]pentane",
-    "hexamine",
     "(R)-BINAP",
     "morphine",
     "codeine",

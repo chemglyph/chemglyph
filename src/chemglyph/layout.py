@@ -29,6 +29,7 @@ inside a ring whose atoms all belong to a bridged system is counted as
 
 from __future__ import annotations
 
+import math
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 
@@ -226,6 +227,12 @@ def best_layout(mol: Chem.Mol, repair=None) -> tuple[str, LayoutReport]:
         candidates.append((name, mol.GetConformer().GetPositions().copy(), report))
         if report.score == 0:
             break  # a clean layout earlier in the preference order wins outright
+    if candidates and min(c[2].severe for c in candidates) and _mostly_cage(mol):
+        # Cages (adamantane, cubane) have no good flat drawing; chemists draw
+        # them in perspective, which is what a projection of 3D coordinates is.
+        if _project(mol):
+            report = check_layout(mol)
+            candidates.append(("projection", mol.GetConformer().GetPositions().copy(), report))
     name, positions, report = min(candidates, key=lambda item: item[2].score)
     conformer = mol.GetConformer()
     for index, (x, y, z) in enumerate(positions):
@@ -289,7 +296,9 @@ def bridged_atoms(mol: Chem.Mol) -> set[int]:
     """Atoms drawn in perspective: bridged ring systems and their substituents.
 
     A ring system is the set of rings joined by shared bonds; it is bridged
-    when two of its rings share three or more atoms (norbornane, morphinan).
+    when two of its rings share three or more atoms (norbornane, morphinan),
+    and a cage when it has three or more rings and every atom lies in two of
+    them (cubane, whose faces share only edges).
     The zone covers every ring atom of such a system plus the atoms bonded to
     it, since a perspective drawing also places substituents (camphor's
     gem-dimethyl) over the ring outlines.
@@ -307,13 +316,125 @@ def bridged_atoms(mol: Chem.Mol) -> set[int]:
             for index, first in enumerate(system)
             for second in system[index + 1 :]
         )
-        if not bridged:
+        if not bridged and not _is_cage(system):
             continue
         atoms = set().union(*system)
         zone |= atoms
         for atom in atoms:
             zone.update(n.GetIdx() for n in mol.GetAtomWithIdx(atom).GetNeighbors())
     return zone
+
+
+def _is_cage(system: list[set[int]]) -> bool:
+    if len(system) < 3:
+        return False
+    atoms = set().union(*system)
+    return all(sum(atom in ring for ring in system) >= 2 for atom in atoms)
+
+
+def _mostly_cage(mol: Chem.Mol) -> bool:
+    """At least half the heavy atoms are in a bridged system or cage."""
+    zone_rings = set()
+    for ring in mol.GetRingInfo().AtomRings():
+        zone_rings.update(ring)
+    perspective = bridged_atoms(mol) & zone_rings
+    heavy = sum(1 for atom in mol.GetAtoms() if atom.GetAtomicNum() > 1)
+    return heavy > 0 and len(perspective) >= 0.5 * heavy
+
+
+def _project(mol: Chem.Mol, seed: int = 42, directions: int = 400) -> bool:
+    """Lay the molecule out as an orthographic view of its 3D shape.
+
+    The viewing direction is chosen on a hemisphere of evenly spread
+    directions. A view loses heavily when an atom lands on a bond it is not
+    part of, when two bonds at an atom look collinear (RDKit would then
+    label a carbon "C", which in a cage misleads), or when a heteroatom
+    label would sit on a bond; among the rest, the view keeps atoms apart
+    and avoids strongly foreshortened bonds. Deterministic for a seed.
+    """
+    from rdkit.Chem import AllChem
+
+    with_h = Chem.AddHs(mol)
+    params = AllChem.ETKDGv3()
+    params.randomSeed = seed
+    if AllChem.EmbedMolecule(with_h, params) != 0:
+        return False
+    try:
+        AllChem.MMFFOptimizeMolecule(with_h)
+    except (RuntimeError, ValueError):
+        pass
+    xyz = with_h.GetConformer().GetPositions()[: mol.GetNumAtoms()]
+    xyz = xyz - xyz.mean(axis=0)
+    bonds = np.array([[b.GetBeginAtomIdx(), b.GetEndAtomIdx()] for b in mol.GetBonds()], dtype=int)
+    if len(bonds) == 0:
+        return False
+    labelled = [a.GetIdx() for a in mol.GetAtoms() if a.GetAtomicNum() != 6]
+    pairs = [
+        (atom.GetIdx(), first, second, 30.0 if atom.GetDegree() == 2 else 15.0)
+        for atom in mol.GetAtoms()
+        for i, first in enumerate(n.GetIdx() for n in atom.GetNeighbors())
+        for second in [n.GetIdx() for n in atom.GetNeighbors()][i + 1 :]
+    ]
+    golden = math.pi * (3 - math.sqrt(5))
+    best: tuple[float, np.ndarray] | None = None
+    for i in range(directions):
+        z = 1 - (i + 0.5) / directions
+        r = math.sqrt(1 - z * z)
+        view = np.array([r * math.cos(golden * i), r * math.sin(golden * i), z])
+        u = np.cross(view, [0.0, 0.0, 1.0] if abs(view[2]) < 0.9 else [1.0, 0.0, 0.0])
+        u /= np.linalg.norm(u)
+        v = np.cross(view, u)
+        xy = np.c_[xyz @ u, xyz @ v]
+        lengths = np.linalg.norm(xy[bonds[:, 0]] - xy[bonds[:, 1]], axis=1)
+        mean = float(lengths.mean())
+        if mean < 1e-6:
+            continue
+        xy_n = xy / mean
+        score = _view_score(xy_n, bonds, pairs, labelled) + 5.0 * float(lengths.min()) / mean
+        if best is None or score > best[0]:
+            best = (score, xy)
+    if best is None:
+        return False
+    conformer = Chem.Conformer(mol.GetNumAtoms())
+    conformer.Set3D(False)
+    for index, (x, y) in enumerate(best[1]):
+        conformer.SetAtomPosition(index, (float(x), float(y), 0.0))
+    mol.RemoveAllConformers()
+    mol.AddConformer(conformer, assignId=True)
+    return True
+
+
+def _view_score(xy: np.ndarray, bonds: np.ndarray, pairs, labelled) -> float:
+    a, b = xy[bonds[:, 0]], xy[bonds[:, 1]]
+    ab = b - a
+    length2 = np.maximum((ab**2).sum(axis=1), 1e-12)
+    t = ((xy[:, None, :] - a[None]) * ab[None]).sum(axis=2) / length2[None]
+    gap = np.linalg.norm(
+        xy[:, None, :] - (a[None] + np.clip(t, 0, 1)[:, :, None] * ab[None]), axis=2
+    )
+    member = (np.arange(len(xy))[:, None] == bonds[None, :, 0]) | (
+        np.arange(len(xy))[:, None] == bonds[None, :, 1]
+    )
+    inside = (t > 0.05) & (t < 0.95) & ~member
+    penalty = 100.0 * float(((gap < 0.2) & inside).sum())
+    if labelled:
+        # A label needs room: off other bonds, away from other atoms, and its
+        # own bonds not so foreshortened that the label covers them.
+        penalty += 30.0 * float(((gap[labelled] < 0.45) & inside[labelled]).sum())
+        near = np.linalg.norm(xy[labelled][:, None] - xy[None], axis=2)
+        near[np.arange(len(labelled)), labelled] = 9.0
+        penalty += 30.0 * float((near < 0.6).sum())
+        lengths = np.sqrt(length2)
+        own = member[labelled].any(axis=0)
+        penalty += 30.0 * float(((lengths < 0.7) & own).sum())
+    for centre, first, second, limit in pairs:
+        e1, e2 = xy[first] - xy[centre], xy[second] - xy[centre]
+        cosine = float(e1 @ e2) / max(float(np.linalg.norm(e1) * np.linalg.norm(e2)), 1e-12)
+        if abs(cosine) > math.cos(math.radians(limit)):
+            penalty += 50.0
+    distance = np.linalg.norm(xy[:, None] - xy[None], axis=2)
+    np.fill_diagonal(distance, 9.0)
+    return 10.0 * min(float(distance.min()), 0.6) - penalty
 
 
 def _template_applies(mol: Chem.Mol) -> bool:
