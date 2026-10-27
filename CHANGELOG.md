@@ -23,6 +23,17 @@ comparing every file in the published sdist against the repository history.
 
 ### Added
 
+- Charge signs are placed like ChemDraw places them: at the upper right of
+  the label as a superscript unless a bond leaves the atom in that
+  direction, then at the next free corner or side (the O- of a pyridine
+  N-oxide moves to the upper left). Negative charges are true minus signs,
+  as wide as the plus, instead of RDKit's hyphen. The sign belongs to the
+  atom's label, so bonds keep the label margin from it.
+- Ions and other fragments are set side by side in input order with room
+  for their labels; RDKit left about one bond between them, and Na+ Cl-,
+  Ca2+ CO3 2-, and the ionic forms of MeMgBr and Cp2TiCl2 collided.
+- Bracketed metal ions ([Cu+2], [Fe+3]) are drawn without the radical dot
+  RDKit's valence model gives them; organic radicals keep theirs.
 - `number="12a"` sets a compound number in bold (Liberation Sans Bold, SIL
   OFL 1.1, now bundled) at the label size, centred half a bond length under
   the structure. It is stored as the title of the embedded molfile in every
@@ -127,6 +138,15 @@ comparing every file in the published sdist against the repository history.
 - Conformance tests (`tests/test_profiles.py`) measure these numbers in the
   rendered SVG for all 20 blind-test molecules in every profile, and fail
   if any bond falls back to RDKit's own clipping.
+
+### Fixed
+
+- A bond between two crowded labels could be drawn inside the counter of
+  an O (the hole of the letter), which is far from every outline edge, so
+  it passed the margin check: the N-O bond of pyridine N-oxide in the
+  textbook profile was a dot inside the O. Labels now count as the convex
+  hull of each glyph, and a bond end inside its own label is reported as a
+  label overlap.
 
 ## 0.1.3 (2026-10-27)
 

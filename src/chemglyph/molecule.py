@@ -14,7 +14,13 @@ from rdkit.Chem.Draw import rdMolDraw2D
 from .abbreviations import abbreviate as abbreviate_groups
 from .abbreviations import select as select_abbreviations
 from .errors import ChemGlyphParseError, ChemGlyphRenderError, ChemGlyphStyleError
-from .layout import LayoutReport, add_stereo_hydrogens, best_layout, check_layout
+from .layout import (
+    LayoutReport,
+    add_stereo_hydrogens,
+    best_layout,
+    check_layout,
+    space_fragments,
+)
 from .metadata import identity
 from .profiles import PROFILES, RENAMED, Profile
 from .styles import STYLES, StyleSpec, get_style
@@ -533,6 +539,9 @@ def _prepare_for_drawing(mol: Chem.Mol) -> tuple[Chem.Mol, tuple[str, LayoutRepo
         method, report = "input", check_layout(mol)
     else:
         method, report = best_layout(mol, repair=_repair_ring_embeddings)
+        if len(Chem.GetMolFrags(mol)) > 1:
+            space_fragments(mol)
+            report = check_layout(mol)
     if report.counts.get("stereo_lost"):
         repaired = add_stereo_hydrogens(mol)
         if repaired is not None:

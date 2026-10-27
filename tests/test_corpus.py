@@ -49,10 +49,6 @@ KNOWN_LAYOUT_LIMITS = {
     "forskolin",  # two OH labels on neighbouring axial positions
     "rifampicin",
     "sitagliptin",  # H2N against an aryl F
-    # PubChem gives these as separate ions, so the labels of neighbouring
-    # fragments collide; drawn as a chemist would (covalent C-Mg, Cp-Ti) they do not.
-    "methylmagnesium bromide",
-    "titanocene dichloride",
 }
 
 # Bonds the clipper leaves as RDKit drew them, with a warning.

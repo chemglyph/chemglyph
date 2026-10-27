@@ -104,7 +104,8 @@ def draw(
 
     drawer = rdMolDraw2D.MolDraw2DSVG(width, height)
     drawer.SetDrawOptions(_options(profile, mean, scale, show_atom_indices))
-    drawer.DrawMolecule(prepared, highlightAtoms=highlight_atoms or [])
+    charges = {a.GetIdx(): a.GetFormalCharge() for a in prepared.GetAtoms() if a.GetFormalCharge()}
+    drawer.DrawMolecule(_without_charges(prepared, charges), highlightAtoms=highlight_atoms or [])
     drawer.FinishDrawing()
     raw = _BACKGROUND_RECT.sub("", drawer.GetDrawingText(), count=1)
 
@@ -112,8 +113,10 @@ def draw(
         i: (drawer.GetDrawCoords(i).x, drawer.GetDrawCoords(i).y)
         for i in range(prepared.GetNumAtoms())
     }
+    raw = _add_charges(raw, prepared, charges, positions, profile)
     bond_lengths = _bond_lengths_pt(prepared, positions)
     glyphs = _glyph_edges(raw)
+    hulls = _glyph_hulls(raw)
 
     hashed = {
         bond.GetIdx() for bond in prepared.GetBonds() if bond.GetBondDir() == Chem.BondDir.BEGINDASH
@@ -123,6 +126,7 @@ def draw(
         glyphs,
         profile.margin_width_pt * k,
         0.75 * profile.bond_spacing * profile.bond_length_pt * k,
+        hulls,
     )
     wedged = {
         bond.GetIdx()
@@ -161,26 +165,210 @@ def draw(
             clipper.shortest_visible / k if clipper.shortest_visible is not None else None
         ),
         notes=clipper.notes,
-        label_overlaps=_label_overlaps(body, glyphs, 0.5 * k),
+        label_overlaps=_label_overlaps(body, glyphs, 0.5 * k, hulls),
         wedges_match_stereo=_wedges_match_stereo(prepared),
     )
 
 
-def _add_number(body: str, number: str, profile: Profile) -> str:
-    """Append a bold compound number centred under the drawing's ink."""
+def _without_charges(mol: Chem.Mol, charges: dict[int, int]) -> Chem.Mol:
+    """The copy RDKit draws: no charge signs, and no radical dots on metals.
+
+    Hydrogen counts are pinned first, so O- stays "O" and NH3+ stays "H3N".
+    RDKit's valence model gives a bracketed transition-metal ion an unpaired
+    electron ([Cu+2], [Fe+3]); structure drawings never show it, so metals
+    lose the dot in the drawing (the molecule itself is unchanged).
+    """
+    metals = [a.GetIdx() for a in mol.GetAtoms() if a.GetAtomicNum() not in _NOT_METALS]
+    if not charges and not any(mol.GetAtomWithIdx(i).GetNumRadicalElectrons() for i in metals):
+        return mol
+    shown = Chem.Mol(mol)
+    for index in charges:
+        atom = shown.GetAtomWithIdx(index)
+        hydrogens = atom.GetTotalNumHs()
+        atom.SetFormalCharge(0)
+        atom.SetNoImplicit(True)
+        atom.SetNumExplicitHs(hydrogens)
+    for index in metals:
+        shown.GetAtomWithIdx(index).SetNumRadicalElectrons(0)
+    return shown
+
+
+# Nonmetals, noble gases, and metalloids; every other element is a metal.
+_NOT_METALS = {0, 1, 2, 5, 6, 7, 8, 9, 10, 14, 15, 16, 17, 18, 32, 33, 34, 35, 36}
+_NOT_METALS |= {51, 52, 53, 54, 85, 86}
+
+
+# Places tried for a charge sign, in order of preference: upper right of the
+# label is the usual place (as a superscript), then upper left, then the
+# lower corners, then above, right, left, and below. The first place whose
+# direction from the atom is at least _CHARGE_ROOM degrees from every bond
+# is taken.
+_CHARGE_DIRECTIONS = (45, 135, -45, -135, 90, 0, 180, -90)
+_CHARGE_ROOM = 40.0
+_SUPERSCRIPT = 0.67  # sign size relative to the label font, as RDKit sets it
+
+
+def _add_charges(
+    svg: str,
+    mol: Chem.Mol,
+    charges: dict[int, int],
+    positions: dict[int, tuple[float, float]],
+    profile: Profile,
+) -> str:
+    """Draw each charge sign on the side of its atom farthest from any bond.
+
+    RDKit always puts the sign at the upper right of the label, even when a
+    bond leaves the atom that way (the O- of a pyridine N-oxide, the N+ of
+    a nitro group), where it reads as part of the bond. The sign is drawn
+    as part of the atom's label (class atom-N), so bond ends keep the label
+    margin from it too. Negative signs are true minus signs: the bar of the
+    plus glyph, as wide as the plus, not RDKit's hyphen.
+    """
     k = UNITS_PER_PT
-    ink = content_viewbox(body, margin=0.0)
-    size = profile.font_size_pt * k
-    # RDKit's DrawString ignores the font file, but atom labels honour it, so
-    # the number is drawn as the label of a lone dummy atom in the bold font.
+    if not charges:
+        return svg
+    glyphs = _glyph_edges(svg)
+    shapes = []
+    for index, charge in charges.items():
+        here = np.array(positions[index])
+        bond_angles = []
+        for neighbour in mol.GetAtomWithIdx(index).GetNeighbors():
+            dx, dy = np.array(positions[neighbour.GetIdx()]) - here
+            bond_angles.append(math.degrees(math.atan2(-dy, dx)))  # SVG y points down
+        sign = _charge_glyphs(charge, profile.font_size_pt * k * _SUPERSCRIPT)
+        if not sign:
+            continue
+        points = np.array([pair for d in sign for pair in _PAIR.findall_floats(d)])
+        half = (points.max(axis=0) - points.min(axis=0)) / 2
+        centre_now = (points.max(axis=0) + points.min(axis=0)) / 2
+        if index in glyphs:
+            edges = glyphs[index]
+            xs = np.concatenate([edges[:, 0], edges[:, 2]])
+            ys = np.concatenate([edges[:, 1], edges[:, 3]])
+            box = (xs.min(), ys.min(), xs.max(), ys.max())
+        else:  # a bare vertex (carbocation, carbanion): a small box around it
+            r = 0.12 * profile.bond_length_pt * k
+            box = (here[0] - r, here[1] - r, here[0] + r, here[1] + r)
+        target = None
+        for direction in _CHARGE_DIRECTIONS:
+            centre = _sign_position(box, half, direction, 0.5 * k)
+            dx, dy = centre - here
+            angle = math.degrees(math.atan2(-dy, dx))
+            room = min((abs((angle - b + 180) % 360 - 180) for b in bond_angles), default=180.0)
+            if room >= _CHARGE_ROOM:
+                target = centre
+                break
+        if target is None:  # crowded on every side: the middle of the widest gap
+            ordered = sorted(bond_angles)
+            gaps = [
+                ((a + (b - a) % 360 / 2), (b - a) % 360 or 360)
+                for a, b in zip(ordered, ordered[1:] + ordered[:1], strict=True)
+            ]
+            middle = max(gaps, key=lambda gap: gap[1])[0]
+            unit = np.array([math.cos(math.radians(middle)), -math.sin(math.radians(middle))])
+            reach = _ray_to_box(here, unit, box)
+            target = here + unit * (
+                reach + 0.5 * k + abs(unit[0]) * half[0] + abs(unit[1]) * half[1]
+            )
+        dx, dy = target - centre_now
+        colour = _label_colour(svg, index)
+
+        def place(match: re.Match[str], dx=dx, dy=dy) -> str:
+            return f"{float(match.group(1)) + dx:.1f},{float(match.group(2)) + dy:.1f}"
+
+        shapes.extend(
+            f"<path class='atom-{index}' d='{_PAIR.sub(place, d).strip()}' "
+            f"style='fill:{colour};fill-rule:evenodd;stroke:none'/>"
+            for d in sign
+        )
+    return svg.replace("</svg>", "".join(shapes) + "</svg>")
+
+
+def _sign_position(box: tuple[float, ...], half: np.ndarray, direction: int, gap: float):
+    """Centre of a charge sign of half-size ``half`` beside a label box.
+
+    Corners sit like super- and subscripts: beside the label, level with its
+    upper or lower part. Axis positions are centred on the label's side.
+    """
+    x0, y0, x1, y1 = box
+    height = y1 - y0
+    right, left = x1 + gap + half[0], x0 - gap - half[0]
+    upper, lower = y0 + 0.2 * height, y1 - 0.2 * height
+    middle_x, middle_y = (x0 + x1) / 2, (y0 + y1) / 2
+    return np.array(
+        {
+            45: (right, upper),
+            135: (left, upper),
+            -45: (right, lower),
+            -135: (left, lower),
+            90: (middle_x, y0 - gap - half[1]),
+            -90: (middle_x, y1 + gap + half[1]),
+            0: (right, middle_y),
+            180: (left, middle_y),
+        }[direction]
+    )
+
+
+def _ray_to_box(origin: np.ndarray, unit: np.ndarray, box: tuple[float, ...]) -> float:
+    """Distance from a point inside a box to its edge along a direction."""
+    x0, y0, x1, y1 = box
+    hits = []
+    if unit[0] > 1e-9:
+        hits.append((x1 - origin[0]) / unit[0])
+    elif unit[0] < -1e-9:
+        hits.append((x0 - origin[0]) / unit[0])
+    if unit[1] > 1e-9:
+        hits.append((y1 - origin[1]) / unit[1])
+    elif unit[1] < -1e-9:
+        hits.append((y0 - origin[1]) / unit[1])
+    return max(0.0, min(hits, default=0.0))
+
+
+def _label_colour(svg: str, index: int) -> str:
+    match = re.search(rf"<path class='atom-{index}' d='[^']*' fill='(#[0-9A-Fa-f]{{6}})'", svg)
+    if match is None:
+        match = re.search(rf"<path class='atom-{index}'[^>]*fill:(#[0-9A-Fa-f]{{6}})", svg)
+    return match.group(1) if match else "#000000"
+
+
+_CHARGE_CACHE: dict[tuple[int, float], list[str]] = {}
+
+
+def _charge_glyphs(charge: int, size: float) -> list[str]:
+    """Outline paths of a charge sign ("+", "-", "2+", "3-") at the given em size."""
+    key = (charge, round(size, 2))
+    if key not in _CHARGE_CACHE:
+        count = "" if abs(charge) == 1 else str(abs(charge))
+        paths = _label_paths(count + "+", size, font_file())
+        if charge < 0 and paths:
+            # The minus sign of Arial and Liberation Sans is the horizontal
+            # bar of the plus: same width, same thickness.
+            plus = np.array(_PAIR.findall_floats(paths[-1]))
+            xs, ys = np.unique(np.round(plus[:, 0], 1)), np.unique(np.round(plus[:, 1], 1))
+            if len(xs) >= 4 and len(ys) >= 4:
+                left, right = xs.min(), xs.max()
+                top, bottom = ys[1], ys[-2]  # the bar lies between the inner y values
+                paths[-1] = (
+                    f"M {left:.1f},{top:.1f} L {right:.1f},{top:.1f} "
+                    f"L {right:.1f},{bottom:.1f} L {left:.1f},{bottom:.1f} Z"
+                )
+        _CHARGE_CACHE[key] = paths
+    return list(_CHARGE_CACHE[key])
+
+
+def _label_paths(text: str, size: float, font: str) -> list[str]:
+    """Glyph outlines of plain text, drawn by RDKit as a lone atom's label.
+
+    RDKit's DrawString ignores the font file and caps the size at 40 units;
+    atom labels honour both.
+    """
     holder = Chem.RWMol()
     holder.AddAtom(Chem.Atom(0))
-    holder.GetAtomWithIdx(0).SetProp("atomLabel", number)
-    conformer = Chem.Conformer(1)
-    holder.AddConformer(conformer)
-    drawer = rdMolDraw2D.MolDraw2DSVG(int(size * (len(number) + 4)), int(size * 4))
+    holder.GetAtomWithIdx(0).SetProp("atomLabel", text)
+    holder.AddConformer(Chem.Conformer(1))
+    drawer = rdMolDraw2D.MolDraw2DSVG(int(size * (len(text) + 4)), int(size * 4))
     options = rdMolDraw2D.MolDrawOptions()
-    options.fontFile = font_file(bold=True)
+    options.fontFile = font
     options.fixedFontSize = int(round(size))
     options.padding = 0.0
     options.clearBackground = False
@@ -188,7 +376,15 @@ def _add_number(body: str, number: str, profile: Profile) -> str:
     drawer.SetDrawOptions(options)
     drawer.DrawMolecule(holder.GetMol())
     drawer.FinishDrawing()
-    paths = re.findall(r"<path class='atom-0' d='([^']+)'", drawer.GetDrawingText())
+    return re.findall(r"<path class='atom-0' d='([^']+)'", drawer.GetDrawingText())
+
+
+def _add_number(body: str, number: str, profile: Profile) -> str:
+    """Append a bold compound number centred under the drawing's ink."""
+    k = UNITS_PER_PT
+    ink = content_viewbox(body, margin=0.0)
+    size = profile.font_size_pt * k
+    paths = _label_paths(number, size, font_file(bold=True))
     if not paths:
         return body
     points = np.array([(float(x), float(y)) for d in paths for x, y in _PAIR.findall(d)])
@@ -209,7 +405,21 @@ def _add_number(body: str, number: str, profile: Profile) -> str:
 
 
 # RDKit writes outline points as "x y" after M and L, and "x y, x y" after Q.
-_PAIR = re.compile(r"(-?\d+(?:\.\d+)?)[ ,](-?\d+(?:\.\d+)?)")
+_PAIR_RE = re.compile(r"(-?\d+(?:\.\d+)?)[ ,](-?\d+(?:\.\d+)?)")
+
+
+class _Pairs:
+    """The coordinate pairs of an outline path: findall, findall_floats, and sub."""
+
+    findall = staticmethod(_PAIR_RE.findall)
+    sub = staticmethod(_PAIR_RE.sub)
+
+    @staticmethod
+    def findall_floats(path: str) -> list[tuple[float, float]]:
+        return [(float(x), float(y)) for x, y in _PAIR_RE.findall(path)]
+
+
+_PAIR = _Pairs()
 
 
 def _wedges_match_stereo(prepared: Chem.Mol) -> bool:
@@ -235,7 +445,9 @@ _ANY_BOND_PATH = re.compile(r"<path class='bond-\d+ atom-(\d+) atom-(\d+)[^']*' 
 _POINT = re.compile(r"(-?[\d.]+),(-?[\d.]+)")
 
 
-def _label_overlaps(svg: str, glyphs: dict[int, np.ndarray], inset: float) -> list[dict]:
+def _label_overlaps(
+    svg: str, glyphs: dict[int, np.ndarray], inset: float, hulls: dict | None = None
+) -> list[dict]:
     """Labels that overlap another label, or a bond not attached to their atom.
 
     A label is taken as the box around its glyphs, shrunk by ``inset`` on
@@ -266,6 +478,12 @@ def _label_overlaps(svg: str, glyphs: dict[int, np.ndarray], inset: float) -> li
             continue
         pairs = zip(points, points[1:], strict=False)
         samples = np.vstack([np.linspace(p, q, 12) for p, q in pairs])
+        for atom in ends:  # a bond end inside its own label, e.g. in the hole of an O
+            if (atom, ends) not in seen and any(
+                _inside_hull(samples, hull).any() for hull in (hulls or {}).get(atom, [])
+            ):
+                seen.add((atom, ends))
+                found.append({"atom": atom, "bond": ends})
         for atom, (x0, y0, x1, y1) in boxes.items():
             if atom in ends or (atom, ends) in seen:
                 continue
@@ -395,6 +613,51 @@ def _glyph_edges(svg: str) -> dict[int, np.ndarray]:
     return {atom: np.array(items) for atom, items in edges.items() if items}
 
 
+def _glyph_hulls(svg: str) -> dict[int, list[np.ndarray]]:
+    """Convex hull of each glyph of each label, as counter-clockwise polygons."""
+    hulls: dict[int, list[np.ndarray]] = {}
+    for match in _ATOM_PATH.finditer(svg):
+        segments = _flatten(match.group(2))
+        if not segments:
+            continue
+        points = np.array([(x, y) for x1, y1, x2, y2 in segments for x, y in ((x1, y1), (x2, y2))])
+        hull = _convex_hull(points)
+        if len(hull) >= 3:
+            hulls.setdefault(int(match.group(1)), []).append(hull)
+    return hulls
+
+
+def _convex_hull(points: np.ndarray) -> np.ndarray:
+    """Andrew's monotone chain; counter-clockwise in a y-up frame."""
+    ordered = sorted({(round(float(x), 3), round(float(y), 3)) for x, y in points})
+    if len(ordered) < 3:
+        return np.array(ordered)
+
+    def cross(o, a, b) -> float:
+        return (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0])
+
+    lower: list[tuple[float, float]] = []
+    for point in ordered:
+        while len(lower) >= 2 and cross(lower[-2], lower[-1], point) <= 0:
+            lower.pop()
+        lower.append(point)
+    upper: list[tuple[float, float]] = []
+    for point in reversed(ordered):
+        while len(upper) >= 2 and cross(upper[-2], upper[-1], point) <= 0:
+            upper.pop()
+        upper.append(point)
+    return np.array(lower[:-1] + upper[:-1])
+
+
+def _inside_hull(points: np.ndarray, hull: np.ndarray) -> np.ndarray:
+    """Boolean mask of the points strictly inside a convex hull."""
+    inside = np.ones(len(points), dtype=bool)
+    for a, b in zip(hull, np.roll(hull, -1, axis=0), strict=True):
+        cross = (b[0] - a[0]) * (points[:, 1] - a[1]) - (b[1] - a[1]) * (points[:, 0] - a[0])
+        inside &= cross > 0
+    return inside
+
+
 def _flatten(path: str) -> list[tuple[float, float, float, float]]:
     """Polyline segments of an SVG outline made of M, L, Q, C, and Z commands."""
     tokens = _TOKEN.findall(path)
@@ -472,9 +735,13 @@ class _Clipper:
         glyphs: dict[int, np.ndarray],
         margin: float,
         offset_threshold: float,
+        hulls: dict[int, list[np.ndarray]] | None = None,
     ) -> None:
         self.positions = positions
         self.glyphs = glyphs
+        # The ink of a glyph includes its counters: a point in the hole of an
+        # O is inside the label even though it is far from every outline edge.
+        self.hulls = hulls or {}
         self.margin = margin
         # A centred double bond's lines sit half a spacing off the atom axis;
         # the inner line of an offset double bond sits a full spacing off.
@@ -571,6 +838,9 @@ class _Clipper:
         points = origin[None, :] + ts[:, None] * unit[None, :]
         edges = np.vstack([self.glyphs[atom] for atom in labelled])
         distances = _distance_to_edges(points, edges)
+        for atom in labelled:
+            for hull in self.hulls.get(atom, []):
+                distances[_inside_hull(points, hull)] = 0.0
         minimum_run = 1.0 * UNITS_PER_PT  # a visible bond shorter than 1 pt reads as a dot
         for factor in (1.0, 0.75, 0.5):
             clear = distances >= self.margin * factor

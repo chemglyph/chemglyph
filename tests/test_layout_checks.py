@@ -106,10 +106,18 @@ def test_flipped_wedge_fails_verification() -> None:
 
 
 def test_overlapping_labels_are_a_severe_layout_problem() -> None:
-    # PubChem's ionic form of MeMgBr puts the Mg2+ and Br- labels on top of each other.
-    result = chemglyph.render_molecule("[CH3-].[Mg+2].[Br-]", style="acs1996")
-    assert result.report["layout"]["problems"]["label_overlaps"] == 1
-    assert any("labels of atom 1 and atom 2 overlap" in w for w in result.warnings)
+    # A molfile's own coordinates are kept, so two ions placed almost on top
+    # of each other stay there and must be reported.
+    ions = Chem.MolFromSmiles("[Na+].[Cl-]")
+    conformer = Chem.Conformer(2)
+    conformer.Set3D(False)
+    conformer.SetAtomPosition(0, (0.0, 0.0, 0.0))
+    conformer.SetAtomPosition(1, (0.5, 0.0, 0.0))
+    ions.AddConformer(conformer)
+    result = chemglyph.render_molecule(Chem.MolToMolBlock(ions), style="acs1996")
+    assert result.report["layout"]["method"] == "input"
+    assert result.report["layout"]["problems"]["label_overlaps"] >= 1
+    assert any("labels of atom 0 and atom 1 overlap" in w for w in result.warnings)
 
 
 def test_ring_fusion_hydrogens_do_not_land_on_atoms() -> None:

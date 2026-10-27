@@ -233,6 +233,58 @@ def best_layout(mol: Chem.Mol, repair=None) -> tuple[str, LayoutReport]:
     return name, report
 
 
+def space_fragments(mol: Chem.Mol) -> None:
+    """Set the fragments of a salt or mixture side by side, in input order.
+
+    RDKit leaves about one bond between fragments, which is too little once
+    the labels carry charges (Na+ Cl- touched). Each fragment's extent is
+    widened by an estimate of its end labels (0.42 bond per character at
+    the ACS sizes, plus room for a charge sign), and fragments are placed
+    left to right with 0.5 bond between them, centred vertically.
+    """
+    pieces = Chem.GetMolFrags(mol)
+    if len(pieces) < 2 or mol.GetNumConformers() == 0:
+        return
+    conformer = mol.GetConformer()
+    xy = conformer.GetPositions()[:, :2].copy()
+    lengths = [
+        float(np.linalg.norm(xy[b.GetBeginAtomIdx()] - xy[b.GetEndAtomIdx()]))
+        for b in mol.GetBonds()
+    ]
+    bond = float(np.mean(lengths)) if lengths else 1.5
+    cursor = 0.0
+    for atoms in pieces:
+        atoms = list(atoms)
+        left = right = None
+        for atom in atoms:
+            half = 0.5 * _label_width(mol.GetAtomWithIdx(atom)) * bond
+            lo, hi = xy[atom, 0] - half, xy[atom, 0] + half
+            left = lo if left is None else min(left, lo)
+            right = hi if right is None else max(right, hi)
+        ys = xy[atoms, 1]
+        shift_x = cursor - left
+        shift_y = -(ys.min() + ys.max()) / 2
+        for atom in atoms:
+            x, y = xy[atom]
+            conformer.SetAtomPosition(atom, (float(x + shift_x), float(y + shift_y), 0.0))
+        cursor += right - left + 0.5 * bond
+
+
+def _label_width(atom: Chem.Atom) -> float:
+    """Rough width of an atom's label in bond lengths (0 for a bare carbon)."""
+    charge = atom.GetFormalCharge()
+    if atom.GetAtomicNum() == 6 and not charge and atom.GetDegree() > 0:
+        return 0.0
+    text = atom.GetSymbol()
+    hydrogens = atom.GetTotalNumHs()
+    if hydrogens:
+        text += "H" + (str(hydrogens) if hydrogens > 1 else "")
+    width = 0.42 * len(text)
+    if charge:
+        width += 0.35 * (1 if abs(charge) == 1 else 2) + 0.1
+    return width
+
+
 def bridged_atoms(mol: Chem.Mol) -> set[int]:
     """Atoms drawn in perspective: bridged ring systems and their substituents.
 
