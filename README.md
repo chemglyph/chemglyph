@@ -26,39 +26,37 @@ plus `canonical_smiles`, `mol_formula`, `mol_weight`, and `warnings`.
 
 ## Styles
 
-Three styles, same molecule (benzoic acid, caffeine, (S)-ibuprofen):
+Three styles, same molecules (benzoic acid, caffeine, (S)-ibuprofen):
 
 ![ChemGlyph style gallery](https://raw.githubusercontent.com/chemglyph/chemglyph/main/docs/images/gallery_3x3.png)
 
 ```python
-chemglyph.render_molecule(smiles, style="acs")  # black/white, ACS journal
-chemglyph.render_molecule(smiles, style="modern")  # colored heteroatoms, screens
-chemglyph.render_molecule(smiles, style="textbook-cn")  # bold monochrome, textbook
+chemglyph.render_molecule(smiles)  # screen: coloured O, N, S, Cl for screens and chat
+chemglyph.render_molecule(smiles, style="acs1996")  # black, ACS journal sizes
+chemglyph.render_molecule(smiles, style="textbook")  # heavier lines for teaching
 ```
 
-All styles default to a transparent background (`transparent=True`) and
-support `fmt="png"`.
+Every style draws at one physical scale. `acs1996` follows the ACS Document
+1996 settings: 14.4 pt bonds, 0.6 pt lines, 10 pt labels, and bond ends that
+stop 1.6 pt from each label. Two structures drawn with the same style have
+the same bond length and label size, so they line up in a paper. `screen`
+keeps that geometry and colours O, N, S, and Cl (classic CPK); `textbook`
+uses 0.8 pt lines and 12 pt labels.
 
-### Fixed-scale profiles (preview for 0.2)
-
-`style="acs1996"` draws every molecule at one physical scale that follows
-the ACS Document 1996 settings: 14.4 pt bonds, 0.6 pt lines, 10 pt labels,
-and bond ends that stop 1.6 pt from each label. Two structures drawn this
-way have the same bond length and label size, so they line up in a paper.
-The SVG size is given in points; PNG output takes a `dpi`; `fmt="pdf"`
-gives a vector PDF for LaTeX and `fmt="mol"` a molfile with the drawn
-coordinates for a structure editor.
-
-`style="screen"` keeps that geometry and colours O, N, S, and Cl (classic
-CPK) for screens and chat. `style="textbook"` uses heavier 0.8 pt lines and
-12 pt labels for teaching material. In 0.2 these three replace `acs`,
-`modern`, and `textbook-cn`.
+The SVG size is given in points and the background is transparent unless
+`transparent=False`. `fmt="png"` takes a `dpi`, `fmt="pdf"` gives a vector
+PDF for LaTeX, and `fmt="mol"` a molfile with the drawn coordinates for a
+structure editor.
 
 ```python
 result = chemglyph.render_molecule("CC(=O)Oc1ccccc1C(=O)O", style="acs1996")
 result.report  # {'bond_length_pt': [14.4, 14.4], 'label_clearance_pt': 1.6, ...}
 png = chemglyph.render_molecule(smiles, style="acs1996", fmt="png", dpi=600)
 ```
+
+The style names from 0.1 (`acs`, `modern`, `textbook-cn`) still work, map to
+`acs1996`, `screen`, and `textbook`, and give a deprecation warning; they go
+in 1.0.
 
 These numbers are measured in the rendered output by the test suite
 (`tests/test_profiles.py`).
@@ -91,10 +89,13 @@ spec = {
             "arrow": "forward",
         }
     ],
-    "style": "modern",
+    "style": "screen",
 }
 svg = chemglyph.render_reaction(spec)
 ```
+
+Reaction schemes are not yet drawn at a fixed scale; that comes with the
+reaction phase of the roadmap.
 
 Conditions are pre-formatted Unicode text, so pass `H₂SO₄`, not `H2SO4`.
 ChemGlyph does not parse formulas out of text. The full schema

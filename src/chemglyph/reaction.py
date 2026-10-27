@@ -15,7 +15,8 @@ from html import escape
 from typing import Any
 
 from .errors import ChemGlyphReactionError
-from .molecule import render_molecule
+from .molecule import _render_legacy
+from .profiles import RENAMED
 from .styles import StyleSpec, get_style
 from .svg_utils import (
     ViewBox,
@@ -43,6 +44,10 @@ _ARROW_HEAD = 10.0
 _DOWN_ARROW_WIDTH = 28.0
 _DOWN_ARROW_HEIGHT = 56.0
 _ARROW_COLOR = "#000000"
+
+
+# Profile name -> the pre-0.2 style reactions are still drawn with.
+_LEGACY_STYLE = {new: old for old, new in RENAMED.items()}
 
 
 @dataclass
@@ -76,14 +81,20 @@ def render_reaction(spec: dict[str, Any]) -> str:
             "yield": "89%",
             "arrow": "forward"
           }],
-          "style": "modern",
+          "style": "screen",
           "layout": {"max_width": 1200, "align": "arrow"}
         }
 
     Conditions are pre-formatted Unicode text; this module never parses
     chemical formulas out of them.
+
+    ``style`` takes the profile names (``screen``, ``acs1996``,
+    ``textbook``) or the older ones. Reactions are still drawn with the
+    canvas-fitted styles from before 0.2, not at a fixed scale; that moves
+    to the profiles in phase 3 (docs/SPEC.md).
     """
-    style_name = spec.get("style", "modern")
+    style_name = spec.get("style", "screen")
+    style_name = _LEGACY_STYLE.get(style_name, style_name)
     style_spec = get_style(style_name)
     layout = spec.get("layout") or {}
     max_width = float(layout.get("max_width", 1200))
@@ -141,7 +152,7 @@ def _render_fragments(
         for structure in [*step.reactants, *step.products]:
             if structure in canonical:
                 continue
-            result = render_molecule(structure, style=style)
+            result = _render_legacy(structure, style=style)
             canonical[structure] = result.canonical_smiles
             if result.canonical_smiles not in fragments:
                 content_box = content_viewbox(result.data, margin=2.0)

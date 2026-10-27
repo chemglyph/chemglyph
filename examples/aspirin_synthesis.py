@@ -30,7 +30,7 @@ SPEC = {
             "arrow": "equilibrium",
         },
     ],
-    "style": "modern",
+    "style": "screen",
     "layout": {"max_width": 1200, "align": "arrow"},
 }
 

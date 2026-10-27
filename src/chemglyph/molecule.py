@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import math
 import re
+import warnings as _warnings
 from dataclasses import dataclass, field
 
 from rdkit import Chem, Geometry
@@ -13,7 +14,7 @@ from rdkit.Chem.Draw import rdMolDraw2D
 from .errors import ChemGlyphParseError, ChemGlyphRenderError, ChemGlyphStyleError
 from .layout import LayoutReport, add_stereo_hydrogens, best_layout, check_layout
 from .metadata import identity
-from .profiles import PROFILES, Profile
+from .profiles import PROFILES, RENAMED, Profile
 from .styles import STYLES, StyleSpec, get_style
 from .svg_utils import apply_post, parse_hex_color
 
@@ -37,7 +38,7 @@ class RenderResult:
 
 def render_molecule(
     structure: str,
-    style: str = "modern",
+    style: str = "screen",
     size: tuple[int, int] | None = None,
     fmt: str = "svg",
     transparent: bool = True,
@@ -51,51 +52,80 @@ def render_molecule(
     Args:
         structure: SMILES, an InChI string (``InChI=`` prefix), or a molblock
             (auto-detected via a ``V2000``/``V3000`` line).
-        style: ``acs1996`` (fixed-scale profile, sizes in points; see
-            docs/SPEC.md), or one of the older canvas-fitted styles ``acs``,
-            ``modern``, ``textbook-cn``.
-        size: canvas size in pixels for the older styles; ``None`` estimates
-            a canvas from molecule size. Fixed-scale profiles size themselves
-            and ignore it (a warning says so).
-        fmt: ``"svg"`` or ``"png"``; fixed-scale profiles also give ``"pdf"``
-            (vector, sized in points) and ``"mol"`` (molfile with the drawn
-            2D coordinates, for editing in a structure editor).
+        style: a drawing profile, every size fixed in points (docs/SPEC.md):
+            ``screen`` (default; ACS geometry with heteroatom colours),
+            ``acs1996`` (the ACS Document 1996 settings, black), or
+            ``textbook`` (heavier lines, larger labels). The names used
+            before 0.2 (``modern``, ``acs``, ``textbook-cn``) still work and
+            give a deprecation warning.
+        size: ignored, with a warning; profiles draw at a fixed scale. Kept
+            so older calls do not break.
+        fmt: ``"svg"``, ``"png"``, ``"pdf"`` (vector, sized in points), or
+            ``"mol"`` (molfile with the drawn 2D coordinates, for editing in
+            a structure editor).
         transparent: emit a transparent background instead of the style background.
         show_atom_indices: draw atom indices next to each atom.
         highlight_atoms: atom indices to highlight with RDKit circles.
-        dpi: PNG resolution for fixed-scale profiles (a 14.4 pt bond is
-            60 px at 300 dpi).
+        dpi: PNG resolution (a 14.4 pt bond is 60 px at 300 dpi).
         name: optional name the structure is supposed to have (for example
-            "cholesterol" or "胆固醇"). Fixed-scale profiles resolve it
+            "cholesterol" or "胆固醇"). It is resolved
             offline with :func:`chemglyph.parse_name` and warn when it names a
             different structure, or the same one with different stereo.
 
     Raises:
         ChemGlyphParseError: the structure could not be parsed.
+        ChemGlyphStyleError: unknown ``style``.
         ChemGlyphRenderError: invalid ``fmt`` or a missing PNG backend.
     """
-    mol, layout = _prepare_for_drawing(_parse_structure(structure))
-    output_fmt = _normalize_fmt(fmt)
-    if style in PROFILES:
-        return _render_with_profile(
-            mol,
-            PROFILES[style],
-            output_fmt,
-            layout=layout,
-            size=size,
-            transparent=transparent,
-            show_atom_indices=show_atom_indices,
-            highlight_atoms=highlight_atoms,
-            dpi=dpi,
-            name=name,
+    renamed = []
+    if style in RENAMED:
+        renamed.append(f"style {style!r} is now called {RENAMED[style]!r}")
+        _warnings.warn(
+            f"style {style!r} is now called {RENAMED[style]!r}; the old name goes in 1.0",
+            DeprecationWarning,
+            stacklevel=2,
         )
-    if style not in STYLES:
-        choices = ", ".join(sorted(STYLES | set(PROFILES)))
+        style = RENAMED[style]
+    if style not in PROFILES:
+        choices = ", ".join(PROFILES)
         raise ChemGlyphStyleError(f"Unknown style {style!r}; choose one of: {choices}")
+    mol, layout = _prepare_for_drawing(_parse_structure(structure))
+    result = _render_with_profile(
+        mol,
+        PROFILES[style],
+        _normalize_fmt(fmt),
+        layout=layout,
+        size=size,
+        transparent=transparent,
+        show_atom_indices=show_atom_indices,
+        highlight_atoms=highlight_atoms,
+        dpi=dpi,
+        name=name,
+    )
+    result.warnings[:0] = renamed
+    return result
+
+
+def _render_legacy(
+    structure: str,
+    style: str = "modern",
+    size: tuple[int, int] | None = None,
+    fmt: str = "svg",
+    transparent: bool = True,
+    show_atom_indices: bool = False,
+    highlight_atoms: list[int] | None = None,
+) -> RenderResult:
+    """Canvas-fitted drawing with the styles from before 0.2 (``modern``, ``acs``,
+    ``textbook-cn``), sized in pixels. Reaction schemes still use it until
+    they move to profiles (docs/SPEC.md, phase 3).
+    """
+    if style not in STYLES:
+        choices = ", ".join(sorted(STYLES))
+        raise ChemGlyphStyleError(f"Unknown style {style!r}; choose one of: {choices}")
+    mol, _ = _prepare_for_drawing(_parse_structure(structure))
+    output_fmt = _normalize_fmt(fmt)
     if output_fmt in {"pdf", "mol"}:
-        raise ChemGlyphRenderError(
-            f"fmt={output_fmt!r} needs a fixed-scale style: acs1996, screen, or textbook"
-        )
+        raise ChemGlyphRenderError(f"fmt={output_fmt!r} is not available for the pre-0.2 styles")
     spec = get_style(style)
     options = _build_options(
         spec, mol=mol, transparent=transparent, show_atom_indices=show_atom_indices

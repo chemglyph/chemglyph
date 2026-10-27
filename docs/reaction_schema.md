@@ -14,7 +14,7 @@
       "arrow": "forward"
     }
   ],
-  "style": "modern",
+  "style": "screen",
   "layout": {"max_width": 1200, "align": "arrow"}
 }
 ```
@@ -32,7 +32,9 @@
     e.g. `rt, 15 min (89%)`.
   - `arrow` (optional, default `forward`): `forward`, `equilibrium` (⇌), or
     `retro` (double line pointing left).
-- `style` (optional, default `modern`): one of `acs`, `modern`, `textbook-cn`.
+- `style` (optional, default `screen`): `screen`, `acs1996`, or `textbook`
+  (the 0.1 names `modern`, `acs`, `textbook-cn` also work). The molecules
+  are still drawn with the 0.1 renderer, not at a fixed scale.
 - `layout` (optional):
   - `max_width` (default `1200`): horizontal budget in SVG user units. When a
     step would overflow it, the row wraps: the current row ends with a

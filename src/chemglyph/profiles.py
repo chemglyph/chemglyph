@@ -85,6 +85,9 @@ TEXTBOOK = Profile(
 
 PROFILES: dict[str, Profile] = {profile.name: profile for profile in (ACS1996, SCREEN, TEXTBOOK)}
 
+# Style names before 0.2, kept as aliases until 1.0.
+RENAMED: dict[str, str] = {"acs": "acs1996", "modern": "screen", "textbook-cn": "textbook"}
+
 
 def get_profile(name: str) -> Profile:
     """Return the named profile."""

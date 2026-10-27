@@ -13,6 +13,7 @@ import chemglyph
 from blind_test_molecules import BLIND_TEST_MOLECULES
 from chemglyph.errors import ChemGlyphRenderError
 from chemglyph.metadata import identity
+from chemglyph.molecule import _render_legacy
 
 pypdf = pytest.importorskip("pypdf")
 
@@ -56,9 +57,9 @@ def test_mol_output_keeps_the_drawn_layout() -> None:
 
 
 @pytest.mark.parametrize("fmt", ["pdf", "mol"])
-def test_older_styles_refuse_pdf_and_mol(fmt: str) -> None:
-    with pytest.raises(ChemGlyphRenderError, match="fixed-scale"):
-        chemglyph.render_molecule("CCO", style="modern", fmt=fmt)
+def test_pre_02_renderer_refuses_pdf_and_mol(fmt: str) -> None:
+    with pytest.raises(ChemGlyphRenderError, match="pre-0.2"):
+        _render_legacy("CCO", style="modern", fmt=fmt)
 
 
 def test_highlighted_bonds_stay_narrower_than_half_a_bond() -> None:

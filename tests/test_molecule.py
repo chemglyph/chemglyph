@@ -13,6 +13,7 @@ from chemglyph.errors import (
     ChemGlyphRenderError,
     ChemGlyphStyleError,
 )
+from chemglyph.molecule import _render_legacy
 
 ASPIRIN = "CC(=O)Oc1ccccc1C(=O)O"
 ASPIRIN_INCHI = "InChI=1S/C9H8O4/c1-6(10)13-8-5-3-2-4-7(8)9(11)12/h2-5H,1H3,(H,11,12)"
@@ -64,9 +65,26 @@ def test_invalid_format_raises() -> None:
         chemglyph.render_molecule(ASPIRIN, fmt="gif")
 
 
-def test_explicit_size_controls_viewbox() -> None:
-    result = chemglyph.render_molecule(ASPIRIN, size=(400, 300))
+def test_explicit_size_controls_the_pre_02_canvas() -> None:
+    result = _render_legacy(ASPIRIN, size=(400, 300))
     assert re.search(r"""viewBox=['"]0 0 400 300['"]""", result.data)
+
+
+def test_default_style_is_screen() -> None:
+    result = chemglyph.render_molecule(ASPIRIN)
+    assert result.report["profile"] == "screen"
+    assert not result.warnings
+
+
+@pytest.mark.parametrize(
+    ("old", "new"), [("modern", "screen"), ("acs", "acs1996"), ("textbook-cn", "textbook")]
+)
+def test_old_style_names_still_work_with_a_deprecation_warning(old: str, new: str) -> None:
+    with pytest.warns(DeprecationWarning, match=new):
+        result = chemglyph.render_molecule(ASPIRIN, style=old)
+    assert result.report["profile"] == new
+    assert result.warnings[0] == f"style {old!r} is now called {new!r}"
+    assert result.data == chemglyph.render_molecule(ASPIRIN, style=new).data
 
 
 def test_atom_indices_add_text_labels() -> None:

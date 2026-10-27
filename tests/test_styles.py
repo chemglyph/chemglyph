@@ -12,8 +12,8 @@ from xml.etree import ElementTree as ET
 import pytest
 from rdkit import Chem
 
-import chemglyph
 from chemglyph.errors import ChemGlyphStyleError
+from chemglyph.molecule import _render_legacy
 from chemglyph.styles import STYLES, StyleSpec, get_style
 
 GOLDEN_MOLECULES = {
@@ -31,7 +31,7 @@ _EXPECTED_FONT_SIZES = {
 
 
 def _svg(smiles: str, style: str) -> str:
-    result = chemglyph.render_molecule(smiles, style=style)
+    result = _render_legacy(smiles, style=style)
     assert result.fmt == "svg"
     return result.data
 
@@ -169,7 +169,7 @@ def test_acs_labels_scale_with_canvas_instead_of_being_pinned() -> None:
     bonds on any reasonably sized canvas.
     """
     smiles = GOLDEN_MOLECULES["benzoic-acid"]
-    result = chemglyph.render_molecule(smiles, style="acs", size=(320, 320))
+    result = _render_legacy(smiles, style="acs", size=(320, 320))
     heights = sorted(_label_heights(result.data))
     median = heights[len(heights) // 2]
     bond = _first_bond_length(result.data)
@@ -186,7 +186,5 @@ def test_transparent_background_by_default() -> None:
 
 
 def test_opaque_background_when_requested() -> None:
-    result = chemglyph.render_molecule(
-        GOLDEN_MOLECULES["benzoic-acid"], style="modern", transparent=False
-    )
+    result = _render_legacy(GOLDEN_MOLECULES["benzoic-acid"], style="modern", transparent=False)
     assert "fill:#FFFFFF" in result.data

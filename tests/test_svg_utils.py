@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import pytest
 
-import chemglyph
 from chemglyph.errors import ChemGlyphRenderError
+from chemglyph.molecule import _render_legacy
 from chemglyph.svg_utils import content_viewbox, extract_viewbox
 
 
@@ -32,7 +32,7 @@ def test_content_viewbox_margin_expands_box() -> None:
 
 
 def test_content_viewbox_is_tighter_than_rdkit_canvas() -> None:
-    result = chemglyph.render_molecule("OC(=O)c1ccccc1")
+    result = _render_legacy("OC(=O)c1ccccc1")
     full = extract_viewbox(result.data)
     tight = content_viewbox(result.data)
     assert full is not None

@@ -40,24 +40,24 @@ server = MCPServer(
         "chat client can display, plus canonical SMILES, formula, molecular "
         "weight, and warnings. Use this when the user asks to render a molecule "
         "from SMILES, InChI, or a molblock. Example: "
-        '{"structure": "CC(=O)Oc1ccccc1C(=O)O", "style": "modern"}. '
+        '{"structure": "CC(=O)Oc1ccccc1C(=O)O", "name": "aspirin"}. '
         "Set fmt to 'svg' to also receive the SVG source as text for saving to "
         "a file; the PNG preview is always included. The PNG is also written "
         "to the user's Downloads/chemglyph folder and the file path is "
         "returned, because some chat clients do not render tool images. "
         "Set save to false to skip the file. "
-        "Styles: 'acs1996' (journal figures at the ACS Document 1996 sizes), "
-        "'screen' (coloured heteroatoms), 'textbook' (heavier lines); the older "
-        "'acs', 'modern', 'textbook-cn' remain until 0.2. With acs1996, screen, "
-        "or textbook, pass the compound's name in 'name' when you know it: the "
-        "structure is checked against it offline and a mismatch is reported, "
-        "which catches a wrong SMILES before the user sees the figure."
+        "Styles: 'screen' (default, coloured heteroatoms), 'acs1996' (journal "
+        "figures at the ACS Document 1996 sizes, black), 'textbook' (heavier "
+        "lines, larger labels); every style draws at a fixed scale. Pass the "
+        "compound's name in 'name' when you know it: the structure is checked "
+        "against it offline and a mismatch is reported, which catches a wrong "
+        "SMILES before the user sees the figure."
     ),
     structured_output=False,
 )
 def render_molecule_tool(
     structure: str,
-    style: str = "modern",
+    style: str = "screen",
     fmt: str = "png",
     transparent: bool = True,
     show_atom_indices: bool = False,
@@ -118,7 +118,7 @@ def render_molecule_tool(
         "H₂SO₄); ChemGlyph does not parse formulas out of text. "
         'Example: {"steps": [{"reactants": ["c1ccccc1O", "CC(=O)OC(C)=O"], '
         '"products": ["CC(=O)Oc1ccccc1C(=O)O"], "conditions": {"above": "H₂SO₄ (cat.)", '
-        '"below": "rt, 15 min"}, "yield": "89%", "arrow": "forward"}], "style": "modern"}. '
+        '"below": "rt, 15 min"}, "yield": "89%", "arrow": "forward"}], "style": "screen"}. '
         "See docs/reaction_schema.md for the full schema. The PNG is written "
         "to the user's Downloads/chemglyph folder and the file path is "
         "returned, because some chat clients do not render tool images. "

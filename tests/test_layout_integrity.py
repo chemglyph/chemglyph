@@ -32,7 +32,8 @@ from rdkit import Chem
 
 import chemglyph
 from blind_test_molecules import BLIND_TEST_MOLECULES
-from chemglyph.molecule import _prepare_for_drawing
+from chemglyph.molecule import _prepare_for_drawing, _render_legacy
+from chemglyph.profiles import PROFILES
 from chemglyph.styles import STYLES
 
 _BOND_SEGMENT = re.compile(
@@ -204,8 +205,9 @@ def test_rendered_svg_keeps_every_bond(label: str, smiles: str, note: str) -> No
     del label, note
     mol = Chem.MolFromSmiles(smiles)
     expected = {bond.GetIdx() for bond in mol.GetBonds()}
-    for style in sorted(STYLES):
-        svg = chemglyph.render_molecule(smiles, style=style).data
+    renders = [(name, chemglyph.render_molecule(smiles, style=name).data) for name in PROFILES]
+    renders += [(name, _render_legacy(smiles, style=name).data) for name in sorted(STYLES)]
+    for style, svg in renders:
         drawn = {int(match) for match in re.findall(r"class='bond-(\d+)", svg)}
         # Stereo wedges may be emitted as extra bond ids (e.g. ACS1996 mode),
         # so the invariant is "every real bond present", not exact equality.

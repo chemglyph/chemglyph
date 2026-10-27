@@ -12,6 +12,7 @@ import chemglyph
 from blind_test_molecules import BLIND_TEST_MOLECULES
 from chemglyph.errors import ChemGlyphParseError
 from chemglyph.metadata import identity
+from chemglyph.molecule import _render_legacy
 from chemglyph.profiles import PROFILES
 
 CASES = [
@@ -47,7 +48,7 @@ def test_embedded_record_carries_identifiers() -> None:
 
 
 def test_read_structure_rejects_figures_without_a_record() -> None:
-    plain = chemglyph.render_molecule("CCO", style="modern").data  # older style, no record
+    plain = _render_legacy("CCO").data  # the pre-0.2 renderer embeds no record
     with pytest.raises(ChemGlyphParseError):
         chemglyph.read_structure(plain)
 

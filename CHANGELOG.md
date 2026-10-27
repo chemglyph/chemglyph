@@ -6,6 +6,21 @@ comparing every file in the published sdist against the repository history.
 
 ## Unreleased
 
+### Changed
+
+- `render_molecule` draws with the fixed-scale profiles only, and the
+  default style is `screen` instead of `modern`. The 0.1 names still work
+  as aliases with a `DeprecationWarning` and a line in `warnings`: `modern`
+  is `screen`, `acs` is `acs1996`, `textbook-cn` is `textbook`. They go in
+  1.0. `size` is ignored with a warning, since every style draws at a fixed
+  scale; use `dpi` to set PNG resolution.
+- The MCP `render_molecule` tool defaults to `screen` as well.
+- Reaction schemes accept the new style names. Their molecules are still
+  drawn with the 0.1 canvas-fitted renderer until reactions move to the
+  profiles.
+- The README gallery is redrawn with the three profiles at one scale
+  (`benchmarks/gallery.py`).
+
 ### Added
 
 - `style="acs1996"`: a fixed-scale profile that follows the ACS Document
