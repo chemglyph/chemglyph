@@ -24,8 +24,14 @@ comparing every file in the published sdist against the repository history.
 - Labels use the bundled Liberation Sans (SIL OFL 1.1), metric-compatible
   with Arial, embedded as outlines, so output does not depend on installed
   fonts.
-- Conformance tests (`tests/test_acs1996.py`) measure these numbers in the
-  rendered SVG for all 20 blind-test molecules.
+- `style="screen"` and `style="textbook"`: the same engine with the screen
+  and teaching profiles. `screen` uses the ACS geometry with classic CPK
+  colours for O, N, S, and Cl; `textbook` uses 0.8 pt lines, 12 pt labels,
+  and 20% bond spacing. Coloured bond halves are joined, clipped as one
+  line, and split again, so label clearance holds in colour too.
+- Conformance tests (`tests/test_profiles.py`) measure these numbers in the
+  rendered SVG for all 20 blind-test molecules in every profile, and fail
+  if any bond falls back to RDKit's own clipping.
 
 ## 0.1.3 (2026-10-27)
 

@@ -48,7 +48,42 @@ ACS1996 = Profile(
     ),
 )
 
-PROFILES: dict[str, Profile] = {ACS1996.name: ACS1996}
+# Screen and chat: the ACS geometry (its line-to-bond ratio, 4.2%, matches the
+# 4.0% the maintainer chose for the old modern style by eye) plus classic CPK
+# colours for O, N, S, and Cl, chosen in the 2026-08-14 maintainer review.
+# Other elements stay black until a review adds them.
+SCREEN = Profile(
+    name="screen",
+    bond_length_pt=14.4,
+    line_width_pt=0.6,
+    bold_width_pt=2.0,
+    bond_spacing=0.18,
+    margin_width_pt=1.6,
+    hash_spacing_pt=2.5,
+    font_size_pt=10.0,
+    atom_colours={8: "#FF0D0D", 7: "#3050F8", 16: "#E8C300", 17: "#1FB01F"},
+    source=(
+        "ACS Document 1996 geometry; classic CPK colours for O, N, S, Cl "
+        "(maintainer review, 2026-08-14)"
+    ),
+)
+
+# Teaching material: heavier lines (1.3x ACS) and larger labels (1.2x) so
+# structures survive projection and textbook printing. This keeps the intent
+# of the older textbook-cn style; there is no external standard for it.
+TEXTBOOK = Profile(
+    name="textbook",
+    bond_length_pt=14.4,
+    line_width_pt=0.8,
+    bold_width_pt=2.6,
+    bond_spacing=0.20,
+    margin_width_pt=1.6,
+    hash_spacing_pt=2.5,
+    font_size_pt=12.0,
+    source="ChemGlyph teaching style: ACS geometry, 1.3x line width, 1.2x labels",
+)
+
+PROFILES: dict[str, Profile] = {profile.name: profile for profile in (ACS1996, SCREEN, TEXTBOOK)}
 
 
 def get_profile(name: str) -> Profile:

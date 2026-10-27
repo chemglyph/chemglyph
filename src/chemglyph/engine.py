@@ -302,7 +302,6 @@ class _Clipper:
             return float(np.dot(np.array(point) - origin, unit))
 
         ta, tb = along(self.positions[atom_a]), along(self.positions[atom_b])
-        middle = (ta + tb) / 2.0
         # The inner line of an offset double bond is shortened on purpose;
         # it may be pulled back from a label but never stretched toward it.
         normal = np.array([-unit[1], unit[0]])
@@ -311,11 +310,10 @@ class _Clipper:
             > self.offset_threshold
             for atom in (atom_a, atom_b)
         )
-        # Each end belongs to the atom it lies toward.
-        end_atoms = {
-            t_end: (atom_a if abs(t_end - ta) <= abs(t_end - tb) else atom_b)
-            for t_end in (0.0, length)
-        }
+        # Ends are matched to atoms by order along the line, not by distance:
+        # RDKit sometimes places a whole line on one atom's side.
+        first, second = (atom_a, atom_b) if ta <= tb else (atom_b, atom_a)
+        end_atoms = {0.0: first, length: second}
         window = self._clear_window(origin, unit, ta, tb, labelled, (atom_a, atom_b))
         if window is None:
             self.notes.append(
@@ -328,14 +326,18 @@ class _Clipper:
         for t_end, atom in end_atoms.items():
             if atom not in self.glyphs:
                 continue
-            clipped = low if t_end < middle else high
+            at_start = t_end == 0.0  # the start end pairs with the window's low side
+            clipped = low if at_start else high
             if offset_line:
                 # Only move toward the middle, never past RDKit's own end.
-                clipped = max(clipped, t_end) if t_end < middle else min(clipped, t_end)
+                clipped = max(clipped, t_end) if at_start else min(clipped, t_end)
             new_t[t_end] = clipped
         start, end = sorted((new_t[0.0], new_t[length]))
         visible = end - start
         if visible <= 0:
+            self.notes.append(
+                f"bond {atom_a}-{atom_b}: clipping left no line; drawn as RDKit placed it"
+            )
             return p1, p2
         if self.shortest_visible is None or visible < self.shortest_visible:
             self.shortest_visible = visible
@@ -400,22 +402,95 @@ class _Clipper:
 def _clip_bonds(
     svg: str, hashed: set[int], clipper: _Clipper
 ) -> tuple[str, dict[int, list[tuple[float, float, float, float]]]]:
-    """Re-clip every straight bond line; pull hashed-wedge lines out for redrawing."""
+    """Re-clip every straight bond line; pull hashed-wedge lines out for redrawing.
+
+    Coloured styles draw one bond line as two halves, one per atom colour.
+    Halves are joined back into one line, clipped as a whole, and split again
+    at the new middle, each keeping its colour.
+    """
     hash_segments: dict[int, list[tuple[float, float, float, float]]] = {}
+    matches = list(_BOND_PATH.finditer(svg))
+    by_bond: dict[int, list[re.Match[str]]] = {}
+    for match in matches:
+        by_bond.setdefault(int(match.group(1)), []).append(match)
 
-    def replace(match: re.Match[str]) -> str:
-        bond, atom_a, atom_b = (int(v) for v in match.group(1, 2, 3))
-        x1, y1, x2, y2 = (float(v) for v in match.group(4, 5, 6, 7))
+    replacement: dict[int, str] = {}
+    for bond, pieces in by_bond.items():
         if bond in hashed:
-            hash_segments.setdefault(bond, []).append((x1, y1, x2, y2))
-            return ""
-        (q1x, q1y), (q2x, q2y) = clipper.segment((x1, y1), (x2, y2), atom_a, atom_b)
-        return (
-            f"<path class='bond-{bond} atom-{atom_a} atom-{atom_b}' "
-            f"d='M {q1x:.1f},{q1y:.1f} L {q2x:.1f},{q2y:.1f}'{match.group(8)}/>"
-        )
+            for match in pieces:
+                hash_segments.setdefault(bond, []).append(_coords(match))
+                replacement[match.start()] = ""
+            continue
+        for line in _join_halves(pieces):
+            atom_a, atom_b = int(line[0].group(2)), int(line[0].group(3))
+            p1 = _coords(line[0])[:2]
+            p2 = _coords(line[-1])[2:]
+            q1, q2 = clipper.segment(p1, p2, atom_a, atom_b)
+            if len(line) == 1:
+                replacement[line[0].start()] = _bond_path(line[0], q1, q2)
+                continue
+            middle = ((q1[0] + q2[0]) / 2, (q1[1] + q2[1]) / 2)
+            replacement[line[0].start()] = _bond_path(line[0], q1, middle)
+            replacement[line[-1].start()] = _bond_path(line[-1], middle, q2)
+            for extra in line[1:-1]:
+                replacement[extra.start()] = ""
 
-    return _BOND_PATH.sub(replace, svg), hash_segments
+    out: list[str] = []
+    cursor = 0
+    for match in matches:
+        out.append(svg[cursor : match.start()])
+        out.append(replacement.get(match.start(), match.group(0)))
+        cursor = match.end()
+    out.append(svg[cursor:])
+    return "".join(out), hash_segments
+
+
+def _coords(match: re.Match[str]) -> tuple[float, float, float, float]:
+    x1, y1, x2, y2 = (float(v) for v in match.group(4, 5, 6, 7))
+    return x1, y1, x2, y2
+
+
+def _bond_path(match: re.Match[str], start: tuple[float, float], end: tuple[float, float]) -> str:
+    bond, atom_a, atom_b = match.group(1, 2, 3)
+    return (
+        f"<path class='bond-{bond} atom-{atom_a} atom-{atom_b}' "
+        f"d='M {start[0]:.1f},{start[1]:.1f} L {end[0]:.1f},{end[1]:.1f}'{match.group(8)}/>"
+    )
+
+
+def _join_halves(pieces: list[re.Match[str]]) -> list[list[re.Match[str]]]:
+    """Chain pieces of one bond whose ends meet and that run in one direction."""
+    remaining = list(pieces)
+    lines: list[list[re.Match[str]]] = []
+    while remaining:
+        line = [remaining.pop(0)]
+        extended = True
+        while extended:
+            extended = False
+            for other in list(remaining):
+                head, tail = _coords(line[0]), _coords(line[-1])
+                candidate = _coords(other)
+                if _meets(tail[2:], candidate[:2]) and _collinear(tail, candidate):
+                    line.append(other)
+                elif _meets(candidate[2:], head[:2]) and _collinear(candidate, head):
+                    line.insert(0, other)
+                else:
+                    continue
+                remaining.remove(other)
+                extended = True
+        lines.append(line)
+    return lines
+
+
+def _meets(p: tuple[float, ...], q: tuple[float, ...]) -> bool:
+    return math.dist(p, q) < 0.5
+
+
+def _collinear(a: tuple[float, ...], b: tuple[float, ...]) -> bool:
+    ax, ay = a[2] - a[0], a[3] - a[1]
+    bx, by = b[2] - b[0], b[3] - b[1]
+    norm = math.hypot(ax, ay) * math.hypot(bx, by)
+    return norm > 0 and abs(ax * by - ay * bx) / norm < 0.05 and ax * bx + ay * by > 0
 
 
 def _redraw_hashes(
@@ -457,9 +532,10 @@ def _redraw_hashes(
                 f"M {cx - nx * half:.1f},{cy - ny * half:.1f} "
                 f"L {cx + nx * half:.1f},{cy + ny * half:.1f}"
             )
+        colour = profile.atom_colours.get(mol.GetAtomWithIdx(narrow).GetAtomicNum(), "#000000")
         paths.append(
             f"<path class='bond-{index} atom-{narrow} atom-{wide} hash' d='{' '.join(lines)}' "
-            f"style='fill:none;stroke:#000000;stroke-width:{profile.line_width_pt * k:.1f}px;"
+            f"style='fill:none;stroke:{colour};stroke-width:{profile.line_width_pt * k:.1f}px;"
             "stroke-linecap:butt'/>"
         )
     if not paths:
@@ -479,6 +555,13 @@ def _redraw_wedges(svg: str, mol: Chem.Mol, wedged: set[int], clipper: _Clipper)
     """
     if not wedged:
         return svg
+    pieces: dict[int, list[tuple[list[tuple[float, float]], str]]] = {}
+    for found in _WEDGE_PATH.finditer(svg):
+        if int(found.group(1)) in wedged:
+            shape = [
+                (float(x), float(y)) for x, y in re.findall(r"([-\d.]+),([-\d.]+)", found.group(4))
+            ]
+            pieces.setdefault(int(found.group(1)), []).append((shape, found.group(5)))
     seen: set[int] = set()
 
     def replace(match: re.Match[str]) -> str:
@@ -493,9 +576,12 @@ def _redraw_wedges(svg: str, mol: Chem.Mol, wedged: set[int], clipper: _Clipper)
         p_narrow = clipper.positions[narrow]
         p_wide = clipper.positions[wide]
         full = math.dist(p_narrow, p_wide)
-        corners = [
-            (float(x), float(y)) for x, y in re.findall(r"([-\d.]+),([-\d.]+)", match.group(4))
-        ]
+        corners = [point for shape, _ in pieces[index] for point in shape]
+        # The whole wedge takes the colour of the piece at the stereocentre.
+        style = min(
+            pieces[index],
+            key=lambda piece: min(math.dist(point, p_narrow) for point in piece[0]),
+        )[1]
         if full <= 0 or len(corners) < 3:
             return match.group(0)
         ux, uy = (p_wide[0] - p_narrow[0]) / full, (p_wide[1] - p_narrow[1]) / full
@@ -544,8 +630,6 @@ def _redraw_wedges(svg: str, mol: Chem.Mol, wedged: set[int], clipper: _Clipper)
                     t1 += step
         points = outline(t1, t2)
         d = "M " + " L ".join(f"{x:.1f},{y:.1f}" for x, y in points) + " Z"
-        return (
-            f"<path class='bond-{index} atom-{narrow} atom-{wide} wedge' d='{d}'{match.group(5)}/>"
-        )
+        return f"<path class='bond-{index} atom-{narrow} atom-{wide} wedge' d='{d}'{style}/>"
 
     return _WEDGE_PATH.sub(replace, svg)

@@ -1,10 +1,10 @@
-"""Conformance tests for the fixed-scale acs1996 profile (docs/SPEC.md, 5 and 7).
+"""Conformance tests for the fixed-scale profiles (docs/SPEC.md, 5 and 7).
 
 Every measurement here is taken from the rendered SVG alone, never from the
 engine's own report, so the tests check the output a user actually gets.
-Targets are the ACS Document 1996 settings: bond 14.4 pt, line 0.6 pt, bond
-spacing 18% of the bond length, label margin 1.6 pt, hash spacing 2.5 pt,
-labels 10 pt.
+Each profile is held to its own numbers; for acs1996 these are the ACS
+Document 1996 settings: bond 14.4 pt, line 0.6 pt, bond spacing 18% of the
+bond length, label margin 1.6 pt, hash spacing 2.5 pt, labels 10 pt.
 """
 
 from __future__ import annotations
@@ -20,21 +20,18 @@ from PIL import Image
 import chemglyph
 from blind_test_molecules import BLIND_TEST_MOLECULES
 from chemglyph.engine import _distance_to_edges, _flatten
+from chemglyph.profiles import PROFILES, Profile
 
-BOND = 14.4
-LINE = 0.6
-SPACING = 0.18
-MARGIN = 1.6
-HASH = 2.5
 TOLERANCE = 0.02  # 2%, the conformance tolerance in the spec
+ALL_PROFILES = [PROFILES[name] for name in sorted(PROFILES)]
 
 _SEGMENT = re.compile(
     r"class='bond-(\d+) atom-(\d+) atom-(\d+)' d='M ([-\d.]+),([-\d.]+) L ([-\d.]+),([-\d.]+)'"
 )
 
 
-def _render(smiles: str) -> str:
-    return chemglyph.render_molecule(smiles, style="acs1996").data
+def _render(smiles: str, profile: Profile = PROFILES["acs1996"]) -> str:
+    return chemglyph.render_molecule(smiles, style=profile.name).data
 
 
 def _unit(svg: str) -> float:
@@ -72,41 +69,52 @@ def _plain_bond_lengths_pt(svg: str) -> list[float]:
 
 
 ELIGIBLE = [(label, smiles) for label, smiles, _ in BLIND_TEST_MOLECULES]
+BY_PROFILE = [
+    pytest.param(profile, label, smiles, id=f"{profile.name}-{label}")
+    for profile in ALL_PROFILES
+    for label, smiles in ELIGIBLE
+]
+PROFILE_IDS = {"ids": [profile.name for profile in ALL_PROFILES]}
 
 
-@pytest.mark.parametrize("label,smiles", ELIGIBLE)
-def test_bond_length_is_14_4_pt(label: str, smiles: str) -> None:
-    lengths = _plain_bond_lengths_pt(_render(smiles))
+@pytest.mark.parametrize("profile,label,smiles", BY_PROFILE)
+def test_bond_length_matches_the_profile(profile: Profile, label: str, smiles: str) -> None:
+    lengths = _plain_bond_lengths_pt(_render(smiles, profile))
     if not lengths:
         pytest.skip(f"{label} has no unlabelled single bond to measure")
     # Bond lengths in a layout are uniform, so the typical bond is the profile's.
-    assert median(lengths) == pytest.approx(BOND, rel=TOLERANCE), label
+    assert median(lengths) == pytest.approx(profile.bond_length_pt, rel=TOLERANCE), label
 
 
-def test_bond_length_is_identical_across_molecules() -> None:
+@pytest.mark.parametrize("profile", ALL_PROFILES, **PROFILE_IDS)
+def test_bond_length_is_identical_across_molecules(profile: Profile) -> None:
     medians = []
     for _, smiles in ELIGIBLE:
-        lengths = _plain_bond_lengths_pt(_render(smiles))
+        lengths = _plain_bond_lengths_pt(_render(smiles, profile))
         if lengths:
             medians.append(median(lengths))
     # Layouts of crowded rings stretch a few bonds slightly; the scale is shared.
-    assert all(m == pytest.approx(BOND, rel=0.005) for m in medians)
+    assert all(m == pytest.approx(profile.bond_length_pt, rel=0.005) for m in medians)
 
 
-@pytest.mark.parametrize("label,smiles", ELIGIBLE)
-def test_no_stroke_is_thinner_than_the_line_width(label: str, smiles: str) -> None:
-    svg = _render(smiles)
+@pytest.mark.parametrize("profile,label,smiles", BY_PROFILE)
+def test_no_stroke_is_thinner_than_the_line_width(
+    profile: Profile, label: str, smiles: str
+) -> None:
+    svg = _render(smiles, profile)
     unit = _unit(svg)
+    line = profile.line_width_pt
     widths = [float(v) / unit for v in re.findall(r"stroke-width:([\d.]+)px", svg)]
     assert widths, label
-    assert min(widths) >= LINE - 0.01, label  # also above the IUPAC 0.5 pt floor
-    assert any(abs(width - LINE) < 0.01 for width in widths), label
+    assert min(widths) >= line - 0.01, label  # also above the IUPAC 0.5 pt floor
+    assert any(abs(width - line) < 0.01 for width in widths), label
 
 
-def test_double_bond_spacing_is_18_percent() -> None:
+@pytest.mark.parametrize("profile", ALL_PROFILES, **PROFILE_IDS)
+def test_double_bond_spacing_matches_the_profile(profile: Profile) -> None:
     ratios = []
     for _, smiles in ELIGIBLE:
-        svg = _render(smiles)
+        svg = _render(smiles, profile)
         labelled = _labelled_atoms(svg)
         for parts in _segments(svg).values():
             if len(parts) != 2 or {parts[0][0], parts[0][1]} & labelled:
@@ -118,8 +126,8 @@ def test_double_bond_spacing_is_18_percent() -> None:
             gap = abs((bx1 - ax1) * dy - (by1 - ay1) * dx)
             ratios.append(gap / max(length_a, length_b))
     assert len(ratios) > 20
-    assert min(ratios) == pytest.approx(SPACING, abs=0.01)
-    assert max(ratios) == pytest.approx(SPACING, abs=0.01)
+    assert min(ratios) == pytest.approx(profile.bond_spacing, abs=0.01)
+    assert max(ratios) == pytest.approx(profile.bond_spacing, abs=0.01)
 
 
 def _bond_shapes(svg: str) -> list[tuple[int, int, list[tuple[float, float]]]]:
@@ -143,12 +151,14 @@ def _bond_shapes(svg: str) -> list[tuple[int, int, list[tuple[float, float]]]]:
     return shapes
 
 
-@pytest.mark.parametrize("label,smiles", ELIGIBLE)
-def test_bond_ends_keep_the_margin_from_label_glyphs(label: str, smiles: str) -> None:
+@pytest.mark.parametrize("profile,label,smiles", BY_PROFILE)
+def test_bond_ends_keep_the_margin_from_label_glyphs(
+    profile: Profile, label: str, smiles: str
+) -> None:
     """Lines, hash marks, and wedge outlines all stop 1.6 pt from a label glyph."""
     import numpy as np
 
-    svg = _render(smiles)
+    svg = _render(smiles, profile)
     unit = _unit(svg)
     glyphs: dict[int, list] = {}
     for atom, path in re.findall(r"<path class='atom-(\d+)' d='([^']+)'", svg):
@@ -164,22 +174,30 @@ def test_bond_ends_keep_the_margin_from_label_glyphs(label: str, smiles: str) ->
             if atom not in glyphs:
                 continue
             gap = float(_distance_to_edges(points, np.array(glyphs[atom])).min()) / unit
-            assert gap >= MARGIN - 0.1, f"{label}: bond {gap:.2f} pt from atom {atom}"
+            assert gap >= profile.margin_width_pt - 0.1, (
+                f"{label}: bond {gap:.2f} pt from atom {atom}"
+            )
             checked += 1
     assert checked, f"{label}: labels present but no bond reaches them"
 
 
-def test_sulfate_bonds_stay_visible() -> None:
-    """Box clipping left 1.4 pt of each S-O bond; glyph clipping keeps ~4 pt."""
-    svg = _render("[O-]S(=O)(=O)[O-]")
+@pytest.mark.parametrize(
+    "profile,minimum",
+    [(PROFILES["acs1996"], 3.5), (PROFILES["screen"], 3.5), (PROFILES["textbook"], 2.2)],
+    ids=["acs1996", "screen", "textbook"],
+)
+def test_sulfate_bonds_stay_visible(profile: Profile, minimum: float) -> None:
+    """Box clipping left 1.4 pt of each S-O bond; glyph clipping keeps ~4 pt.
+
+    Coloured profiles draw each line as two halves, so lengths are summed per
+    bond and divided by its number of lines (1 single, 2 double).
+    """
+    svg = _render("[O-]S(=O)(=O)[O-]", profile)
     unit = _unit(svg)
-    lengths = [
-        math.dist((x1, y1), (x2, y2)) / unit
-        for parts in _segments(svg).values()
-        for _, _, x1, y1, x2, y2 in parts
-    ]
-    assert len(lengths) == 6  # two single bonds, two double bonds
-    assert min(lengths) > 3.5
+    lines_per_bond = {0: 1, 1: 2, 2: 2, 3: 1}
+    for bond, parts in _segments(svg).items():
+        total = sum(math.dist((x1, y1), (x2, y2)) for _, _, x1, y1, x2, y2 in parts)
+        assert total / unit / lines_per_bond[bond] > minimum
 
 
 @pytest.mark.parametrize(
@@ -189,8 +207,9 @@ def test_sulfate_bonds_stay_visible() -> None:
         "OC[C@H]1OC(O)[C@H](O)[C@@H](O)[C@@H]1O",  # glucose
     ],
 )
-def test_hashed_wedges_use_the_hash_spacing(smiles: str) -> None:
-    svg = _render(smiles)
+@pytest.mark.parametrize("profile", ALL_PROFILES, **PROFILE_IDS)
+def test_hashed_wedges_use_the_hash_spacing(profile: Profile, smiles: str) -> None:
+    svg = _render(smiles, profile)
     unit = _unit(svg)
     hashes = re.findall(r"<path class='bond-\d+ atom-\d+ atom-\d+ hash' d='([^']+)'", svg)
     assert hashes
@@ -199,20 +218,22 @@ def test_hashed_wedges_use_the_hash_spacing(smiles: str) -> None:
         assert len(lines) >= 3  # IUPAC 2008: at least three hashes
         centres = [((float(a) + float(c)) / 2, (float(b) + float(d)) / 2) for a, b, c, d in lines]
         gaps = [math.dist(p, q) / unit for p, q in zip(centres, centres[1:], strict=False)]
-        assert max(gaps) <= HASH * 1.25
-        assert min(gaps) >= HASH * 0.6
+        assert max(gaps) <= profile.hash_spacing_pt * 1.25
+        assert min(gaps) >= profile.hash_spacing_pt * 0.6
 
 
-def test_label_size_is_the_same_in_every_molecule() -> None:
+@pytest.mark.parametrize("profile", ALL_PROFILES, **PROFILE_IDS)
+def test_label_size_is_the_same_in_every_molecule(profile: Profile) -> None:
     heights = []
     for smiles in ["OC(=O)c1ccccc1", "Cn1cnc2c1c(=O)n(C)c(=O)n2C", "COc1cc(C=O)ccc1O"]:
-        svg = _render(smiles)
+        svg = _render(smiles, profile)
         unit = _unit(svg)
         for _atom, path in re.findall(r"<path class='atom-(\d+)' d='([^']+)'", svg):
             ys = [float(v) for v in re.findall(r"-?\d+\.?\d*", path)][1::2]
             heights.append((max(ys) - min(ys)) / unit)
-    # A 10 pt label: cap height of the bundled Liberation Sans is about 7.1 pt.
-    assert 6.5 < min(heights) and max(heights) < 7.6
+    # Cap height of the bundled Liberation Sans is about 0.71 of the font size.
+    font = profile.font_size_pt
+    assert 0.65 * font < min(heights) and max(heights) < 0.76 * font
 
 
 def test_output_is_deterministic() -> None:
@@ -231,7 +252,7 @@ def test_report_and_warnings() -> None:
     result = chemglyph.render_molecule("[O-]S(=O)(=O)[O-]", style="acs1996", size=(300, 300))
     assert result.report["profile"] == "acs1996"
     assert result.report["bond_length_pt"] == [14.4, 14.4]
-    assert result.report["label_clearance_pt"] >= MARGIN - 0.05
+    assert result.report["label_clearance_pt"] >= 1.55
     assert any("size is ignored" in warning for warning in result.warnings)
 
 
@@ -255,3 +276,18 @@ def test_unknown_style_lists_profiles() -> None:
 
     with pytest.raises(ChemGlyphStyleError, match="acs1996"):
         chemglyph.render_molecule("CCO", style="neon")
+
+
+def test_screen_colours_heteroatoms_and_acs_stays_black() -> None:
+    screen = _render("Cn1cnc2c1c(=O)n(C)c(=O)n2C", PROFILES["screen"])
+    acs = _render("Cn1cnc2c1c(=O)n(C)c(=O)n2C", PROFILES["acs1996"])
+    assert "#FF0D0D" in screen and "#3050F8" in screen  # classic CPK O and N
+    assert "#FF0D0D" not in acs and "#3050F8" not in acs
+
+
+@pytest.mark.parametrize("profile,label,smiles", BY_PROFILE)
+def test_clipping_never_falls_back(profile: Profile, label: str, smiles: str) -> None:
+    """Every bond next to a label is clipped by the glyph rule, never left as RDKit drew it."""
+    result = chemglyph.render_molecule(smiles, style=profile.name)
+    fallbacks = [w for w in result.warnings if "drawn as RDKit placed it" in w]
+    assert not fallbacks, f"{label}: {fallbacks}"
