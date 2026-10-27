@@ -62,6 +62,29 @@ def test_server_exposes_four_tools() -> None:
     }
 
 
+def test_validate_tool_description_example_is_true() -> None:
+    """The example in the tool description must describe real behavior."""
+    import re
+
+    from chemglyph import validate_structure
+
+    async def run() -> str:
+        params = StdioServerParameters(command=sys.executable, args=["-m", "chemglyph.mcp_server"])
+        async with stdio_client(params) as (read_stream, write_stream):
+            async with ClientSession(read_stream, write_stream) as session:
+                await session.initialize()
+                tools = await session.list_tools()
+                return next(t.description for t in tools.tools if t.name == "validate_structure")
+
+    description = anyio.run(run)
+    structure, fixed = re.search(
+        r'"structure": "([^"]+)"\} returns the fixed SMILES "([^"]+)"', description
+    ).groups()
+    report = validate_structure(structure)
+    assert not report.valid
+    assert report.fixes[0].fixed_smiles == fixed
+
+
 def test_render_molecule_returns_png_image_and_metadata() -> None:
     result = _call_tool("render_molecule", {"structure": "CC(=O)Oc1ccccc1C(=O)O"})
     assert not result.is_error

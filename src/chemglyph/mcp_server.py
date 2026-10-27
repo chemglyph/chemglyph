@@ -180,7 +180,7 @@ def render_reaction_tool(
         "Validate a structure string and return errors plus automatic fixes. "
         "Use this when a SMILES may be malformed and you need a repair "
         "suggestion before rendering. Example: "
-        '{"structure": "c1ccc1"} returns the fixed SMILES "C1CCC1".'
+        '{"structure": "c1cccc1"} returns the fixed SMILES "C1CCCC1".'
     ),
     structured_output=False,
 )

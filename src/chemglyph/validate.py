@@ -168,41 +168,55 @@ def _valid_report(mol: Chem.Mol) -> ValidationReport:
 
 
 def _syntax_issues(smiles: str) -> list[str]:
-    """Rule 1: report unbalanced brackets and odd ring-closure numbers."""
+    """Rule 1: report unbalanced brackets/parentheses and unpaired ring closures.
+
+    Ring-closure digits are counted everywhere outside square brackets,
+    including inside branches: ``C1CC(C1)`` closes ring 1 inside a branch.
+    Two-digit closures use the ``%nn`` form and are counted as one label.
+    """
     issues: list[str] = []
-    depth = 0
+    bracket_depth = 0
+    paren_depth = 0
     ring_counts: dict[str, int] = {}
     index = 0
     while index < len(smiles):
         char = smiles[index]
-        if char == "[":
-            depth += 1
-        elif char == "]":
-            if depth == 0:
-                issues.append("closing bracket without matching opening bracket")
-            depth -= 1
-        elif char == "(":
-            depth += 1
-        elif char == ")":
-            if depth == 0:
-                issues.append("closing parenthesis without matching opening")
-            depth -= 1
-        elif char == "%":
-            for offset in (1, 2):
-                digit = smiles[index + offset : index + offset + 1]
-                if digit.isdigit():
-                    ring_counts[digit] = ring_counts.get(digit, 0) + 1
-            index += 2
+        if bracket_depth:
+            # Inside an atom bracket: digits are isotopes, counts, or charges.
+            if char == "]":
+                bracket_depth -= 1
+            index += 1
             continue
-        elif char.isdigit() and depth == 0:
+        if char == "[":
+            bracket_depth += 1
+        elif char == "]":
+            issues.append("closing bracket without matching opening bracket")
+        elif char == "(":
+            paren_depth += 1
+        elif char == ")":
+            if paren_depth == 0:
+                issues.append("closing parenthesis without matching opening")
+            else:
+                paren_depth -= 1
+        elif char == "%":
+            label = smiles[index + 1 : index + 3]
+            if len(label) == 2 and label.isdigit():
+                key = f"%{label}"
+                ring_counts[key] = ring_counts.get(key, 0) + 1
+                index += 3
+                continue
+            issues.append("'%' must be followed by a two-digit ring-closure number")
+        elif char.isdigit():
             ring_counts[char] = ring_counts.get(char, 0) + 1
         index += 1
-    if depth > 0:
-        issues.append("unclosed bracket or parenthesis")
-    for digit, count in sorted(ring_counts.items()):
+    if bracket_depth:
+        issues.append("unclosed bracket")
+    if paren_depth:
+        issues.append("unclosed parenthesis")
+    for label, count in sorted(ring_counts.items()):
         if count % 2 == 1:
             issues.append(
-                f"ring-closure number {digit} appears {count} time(s); "
+                f"ring-closure number {label} appears {count} time(s); "
                 "ring closures must come in pairs"
             )
     return issues

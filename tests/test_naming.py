@@ -50,6 +50,10 @@ def test_dictionary_entries_are_valid() -> None:
         assert chemglyph.parse_name(zh) == Chem.MolToSmiles(mol)
 
 
+def test_hydrochloric_acid_is_hcl_not_chloride() -> None:
+    assert chemglyph.parse_name("盐酸") == "Cl"
+
+
 def test_empty_name_rejected() -> None:
     with pytest.raises(ChemGlyphParseError):
         chemglyph.parse_name("   ")

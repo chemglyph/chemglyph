@@ -77,7 +77,7 @@ ZH_NAMES: dict[str, str] = {
     "氢氧化钠": "[Na+].[OH-]",
     "硫酸": "OS(=O)(=O)O",
     "硝酸": "O[N+](=O)[O-]",
-    "盐酸": "[Cl-]",
+    "盐酸": "Cl",
     # Common drugs
     "对乙酰氨基酚": "CC(=O)Nc1ccc(O)cc1",
     "扑热息痛": "CC(=O)Nc1ccc(O)cc1",
