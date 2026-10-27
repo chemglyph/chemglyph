@@ -332,6 +332,9 @@ def _is_cage(system: list[set[int]]) -> bool:
     return all(sum(atom in ring for ring in system) >= 2 for atom in atoms)
 
 
+_MAX_PROJECTED = 40
+
+
 def _mostly_cage(mol: Chem.Mol) -> bool:
     """At least half the heavy atoms are in a bridged system or cage."""
     zone_rings = set()
@@ -339,7 +342,9 @@ def _mostly_cage(mol: Chem.Mol) -> bool:
         zone_rings.update(ring)
     perspective = bridged_atoms(mol) & zone_rings
     heavy = sum(1 for atom in mol.GetAtoms() if atom.GetAtomicNum() > 1)
-    return heavy > 0 and len(perspective) >= 0.5 * heavy
+    # Larger cages (fullerenes) gain nothing from a projection: the far side
+    # lands on the near side whatever the direction.
+    return 0 < heavy <= _MAX_PROJECTED and len(perspective) >= 0.5 * heavy
 
 
 def _project(mol: Chem.Mol, seed: int = 42, directions: int = 400) -> bool:
@@ -369,12 +374,15 @@ def _project(mol: Chem.Mol, seed: int = 42, directions: int = 400) -> bool:
     if len(bonds) == 0:
         return False
     labelled = [a.GetIdx() for a in mol.GetAtoms() if a.GetAtomicNum() != 6]
-    pairs = [
-        (atom.GetIdx(), first, second, 30.0 if atom.GetDegree() == 2 else 15.0)
-        for atom in mol.GetAtoms()
-        for i, first in enumerate(n.GetIdx() for n in atom.GetNeighbors())
-        for second in [n.GetIdx() for n in atom.GetNeighbors()][i + 1 :]
-    ]
+    pairs = np.array(
+        [
+            (atom.GetIdx(), first, second, 30.0 if atom.GetDegree() == 2 else 15.0)
+            for atom in mol.GetAtoms()
+            for i, first in enumerate(n.GetIdx() for n in atom.GetNeighbors())
+            for second in [n.GetIdx() for n in atom.GetNeighbors()][i + 1 :]
+        ],
+        dtype=float,
+    ).reshape(-1, 4)
     golden = math.pi * (3 - math.sqrt(5))
     best: tuple[float, np.ndarray] | None = None
     for i in range(directions):
@@ -427,11 +435,12 @@ def _view_score(xy: np.ndarray, bonds: np.ndarray, pairs, labelled) -> float:
         lengths = np.sqrt(length2)
         own = member[labelled].any(axis=0)
         penalty += 30.0 * float(((lengths < 0.7) & own).sum())
-    for centre, first, second, limit in pairs:
+    if len(pairs):
+        centre, first, second = (pairs[:, i].astype(int) for i in range(3))
         e1, e2 = xy[first] - xy[centre], xy[second] - xy[centre]
-        cosine = float(e1 @ e2) / max(float(np.linalg.norm(e1) * np.linalg.norm(e2)), 1e-12)
-        if abs(cosine) > math.cos(math.radians(limit)):
-            penalty += 50.0
+        norms = np.maximum(np.linalg.norm(e1, axis=1) * np.linalg.norm(e2, axis=1), 1e-12)
+        cosine = np.abs((e1 * e2).sum(axis=1)) / norms
+        penalty += 50.0 * float((cosine > np.cos(np.radians(pairs[:, 3]))).sum())
     distance = np.linalg.norm(xy[:, None] - xy[None], axis=2)
     np.fill_diagonal(distance, 9.0)
     return 10.0 * min(float(distance.min()), 0.6) - penalty
